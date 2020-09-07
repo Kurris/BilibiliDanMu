@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30413.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BilibiliDanMu", "BilibiliDanMu.csproj", "{10584ED3-8DF2-49F5-B780-493639C74B4E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6FB947A0-2C45-4AFA-8301-85441244D8AB}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestDanMu", "..\TestDanMu\TestDanMu.csproj", "{BDD678D8-72D5-4A63-9CDF-C765487724BB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{10584ED3-8DF2-49F5-B780-493639C74B4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10584ED3-8DF2-49F5-B780-493639C74B4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10584ED3-8DF2-49F5-B780-493639C74B4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10584ED3-8DF2-49F5-B780-493639C74B4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDD678D8-72D5-4A63-9CDF-C765487724BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDD678D8-72D5-4A63-9CDF-C765487724BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDD678D8-72D5-4A63-9CDF-C765487724BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDD678D8-72D5-4A63-9CDF-C765487724BB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D09420B1-9927-4AA6-810D-A44132DC067D}
+	EndGlobalSection
+EndGlobal
