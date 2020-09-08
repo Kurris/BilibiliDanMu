@@ -103,6 +103,7 @@ namespace BitConverter
             return this.GetBytes(val);
         }
 
+#pragma warning disable 3021
         /// <summary>
         /// Returns the specified 16-bit unsigned integer value as an array of bytes.
         /// </summary>
@@ -138,6 +139,8 @@ namespace BitConverter
         {
             return this.GetBytes((long)value);
         }
+
+#pragma warning restore 
 
         /// <summary>
         /// Returns a Boolean value converted from the byte at a specified position in a byte array.
@@ -264,6 +267,7 @@ namespace BitConverter
             return new SingleConverter(val).GetFloatValue();
         }
 
+#pragma warning disable 3021
         /// <summary>
         /// Returns a 16-bit unsigned integer converted from two bytes at a specified position in a byte array.
         /// </summary>
@@ -323,6 +327,8 @@ namespace BitConverter
         {
             return (ulong)this.ToInt64(value, startIndex);
         }
+
+#pragma warning restore 3021
 
         // Testing showed that this method wasn't automatically being inlined, and doing so offers a significant performance improvement.
 #if !NET40

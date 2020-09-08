@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{10584ED3-8DF2-49F5-B780-493639C74B4E}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>BilibiliDanMu</RootNamespace>
-    <AssemblyName>BilibiliDanMu</AssemblyName>
+    <RootNamespace>BilibiliDanMuLib</RootNamespace>
+    <AssemblyName>BilibiliDanMuLib</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -53,11 +53,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BilibiliDanMu.cs" />
+    <Compile Include="DanmakuProtocolStruts.cs" />
     <Compile Include="EndianBitConverter\BigEndianBitConverter.cs" />
     <Compile Include="EndianBitConverter\EndianBitConverter.cs" />
     <Compile Include="EndianBitConverter\LittleEndianBitConverter.cs" />
     <Compile Include="EndianBitConverter\SingleConverter.cs" />
+    <Compile Include="Events\LogMsg.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StaticUtils.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -66,8 +69,8 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
-    <None Include=".editorconfig" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

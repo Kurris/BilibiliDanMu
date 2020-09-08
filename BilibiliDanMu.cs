@@ -11,120 +11,189 @@ using BitConverter;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace BilibiliDanMu
+namespace BilibiliDanMuLib
 {
+    /// <summary>
+    /// 破站弹幕库
+    /// </summary>
     public class BilibiliDanMu
     {
-        private string[] defaulthosts = new string[] { "livecmt-2.bilibili.com", "livecmt-1.bilibili.com" };
-        private string ChatHost = "chat.bilibili.com";
-        private int ChatPort = 2243; // TCP协议默认端口疑似修改到 2243
-        private TcpClient Client;
-        private Stream NetStream;
-        private readonly string CIDInfoUrl = "https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=";
-        private bool Connected = false;
-        public Exception Error;
-        public event LogMessageEvt LogMessage;
-        private bool debuglog = true;
-        private short protocolversion = 2;
-        private static int lastroomid;
-        private static string lastserver;
-        private static HttpClient httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(5) };
+        /// <summary>
+        /// 用户直播地址
+        /// </summary>
+        private readonly string _mBroadcastUrl = "https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=";
 
-        public async Task<bool> ConnectAsync(int roomId)
+        /// <summary>
+        /// 直播弹幕地址
+        /// </summary>
+        private string[] _mDefaultHosts = { "livecmt-2.bilibili.com", "livecmt-1.bilibili.com" };
+
+        /// <summary>
+        /// 直播服务地址DNS
+        /// </summary>
+        private string _mChatHost = "chat.bilibili.com";
+
+        /// <summary>
+        /// TCP端口
+        /// </summary>
+        private int _mChatPort = 2243;
+
+        /// <summary>
+        /// Http客户端
+        /// </summary>
+        private static HttpClient _mHttpClient = null;
+
+        /// <summary>
+        /// TCP客户端
+        /// </summary>
+        private TcpClient _mTcpClient = null;
+
+        /// <summary>
+        /// 网络流
+        /// </summary>
+        private Stream _mNetStream;
+
+        /// <summary>
+        /// 是否已经连接
+        /// </summary>
+        private bool _mConnected = false;
+
+        /// <summary>
+        /// 日志事件
+        /// </summary>
+        public event LogMsg Log;
+
+        /// <summary>
+        /// 协议版本
+        /// </summary>
+        private short _mProtocolVer = 2;
+
+        /// <summary>
+        /// 最后使用的房间号
+        /// </summary>
+        private static int _mLastRoomid;
+
+        /// <summary>
+        /// 最后使用的服务地址
+        /// </summary>
+        private static string _mLastSrv;
+
+        /// <summary>
+        /// 连接直播弹幕服务器
+        /// </summary>
+        /// <param name="RoomId">房间号</param>
+        /// <returns>连接结果</returns>
+        public async Task<bool> ConnectAsync(int RoomId)
         {
             try
             {
-                if (this.Connected) throw new InvalidOperationException();
-                var channelId = roomId;
+                if (this._mConnected) throw new InvalidOperationException();
 
-                var token = "";
-                if (channelId != lastroomid)
+                if (RoomId == _mLastRoomid) _mChatHost = _mLastSrv;
+
+                string sToken = string.Empty;
+                try
                 {
-                    try
+                    if (_mHttpClient == null)
                     {
-                        var req = await httpClient.GetStringAsync(CIDInfoUrl + channelId);
-                        var roomobj = JObject.Parse(req);
-                        token = roomobj["data"]["token"] + "";
-                        ChatHost = roomobj["data"]["host"] + "";
-
-                        ChatPort = roomobj["data"]["port"].Value<int>();
-                        if (string.IsNullOrEmpty(ChatHost))
-                        {
-                            throw new Exception();
-                        }
-
+                        _mHttpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(5) };
                     }
-                    catch (WebException ex)
-                    {
-                        ChatHost = defaulthosts[new Random().Next(defaulthosts.Length)];
+                    //请求的内容
+                    var sRequestContent = await _mHttpClient.GetStringAsync(_mBroadcastUrl + RoomId);
 
-                        var errorResponse = ex.Response as HttpWebResponse;
-                        if (errorResponse.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            // 直播间不存在（HTTP 404）
-                            var msg = "该直播间疑似不存在，弹幕姬只支持使用原房间号连接";
-                            LogMessage?.Invoke(this, new LogMessageArgs() { message = msg });
-                        }
-                        else
-                        {
-                            // B站服务器响应错误
-                            var msg = "B站服务器响应弹幕服务器地址出错，尝试使用常见地址连接";
-                            LogMessage?.Invoke(this, new LogMessageArgs() { message = msg });
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // 其他错误（XML解析错误？）
-                        ChatHost = defaulthosts[new Random().Next(defaulthosts.Length)];
-                        var msg = "获取弹幕服务器地址时出现未知错误，尝试使用常见地址连接";
-                        LogMessage?.Invoke(this, new LogMessageArgs() { message = msg });
-                    }
+                    var DataJToken = JObject.Parse(sRequestContent)["data"];
 
+                    sToken = DataJToken["token"] + "";
+                    _mChatHost = DataJToken["host"] + "";
+                    _mChatPort = DataJToken["port"].Value<int>();
 
                 }
-                else
+                catch (Exception ex)
                 {
-                    ChatHost = lastserver;
+                    Log?.Invoke(new LogArgs()
+                    {
+                        Msg = ex.StackTrace
+                    });
                 }
-                Client = new TcpClient();
 
-                var ipAddress = await System.Net.Dns.GetHostAddressesAsync(ChatHost);
-                var random = new Random();
-                var idx = random.Next(ipAddress.Length);
-                await Client.ConnectAsync(ipAddress[idx], ChatPort);
+                _mTcpClient = new TcpClient();
 
-                NetStream = Stream.Synchronized(Client.GetStream());
+                var ipAddress = await Dns.GetHostAddressesAsync(_mChatHost);
 
+                var iIndex = new Random().Next(ipAddress.Length);
 
-                if (await SendJoinChannel(channelId, token))
+                if (_mTcpClient.Connected)
                 {
-                    Connected = true;
-                    _ = this.HeartbeatLoop();
-                    _ = this.ReceiveMessageLoop();
-                    lastserver = ChatHost;
-                    lastroomid = roomId;
+                    throw new SocketException((int)SocketError.SocketError);
+                }
+                await _mTcpClient.ConnectAsync(ipAddress[iIndex], _mChatPort);
+
+                //同步流
+                _mNetStream = Stream.Synchronized(_mTcpClient.GetStream());
+
+                if (await SendJoinRoom(RoomId, sToken))
+                {
+                    _mConnected = true;
+                    _ = HeartBeatLoop();
+                    _ = ReceiveMessageLoop();
+                    _mLastSrv = _mChatHost;
+                    _mLastRoomid = RoomId;
+
                     return true;
                 }
                 return false;
             }
             catch (Exception ex)
             {
-                this.Error = ex;
+                Log?.Invoke(new LogArgs()
+                {
+                    Msg = ex.StackTrace
+                });
+
                 return false;
             }
         }
 
+        /// <summary>
+        /// 循环发送心跳包
+        /// </summary>
+        /// <returns></returns>
+        private async Task HeartBeatLoop()
+        {
+            try
+            {
+                while (this._mConnected)
+                {
+                    await this.SendHeartbeatAsync();
+                    //延迟30秒
+                    await Task.Delay(30000);
+                }
+            }
+            catch (Exception ex)
+            {
+                Disconnect();
+                Log?.Invoke(new LogArgs()
+                {
+                    Msg = ex.StackTrace
+                });
+            }
+        }
+
+        /// <summary>
+        /// 循环接受信息
+        /// </summary>
+        /// <returns></returns>
         private async Task ReceiveMessageLoop()
         {
-
             try
             {
                 var stableBuffer = new byte[16];
                 var buffer = new byte[4096];
-                while (this.Connected)
+                while (this._mConnected)
                 {
-                    await NetStream.ReadBAsync(stableBuffer, 0, 16);
-                    var protocol = DanmakuProtocol.FromBuffer(stableBuffer);
+                    await _mNetStream.ReadBAsync(stableBuffer, 0, 16);
+
+                    var protocol = DanmakuProtocolStruts.FromBuffer(stableBuffer);
                     if (protocol.PacketLength < 16)
                     {
                         throw new NotSupportedException("协议失败: (L:" + protocol.PacketLength + ")");
@@ -137,8 +206,8 @@ namespace BilibiliDanMu
 
                     buffer = new byte[payloadlength];
 
-                    await NetStream.ReadBAsync(buffer, 0, payloadlength);
-                    if (protocol.Version == 2 && protocol.Action == 5) // 处理deflate消息
+                    await _mNetStream.ReadBAsync(buffer, 0, payloadlength);
+                    if (protocol.Version == 2 && protocol.OpearateCode == OperateCode.表示具体命令Cmd) // 处理deflate消息
                     {
                         using (var ms = new MemoryStream(buffer, 2, payloadlength - 2)) // Skip 0x78 0xDA
                         using (var deflate = new DeflateStream(ms, CompressionMode.Decompress))
@@ -149,146 +218,124 @@ namespace BilibiliDanMu
                                 while (true)
                                 {
                                     await deflate.ReadBAsync(headerbuffer, 0, 16);
-                                    var protocol_in = DanmakuProtocol.FromBuffer(headerbuffer);
+                                    var protocol_in = DanmakuProtocolStruts.FromBuffer(headerbuffer);
                                     payloadlength = protocol_in.PacketLength - 16;
                                     var danmakubuffer = new byte[payloadlength];
                                     await deflate.ReadBAsync(danmakubuffer, 0, payloadlength);
-                                    ProcessDanmaku(protocol.Action, danmakubuffer);
+                                    ProcessDanmaku(protocol.OpearateCode, danmakubuffer);
                                 }
-
                             }
-                            catch (Exception e)
+                            catch (Exception)
                             {
 
                             }
-
-
                         }
                     }
                     else
                     {
-                        ProcessDanmaku(protocol.Action, buffer);
+                        ProcessDanmaku(protocol.OpearateCode, buffer);
                     }
                 }
             }
             catch (Exception ex)
             {
-                this.Error = ex;
-                _disconnect();
-
-            }
-
-
-        }
-
-        private void ProcessDanmaku(int action, byte[] buffer)
-        {
-            switch (action)
-            {
-                case 3: // (OpHeartbeatReply)
-                    {
-                        var viewer = EndianBitConverter.BigEndian.ToUInt32(buffer, 0); //观众人数
-                        break;
-                    }
-                case 5://playerCommand (OpSendMsgReply)
-                    {
-
-                        var json = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
-                        LogMessage?.Invoke(this, new LogMessageArgs() { message = json });
-                        if (debuglog)
-                        {
-                            Console.WriteLine(json);
-                        }
-                        try
-                        {
-
-                        }
-                        catch (Exception)
-                        {
-                            // ignored
-                        }
-                        break;
-                    }
-                case 8: // (OpAuthReply)
-                    {
-                        break;
-                    }
-                default:
-                    {
-                        break;
-                    }
-            }
-        }
-
-        private async Task HeartbeatLoop()
-        {
-
-            try
-            {
-                while (this.Connected)
+                Disconnect();
+                Log?.Invoke(new LogArgs()
                 {
-                    await this.SendHeartbeatAsync();
-                    await Task.Delay(30000);
-                }
+                    Msg = ex.StackTrace
+                });
             }
-            catch (Exception ex)
-            {
-                this.Error = ex;
-                _disconnect();
 
+
+        }
+
+        private void ProcessDanmaku(OperateCode Code, byte[] buffer)
+        {
+
+            switch (Code)
+            {
+                case OperateCode.客户端发送的心跳包:
+                    break;
+                case OperateCode.人气值节整数:
+                    var viewer = EndianBitConverter.BigEndian.ToUInt32(buffer, 0); //观众人数
+                    //Log?.Invoke(new LogArgs()
+                    //{
+                    //    Msg = viewer.ToString()
+                    //});
+                    break;
+                case OperateCode.表示具体命令Cmd:
+                    var json = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
+                    try
+                    {
+                        Log?.Invoke(new LogArgs()
+                        {
+                            Msg = json
+                        });
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    break;
+                case OperateCode.认证并加入房间:
+                    break;
+                case OperateCode.服务器发送的心跳包:
+                    break;
+                default:
+                    break;
             }
         }
 
+
+        /// <summary>
+        /// 断开连接
+        /// </summary>
         public void Disconnect()
         {
+            if (!_mConnected) return;
 
-            Connected = false;
+            _mConnected = false;
+
             try
             {
-                Client.Close();
+                _mTcpClient.Close();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                Log?.Invoke(new LogArgs()
+                {
+                    Msg = ex.StackTrace
+                });
             }
 
-
-            NetStream = null;
-        }
-
-        private void _disconnect()
-        {
-            if (Connected)
-            {
-                Debug.WriteLine("Disconnected");
-
-                Connected = false;
-
-                Client.Close();
-
-                NetStream = null;
-            }
-
+            _mNetStream = null;
         }
 
         private async Task SendHeartbeatAsync()
         {
-            await SendSocketDataAsync(2);
+            await SendSocketDataAsync(0, 16, _mProtocolVer, 2, 1, string.Empty);
             Debug.WriteLine("Message Sent: Heartbeat");
         }
 
-        Task SendSocketDataAsync(int action, string body = "")
+        /// <summary>
+        /// 发送套字节数据
+        /// </summary>
+        /// <param name="PackLength"></param>
+        /// <param name="Magic"></param>
+        /// <param name="Ver"></param>
+        /// <param name="Action"></param>
+        /// <param name="Param"></param>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        async Task SendSocketDataAsync(int PackLength, short Magic, short Ver, int Action, int Param = 1, string Body = "")
         {
-            return SendSocketDataAsync(0, 16, protocolversion, action, 1, body);
-        }
-        async Task SendSocketDataAsync(int packetlength, short magic, short ver, int action, int param = 1, string body = "")
-        {
-            var playload = Encoding.UTF8.GetBytes(body);
-            if (packetlength == 0)
+            var playload = Encoding.UTF8.GetBytes(Body);
+            if (PackLength == 0)
             {
-                packetlength = playload.Length + 16;
+                PackLength = playload.Length + 16;
             }
-            var buffer = new byte[packetlength];
+            var buffer = new byte[PackLength];
             using (var ms = new MemoryStream(buffer))
             {
 
@@ -296,99 +343,44 @@ namespace BilibiliDanMu
                 var b = EndianBitConverter.BigEndian.GetBytes(buffer.Length);
 
                 await ms.WriteAsync(b, 0, 4);
-                b = EndianBitConverter.BigEndian.GetBytes(magic);
+                b = EndianBitConverter.BigEndian.GetBytes(Magic);
                 await ms.WriteAsync(b, 0, 2);
-                b = EndianBitConverter.BigEndian.GetBytes(ver);
+                b = EndianBitConverter.BigEndian.GetBytes(Ver);
                 await ms.WriteAsync(b, 0, 2);
-                b = EndianBitConverter.BigEndian.GetBytes(action);
+                b = EndianBitConverter.BigEndian.GetBytes(Action);
                 await ms.WriteAsync(b, 0, 4);
-                b = EndianBitConverter.BigEndian.GetBytes(param);
+                b = EndianBitConverter.BigEndian.GetBytes(Param);
                 await ms.WriteAsync(b, 0, 4);
                 if (playload.Length > 0)
                 {
                     await ms.WriteAsync(playload, 0, playload.Length);
                 }
-                await NetStream.WriteAsync(buffer, 0, buffer.Length);
+                await _mNetStream.WriteAsync(buffer, 0, buffer.Length);
             }
         }
 
-        private async Task<bool> SendJoinChannel(int channelId, string token)
+        /// <summary>
+        /// 发送加入房间包
+        /// </summary>
+        /// <param name="RoomId">房间号</param>
+        /// <param name="Token">凭证</param>
+        /// <returns></returns>
+        private async Task<bool> SendJoinRoom(int RoomId, string Token)
         {
-
-            var packetModel = new { roomid = channelId, uid = 0, protover = 2, token = token, platform = "danmuji" };
-            var playload = JsonConvert.SerializeObject(packetModel);
-            await SendSocketDataAsync(7, playload);
-            return true;
-        }
-    }
-
-    public delegate void LogMessageEvt(object sender, LogMessageArgs e);
-    public class LogMessageArgs
-    {
-        public string message = string.Empty;
-    }
-
-
-    public struct DanmakuProtocol
-    {
-        /// <summary>
-        /// 消息总长度 (协议头 + 数据长度)
-        /// </summary>
-        public int PacketLength;
-        /// <summary>
-        /// 消息头长度 (固定为16[sizeof(DanmakuProtocol)])
-        /// </summary>
-        public short HeaderLength;
-        /// <summary>
-        /// 消息版本号
-        /// </summary>
-        public short Version;
-        /// <summary>
-        /// 消息类型
-        /// </summary>
-        public int Action;
-        /// <summary>
-        /// 参数, 固定为1
-        /// </summary>
-        public int Parameter;
-
-        public static DanmakuProtocol FromBuffer(byte[] buffer)
-        {
-            if (buffer.Length < 16) { throw new ArgumentException(); }
-            return new DanmakuProtocol()
+            var PackageModel = new
             {
-                PacketLength = EndianBitConverter.BigEndian.ToInt32(buffer, 0),
-                HeaderLength = EndianBitConverter.BigEndian.ToInt16(buffer, 4),
-                Version = EndianBitConverter.BigEndian.ToInt16(buffer, 6),
-                Action = EndianBitConverter.BigEndian.ToInt32(buffer, 8),
-                Parameter = EndianBitConverter.BigEndian.ToInt32(buffer, 12),
+                roomid = RoomId,
+                uid = 0,
+                protover = _mProtocolVer,
+                token = Token,
+                platform = "web"
             };
-        }
-    }
-    public static class utils
-    {
 
-        public static async Task ReadBAsync(this Stream stream, byte[] buffer, int offset, int count)
-        {
-            if (offset + count > buffer.Length)
-                throw new ArgumentException();
-            int read = 0;
-            while (read < count)
-            {
-                var available = await stream.ReadAsync(buffer, offset, count - read);
-                if (available == 0)
-                {
-                    throw new ObjectDisposedException(null);
-                }
-                //                if (available != count)
-                //                {
-                //                    throw new NotSupportedException();
-                //                }
-                read += available;
-                offset += available;
+            var sJson = JsonConvert.SerializeObject(PackageModel);
 
-            }
+            await SendSocketDataAsync(0, 16, _mProtocolVer, 7, 1, sJson);
 
+            return true;
         }
     }
 }
