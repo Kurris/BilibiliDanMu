@@ -63,6 +63,11 @@ namespace BilibiliDanMuLib
         public event InfoLogMsg Log;
 
         /// <summary>
+        /// 消息输出
+        /// </summary>
+        public event MsgOutPut OutPut;
+
+        /// <summary>
         /// 协议版本
         /// </summary>
         private short _mProtocolVer = 2;
@@ -256,8 +261,6 @@ namespace BilibiliDanMuLib
                 Disconnect();
                 Log?.Invoke(ex.StackTrace);
             }
-
-
         }
 
         /// <summary>
@@ -273,17 +276,59 @@ namespace BilibiliDanMuLib
                 case OperateCode.客户端发送的心跳包:
                     break;
                 case OperateCode.人气值节整数:
+
                     var Viewer = EndianBitConverter.BigEndian.ToUInt32(buffer, 0);
-                    //Log?.Invoke(new LogArgs()
-                    //{
-                    //    Msg = viewer.ToString()
-                    //});
+                    OutPut?.Invoke(Cmd.NONE, $"直播间人气值:{Viewer.ToString()}");
+
                     break;
                 case OperateCode.表示具体命令Cmd:
-                    var json = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
+
+                    string sJson = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
+
                     try
                     {
-                        Log?.Invoke(json);
+                        var Jobj = JObject.Parse(sJson);
+
+                        var Cmd = Jobj.Value<string>("cmd");
+
+                        var CmdCommand = (Cmd)Enum.Parse(typeof(Cmd), Cmd);
+
+                        switch (CmdCommand)
+                        {
+                            case BilibiliDanMuLib.Cmd.DANMU_MSG:
+                                {
+                                    var Infos = Jobj["info"];
+                                    //Console.WriteLine($"{token[2][1]}:{token[1]}");
+                                    OutPut?.Invoke(BilibiliDanMuLib.Cmd.DANMU_MSG, $"{Infos[2][1]}:{Infos[1]}");
+                                }
+                                break;
+                            case BilibiliDanMuLib.Cmd.SEND_GIFT:
+                                {
+                                    OutPut?.Invoke(BilibiliDanMuLib.Cmd.SEND_GIFT, sJson);
+                                }
+                                break;
+                            case BilibiliDanMuLib.Cmd.WELCOME:
+                                break;
+                            case BilibiliDanMuLib.Cmd.WELCOME_GUARD:
+                                break;
+                            case BilibiliDanMuLib.Cmd.SYS_MSG:
+                                break;
+                            case BilibiliDanMuLib.Cmd.PREPARING:
+                                break;
+                            case BilibiliDanMuLib.Cmd.LIVE:
+                                break;
+                            case BilibiliDanMuLib.Cmd.WISH_BOTTLE:
+                                break;
+                            case BilibiliDanMuLib.Cmd.INTERACT_WORD:
+                                {
+                                    var DataToken = Jobj["data"];
+                                    string sUserName = DataToken["uname"].Value<string>();
+                                    OutPut?.Invoke(BilibiliDanMuLib.Cmd.INTERACT_WORD, $"{sUserName}进入直播间");
+                                    break;
+                                }
+                            default:
+                                break;
+                        }
                     }
                     catch (Exception)
                     {

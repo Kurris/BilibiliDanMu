@@ -70,6 +70,12 @@ namespace BilibiliDanMuLib
     /// </summary>
     public enum Cmd
     {
+
+        /// <summary>
+        /// 无命令
+        /// </summary>
+        NONE,
+
         /// <summary>
         /// 弹幕信息
         /// </summary>

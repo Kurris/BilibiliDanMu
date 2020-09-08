@@ -58,6 +58,7 @@
     <Compile Include="EndianBitConverter\EndianBitConverter.cs" />
     <Compile Include="EndianBitConverter\LittleEndianBitConverter.cs" />
     <Compile Include="EndianBitConverter\SingleConverter.cs" />
+    <Compile Include="Events\DanMuOutPut.cs" />
     <Compile Include="Events\LogMsg.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StaticUtils.cs" />

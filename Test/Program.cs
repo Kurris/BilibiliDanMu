@@ -10,79 +10,17 @@ namespace ConsoleApp2
         static void Main(string[] args)
         {
             BilibiliDanMu danMu = new BilibiliDanMu();
-            danMu.ConnectAsync(21301839).Wait();
-            danMu.Log += DanMu_Log;
-            //var jobj = JObject.Parse(dmjson);
-            //var Cmd = jobj.Value<string>("cmd");
-
-            //var infos= jobj["info"];
-
+            danMu.ConnectAsync(545072).Wait();
+            danMu.OutPut += DanMu_OutPut;
             Console.ReadKey();
         }
 
-
-        private static void WriteInter(JToken token)
+        private static void DanMu_OutPut(Cmd cmd, string Msg)
         {
-            string user = token["uname"].Value<string>();
-
-         //   SpeechSynthesizer speech = new SpeechSynthesizer();
-            
-            string sContent = $"{user}进入直播间";
-         //   speech.Speak(sContent);
-            Console.WriteLine(sContent);
-        }
-
-        private static void WriteDM(JToken token)
-        {
-            SpeechSynthesizer speech = new SpeechSynthesizer();
-            speech.Speak(token[1].Value<string>());
-
-            Console.WriteLine($"{token[2][1]}:{token[1]}");
+            Console.WriteLine(Msg);
         }
 
 
-        private static string dmjson = "{\"cmd\":\"DANMU_MSG\",\"info\":[[0,4,25,16370799,1599548229402,1599548065,0,\"20bd3985\",0,0,5,\"#1953BAFF,#3353BAFF,#3353BAFF\"],\"这伽马P3？\",[282051187,\"Miko天下第一\",0,0,0,10000,1,\"#00D1F1\"],[21,\"橘安人\",\"喜欢草莓的橘子可\",21301839,1725515,\"\",0,6809855,1725515,5414290,3,1,22871593],[21,0,5805790,\"\\u003e50000\"],[\"\",\"\"],0,3,null,{\"ts\":1599548229,\"ct\":\"57E74A10\"},0,0,null,null,0]}";
-
-
-        private static string inter = "    { \"cmd\":\"INTERACT_WORD\",\"data\":{ \"uid\":436453887,\"uname\":\"Hoy12356\",\"uname_color\":\"\",\"identities\":[1],\"msg_type\":1,\"roomid\":21301839,\"timestamp\":1599548357,\"score\":1599537357997193816,\"fans_medal\":{ \"target_id\":0,\"medal_level\":0,\"medal_name\":\"\",\"medal_color\":0,\"medal_color_start\":0,\"medal_color_end\":0,\"medal_color_border\":0,\"is_lighted\":0,\"guard_level\":0,\"special\":\"\",\"icon_id\":0} } }";
-
-        private static void DanMu_Log(string Msg)
-        {
-            var jobj = JObject.Parse(Msg);
-            var Cmd = jobj.Value<string>("cmd");
-
-            var CmdCommand = (Cmd)Enum.Parse(typeof(Cmd), Cmd);
-
-            switch (CmdCommand)
-            {
-                case BilibiliDanMuLib.Cmd.DANMU_MSG:
-
-                    var infos = jobj["info"];
-                    WriteDM(infos);
-                    break;
-                //case BilibiliDanMuLib.Cmd.SEND_GIFT:
-                //    break;
-                //case BilibiliDanMuLib.Cmd.WELCOME:
-                //    break;
-                //case BilibiliDanMuLib.Cmd.WELCOME_GUARD:
-                //    break;
-                //case BilibiliDanMuLib.Cmd.SYS_MSG:
-                //    break;
-                //case BilibiliDanMuLib.Cmd.PREPARING:
-                //    break;
-                //case BilibiliDanMuLib.Cmd.LIVE:
-                //    break;
-                //case BilibiliDanMuLib.Cmd.WISH_BOTTLE:
-                //    break;
-                case BilibiliDanMuLib.Cmd.INTERACT_WORD:
-                    var DataJToken = jobj["data"];
-                    WriteInter(DataJToken);
-                    break;
-                default:
-                    Console.WriteLine(Msg);
-                    break;
-            }
-
-        }
+        private string aa = "{\"cmd\":\"SEND_GIFT\",\"data\":{\"draw\":0,\"gold\":0,\"silver\":0,\"num\":1,\"total_coin\":0,\"effect\":0,\"broadcast_id\":0,\"crit_prob\":0,\"guard_level\":0,\"rcost\":5877847,\"uid\":3338446,\"timestamp\":1599565592,\"giftId\":30607,\"giftType\":5,\"eventScore\":0,\"eventNum\":0,\"addFollow\":0,\"super\":0,\"super_gift_num\":0,\"super_batch_gift_num\":0,\"remain\":0,\"price\":0,\"newMedal\":0,\"newTitle\":0,\"title\":\"\",\"medal\":[],\"beatId\":\"0\",\"biz_source\":\"live\",\"metadata\":\"\",\"action\":\"投喂\",\"coin_type\":\"silver\",\"uname\":\"低調の↘低调\",\"face\":\"http://i2.hdslb.com/bfs/face/c24e0860cf7a69ecf2025e56362401a50a933d46.jpg\",\"batch_combo_id\":\"\",\"rnd\":\"1599561681\",\"giftName\":\"小心心\",\"notice_msg\":[],\"smalltv_msg\":[],\"combo_send\":null,\"batch_combo_send\":null,\"tag_image\":\"\",\"top_list\":[],\"send_master\":null,\"is_first\":true,\"demarcation\":1,\"combo_stay_time\":3,\"combo_total_coin\":1,\"tid\":\"1599565592112600001\",\"effect_block\":1,\"smallTVCountFlag\":true,\"capsule\":null,\"specialGift\":null,\"is_special_batch\":0,\"combo_resources_id\":1,\"magnification\":1,\"name_color\":\"\",\"medal_info\":{\"target_id\":0,\"special\":\"\",\"icon_id\":0,\"anchor_uname\":\"\",\"anchor_roomid\":0,\"medal_level\":0,\"medal_name\":\"\",\"medal_color\":0,\"medal_color_start\":0,\"medal_color_end\":0,\"medal_color_border\":0,\"is_lighted\":0,\"guard_level\":0},\"svga_block\":0}}";
     }
 }
