@@ -3,3 +3,8 @@
 ################################################################################
 
 /.vs/BilibiliDanMu/v16
+/obj/Debug
+/packages/Newtonsoft.Json.12.0.3
+/Test/bin/Debug
+/Test/obj/Debug
+/bin/Debug

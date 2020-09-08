@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 
 namespace BilibiliDanMuLib
 {
-    public static class StaticUtils
+    internal static class StaticUtils
     {
-        public static async Task ReadBAsync(this Stream stream, byte[] buffer, int offset, int count)
+        internal static async Task ReadBAsync(this Stream stream, byte[] buffer, int offset, int count)
         {
             if (offset + count > buffer.Length)
                 throw new ArgumentException();

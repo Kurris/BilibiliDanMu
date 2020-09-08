@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -61,7 +60,7 @@ namespace BilibiliDanMuLib
         /// <summary>
         /// 日志事件
         /// </summary>
-        public event LogMsg Log;
+        public event InfoLogMsg Log;
 
         /// <summary>
         /// 协议版本
@@ -110,10 +109,7 @@ namespace BilibiliDanMuLib
                 }
                 catch (Exception ex)
                 {
-                    Log?.Invoke(new LogArgs()
-                    {
-                        Msg = ex.StackTrace
-                    });
+                    Log?.Invoke(ex.StackTrace);
                 }
 
                 _mTcpClient = new TcpClient();
@@ -145,13 +141,34 @@ namespace BilibiliDanMuLib
             }
             catch (Exception ex)
             {
-                Log?.Invoke(new LogArgs()
-                {
-                    Msg = ex.StackTrace
-                });
+                Log?.Invoke(ex.StackTrace);
 
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 发送加入房间包
+        /// </summary>
+        /// <param name="RoomId">房间号</param>
+        /// <param name="Token">凭证</param>
+        /// <returns></returns>
+        private async Task<bool> SendJoinRoom(int RoomId, string Token)
+        {
+            var PackageModel = new
+            {
+                roomid = RoomId,
+                uid = 0,
+                protover = _mProtocolVer,
+                token = Token,
+                platform = "web"
+            };
+
+            var sJson = JsonConvert.SerializeObject(PackageModel);
+
+            await SendSocketDataAsync(0, 16, _mProtocolVer, 7, 1, sJson);
+
+            return true;
         }
 
         /// <summary>
@@ -172,10 +189,7 @@ namespace BilibiliDanMuLib
             catch (Exception ex)
             {
                 Disconnect();
-                Log?.Invoke(new LogArgs()
-                {
-                    Msg = ex.StackTrace
-                });
+                Log?.Invoke(ex.StackTrace);
             }
         }
 
@@ -222,7 +236,7 @@ namespace BilibiliDanMuLib
                                     payloadlength = protocol_in.PacketLength - 16;
                                     var danmakubuffer = new byte[payloadlength];
                                     await deflate.ReadBAsync(danmakubuffer, 0, payloadlength);
-                                    ProcessDanmaku(protocol.OpearateCode, danmakubuffer);
+                                    HandleMsg(protocol.OpearateCode, danmakubuffer);
                                 }
                             }
                             catch (Exception)
@@ -233,23 +247,25 @@ namespace BilibiliDanMuLib
                     }
                     else
                     {
-                        ProcessDanmaku(protocol.OpearateCode, buffer);
+                        HandleMsg(protocol.OpearateCode, buffer);
                     }
                 }
             }
             catch (Exception ex)
             {
                 Disconnect();
-                Log?.Invoke(new LogArgs()
-                {
-                    Msg = ex.StackTrace
-                });
+                Log?.Invoke(ex.StackTrace);
             }
 
 
         }
 
-        private void ProcessDanmaku(OperateCode Code, byte[] buffer)
+        /// <summary>
+        /// 处理消息,具体的类型处理
+        /// </summary>
+        /// <param name="Code">操作码</param>
+        /// <param name="buffer">字节流</param>
+        private void HandleMsg(OperateCode Code, byte[] buffer)
         {
 
             switch (Code)
@@ -257,7 +273,7 @@ namespace BilibiliDanMuLib
                 case OperateCode.客户端发送的心跳包:
                     break;
                 case OperateCode.人气值节整数:
-                    var viewer = EndianBitConverter.BigEndian.ToUInt32(buffer, 0); //观众人数
+                    var Viewer = EndianBitConverter.BigEndian.ToUInt32(buffer, 0);
                     //Log?.Invoke(new LogArgs()
                     //{
                     //    Msg = viewer.ToString()
@@ -267,10 +283,7 @@ namespace BilibiliDanMuLib
                     var json = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
                     try
                     {
-                        Log?.Invoke(new LogArgs()
-                        {
-                            Msg = json
-                        });
+                        Log?.Invoke(json);
                     }
                     catch (Exception)
                     {
@@ -287,6 +300,55 @@ namespace BilibiliDanMuLib
             }
         }
 
+        /// <summary>
+        /// 发送心跳包
+        /// </summary>
+        /// <returns></returns>
+        private async Task SendHeartbeatAsync()
+        {
+            await SendSocketDataAsync(0, 16, _mProtocolVer, 2, 1, string.Empty);
+        }
+
+        /// <summary>
+        /// 发送套字节数据
+        /// </summary>
+        /// <param name="PackLength"></param>
+        /// <param name="Magic"></param>
+        /// <param name="Ver"></param>
+        /// <param name="Action"></param>
+        /// <param name="Param"></param>
+        /// <param name="Body"></param>
+        /// <returns></returns>
+        async Task SendSocketDataAsync(int PackLength, short Magic, short Ver, int Action, int Param = 1, string Body = "")
+        {
+            var playload = Encoding.UTF8.GetBytes(Body);
+            if (PackLength == 0)
+            {
+                PackLength = playload.Length + 16;
+            }
+            var buffer = new byte[PackLength];
+            using (var ms = new MemoryStream(buffer))
+            {
+                var b = EndianBitConverter.BigEndian.GetBytes(buffer.Length);
+
+                await ms.WriteAsync(b, 0, 4);
+                b = EndianBitConverter.BigEndian.GetBytes(Magic);
+                await ms.WriteAsync(b, 0, 2);
+                b = EndianBitConverter.BigEndian.GetBytes(Ver);
+                await ms.WriteAsync(b, 0, 2);
+                b = EndianBitConverter.BigEndian.GetBytes(Action);
+                await ms.WriteAsync(b, 0, 4);
+                b = EndianBitConverter.BigEndian.GetBytes(Param);
+                await ms.WriteAsync(b, 0, 4);
+
+                if (playload.Length > 0)
+                {
+                    await ms.WriteAsync(playload, 0, playload.Length);
+                }
+
+                await _mNetStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+        }
 
         /// <summary>
         /// 断开连接
@@ -303,84 +365,10 @@ namespace BilibiliDanMuLib
             }
             catch (Exception ex)
             {
-                Log?.Invoke(new LogArgs()
-                {
-                    Msg = ex.StackTrace
-                });
+                Log?.Invoke(ex.StackTrace);
             }
 
             _mNetStream = null;
-        }
-
-        private async Task SendHeartbeatAsync()
-        {
-            await SendSocketDataAsync(0, 16, _mProtocolVer, 2, 1, string.Empty);
-            Debug.WriteLine("Message Sent: Heartbeat");
-        }
-
-        /// <summary>
-        /// 发送套字节数据
-        /// </summary>
-        /// <param name="PackLength"></param>
-        /// <param name="Magic"></param>
-        /// <param name="Ver"></param>
-        /// <param name="Action"></param>
-        /// <param name="Param"></param>
-        /// <param name="body"></param>
-        /// <returns></returns>
-        async Task SendSocketDataAsync(int PackLength, short Magic, short Ver, int Action, int Param = 1, string Body = "")
-        {
-            var playload = Encoding.UTF8.GetBytes(Body);
-            if (PackLength == 0)
-            {
-                PackLength = playload.Length + 16;
-            }
-            var buffer = new byte[PackLength];
-            using (var ms = new MemoryStream(buffer))
-            {
-
-
-                var b = EndianBitConverter.BigEndian.GetBytes(buffer.Length);
-
-                await ms.WriteAsync(b, 0, 4);
-                b = EndianBitConverter.BigEndian.GetBytes(Magic);
-                await ms.WriteAsync(b, 0, 2);
-                b = EndianBitConverter.BigEndian.GetBytes(Ver);
-                await ms.WriteAsync(b, 0, 2);
-                b = EndianBitConverter.BigEndian.GetBytes(Action);
-                await ms.WriteAsync(b, 0, 4);
-                b = EndianBitConverter.BigEndian.GetBytes(Param);
-                await ms.WriteAsync(b, 0, 4);
-                if (playload.Length > 0)
-                {
-                    await ms.WriteAsync(playload, 0, playload.Length);
-                }
-                await _mNetStream.WriteAsync(buffer, 0, buffer.Length);
-            }
-        }
-
-        /// <summary>
-        /// 发送加入房间包
-        /// </summary>
-        /// <param name="RoomId">房间号</param>
-        /// <param name="Token">凭证</param>
-        /// <returns></returns>
-        private async Task<bool> SendJoinRoom(int RoomId, string Token)
-        {
-            var PackageModel = new
-            {
-                roomid = RoomId,
-                uid = 0,
-                protover = _mProtocolVer,
-                token = Token,
-                platform = "web"
-            };
-
-            var sJson = JsonConvert.SerializeObject(PackageModel);
-
-            await SendSocketDataAsync(0, 16, _mProtocolVer, 7, 1, sJson);
-
-            return true;
         }
     }
 }

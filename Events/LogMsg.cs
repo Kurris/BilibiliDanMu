@@ -1,19 +1,16 @@
-﻿namespace BilibiliDanMuLib
+﻿
+namespace BilibiliDanMuLib
 {
     /// <summary>
     /// 日志输出委托
     /// </summary>
-    /// <param name="e"></param>
-    public delegate void LogMsg(LogArgs e);
+    /// <param name="Msg"></param>
+    public delegate void InfoLogMsg(string Msg);
+
 
     /// <summary>
-    /// 日志参数
+    /// 异常日志输出委托
     /// </summary>
-    public class LogArgs
-    {
-        /// <summary>
-        /// 日志内容
-        /// </summary>
-        public string Msg { get; internal set; }
-    }
+    /// <param name="Msg"></param>
+    public delegate void ErrorLogMsg(string Msg);
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Speech.Synthesis;
 using BilibiliDanMuLib;
 using Newtonsoft.Json.Linq;
 
@@ -19,15 +20,23 @@ namespace ConsoleApp2
             Console.ReadKey();
         }
 
+
         private static void WriteInter(JToken token)
         {
             string user = token["uname"].Value<string>();
 
-            Console.WriteLine($"{user}进入直播间");
+         //   SpeechSynthesizer speech = new SpeechSynthesizer();
+            
+            string sContent = $"{user}进入直播间";
+         //   speech.Speak(sContent);
+            Console.WriteLine(sContent);
         }
 
         private static void WriteDM(JToken token)
         {
+            SpeechSynthesizer speech = new SpeechSynthesizer();
+            speech.Speak(token[1].Value<string>());
+
             Console.WriteLine($"{token[2][1]}:{token[1]}");
         }
 
@@ -37,9 +46,9 @@ namespace ConsoleApp2
 
         private static string inter = "    { \"cmd\":\"INTERACT_WORD\",\"data\":{ \"uid\":436453887,\"uname\":\"Hoy12356\",\"uname_color\":\"\",\"identities\":[1],\"msg_type\":1,\"roomid\":21301839,\"timestamp\":1599548357,\"score\":1599537357997193816,\"fans_medal\":{ \"target_id\":0,\"medal_level\":0,\"medal_name\":\"\",\"medal_color\":0,\"medal_color_start\":0,\"medal_color_end\":0,\"medal_color_border\":0,\"is_lighted\":0,\"guard_level\":0,\"special\":\"\",\"icon_id\":0} } }";
 
-        private static void DanMu_Log(LogArgs e)
+        private static void DanMu_Log(string Msg)
         {
-            var jobj = JObject.Parse(e.Msg);
+            var jobj = JObject.Parse(Msg);
             var Cmd = jobj.Value<string>("cmd");
 
             var CmdCommand = (Cmd)Enum.Parse(typeof(Cmd), Cmd);
@@ -70,7 +79,7 @@ namespace ConsoleApp2
                     WriteInter(DataJToken);
                     break;
                 default:
-                    Console.WriteLine(e.Msg);
+                    Console.WriteLine(Msg);
                     break;
             }
 
