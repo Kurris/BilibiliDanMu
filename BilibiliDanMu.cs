@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -73,16 +74,6 @@ namespace BilibiliDanMuLib
         private short _mProtocolVer = 2;
 
         /// <summary>
-        /// 最后使用的房间号
-        /// </summary>
-        private static int _mLastRoomid;
-
-        /// <summary>
-        /// 最后使用的服务地址
-        /// </summary>
-        private static string _mLastSrv;
-
-        /// <summary>
         /// 连接直播弹幕服务器
         /// </summary>
         /// <param name="RoomId">房间号</param>
@@ -92,8 +83,6 @@ namespace BilibiliDanMuLib
             try
             {
                 if (this._mConnected) throw new InvalidOperationException();
-
-                if (RoomId == _mLastRoomid) _mChatHost = _mLastSrv;
 
                 string sToken = string.Empty;
                 try
@@ -107,14 +96,15 @@ namespace BilibiliDanMuLib
 
                     var DataJToken = JObject.Parse(sRequestContent)["data"];
 
-                    sToken = DataJToken["token"] + "";
-                    _mChatHost = DataJToken["host"] + "";
+                    sToken = DataJToken["token"].Value<string>();
+                    _mChatHost = DataJToken["host"].Value<string>();
                     _mChatPort = DataJToken["port"].Value<int>();
 
                 }
                 catch (Exception ex)
                 {
                     Log?.Invoke(ex.StackTrace);
+                    return false;
                 }
 
                 _mTcpClient = new TcpClient();
@@ -137,8 +127,6 @@ namespace BilibiliDanMuLib
                     _mConnected = true;
                     _ = HeartBeatLoop();
                     _ = ReceiveMessageLoop();
-                    _mLastSrv = _mChatHost;
-                    _mLastRoomid = RoomId;
 
                     return true;
                 }
@@ -278,7 +266,7 @@ namespace BilibiliDanMuLib
                 case OperateCode.人气值节整数:
 
                     var Viewer = EndianBitConverter.BigEndian.ToUInt32(buffer, 0);
-                    OutPut?.Invoke(Cmd.NONE, $"直播间人气值:{Viewer.ToString()}");
+                    OutPut?.Invoke(Cmd.NONE, $"直播间人气值:{Viewer}");
 
                     break;
                 case OperateCode.表示具体命令Cmd:
@@ -290,7 +278,6 @@ namespace BilibiliDanMuLib
                         var Jobj = JObject.Parse(sJson);
 
                         var Cmd = Jobj.Value<string>("cmd");
-
                         var CmdCommand = (Cmd)Enum.Parse(typeof(Cmd), Cmd);
 
                         switch (CmdCommand)
@@ -298,16 +285,38 @@ namespace BilibiliDanMuLib
                             case BilibiliDanMuLib.Cmd.DANMU_MSG:
                                 {
                                     var Infos = Jobj["info"];
-                                    //Console.WriteLine($"{token[2][1]}:{token[1]}");
-                                    OutPut?.Invoke(BilibiliDanMuLib.Cmd.DANMU_MSG, $"{Infos[2][1]}:{Infos[1]}");
+                                    string sUserName = Infos[2][1].Value<string>();
+
+                                    var Medal = Infos[3];
+                                    if (Medal.Count() != 0)
+                                    {
+                                        string sMedalName = Medal[1].Value<string>();
+                                        string sLeavel = Medal[0].Value<string>();
+                                        sUserName = $"[{sLeavel} {sMedalName}]" + sUserName;
+                                    }
+
+                                    bool IsAdmin = Infos[2][2].Value<bool>();
+                                    if (IsAdmin)
+                                    {
+                                        sUserName = "[房管]" + sUserName;
+                                    }
+
+                                    OutPut?.Invoke(BilibiliDanMuLib.Cmd.DANMU_MSG, $"{sUserName}:{Infos[1]}");
                                 }
                                 break;
                             case BilibiliDanMuLib.Cmd.SEND_GIFT:
                                 {
-                                    OutPut?.Invoke(BilibiliDanMuLib.Cmd.SEND_GIFT, sJson);
+                                    var DataJToken = Jobj["data"];
+                                    string sUserName = DataJToken["uname"].Value<string>();
+                                    string sAction = DataJToken["action"].Value<string>();
+                                    string sgiftName = DataJToken["giftName"].Value<string>();
+                                    int iNum = DataJToken["num"].Value<int>();
+
+                                    OutPut?.Invoke(BilibiliDanMuLib.Cmd.SEND_GIFT, $"{sUserName}{sAction}{sgiftName} x {iNum}");
                                 }
                                 break;
                             case BilibiliDanMuLib.Cmd.WELCOME:
+
                                 break;
                             case BilibiliDanMuLib.Cmd.WELCOME_GUARD:
                                 break;
@@ -329,10 +338,12 @@ namespace BilibiliDanMuLib
                             default:
                                 break;
                         }
-                    }
-                    catch (Exception)
-                    {
 
+                        Log?.Invoke(sJson);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log?.Invoke(ex.Message);
                     }
 
                     break;
@@ -352,6 +363,7 @@ namespace BilibiliDanMuLib
         private async Task SendHeartbeatAsync()
         {
             await SendSocketDataAsync(0, 16, _mProtocolVer, 2, 1, string.Empty);
+            Log?.Invoke("Sent Heart Beat!");
         }
 
         /// <summary>
