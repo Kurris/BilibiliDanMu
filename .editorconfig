@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# IDE0008: 使用显式类型
+dotnet_diagnostic.IDE0008.severity = none

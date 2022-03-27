@@ -1,9 +1,9 @@
 ﻿// Copyright (C) Microsoft Corporation. All rights reserved.
 
-namespace BitConverter
-{
-    using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
+namespace BDanMuLib.Converters
+{
     // Converts between Single (float) and Int32 (int), as System.BitConverter does not have a method to do this in all .NET versions.
     // A union is used instead of an unsafe pointer cast so we don't have to worry about the trusted environment implications.
     [StructLayout(LayoutKind.Explicit)]

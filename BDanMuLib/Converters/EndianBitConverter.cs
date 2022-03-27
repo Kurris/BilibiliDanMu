@@ -1,10 +1,10 @@
 ﻿// Copyright (C) Microsoft Corporation. All rights reserved.
 
-namespace BitConverter
-{
-    using System;
-    using System.Runtime.CompilerServices;
+using System;
+using System.Runtime.CompilerServices;
 
+namespace BDanMuLib.Converters
+{
     /// <summary>
     /// A BitConverter with a specific endianness that converts base data types to an array of bytes, and an array of bytes to base data types, regardless of
     /// machine architecture. Access the little-endian and big-endian converters with their respective properties.
