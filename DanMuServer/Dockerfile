@@ -6,8 +6,8 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
 WORKDIR /src
-COPY ["DanMuServer/DanMuServer.csproj", "DanMuServer/"]
-COPY ["BDanMuLib/BDanMuLib.csproj", "BDanMuLib/"]
+COPY ["DanMuServer/DanMuServer.csproj", "DanMuServer/DanMuServer.csproj"]
+COPY ["BDanMuLib/BDanMuLib.csproj", "BDanMuLib/BDanMuLib.csproj"]
 RUN dotnet restore "DanMuServer/DanMuServer.csproj"
 COPY . .
 WORKDIR "/src/DanMuServer"
