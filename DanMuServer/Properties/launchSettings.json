@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
@@ -8,16 +8,20 @@
       "sslPort": 0
     }
   },
-  "profiles": {  
+  "profiles": {
     "DanMuServer": {
       "commandName": "Project",
-      "dotnetRunMessages": "true",
-      "launchBrowser": false,
       "launchUrl": "danmu",
-      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "applicationUrl": "http://localhost:5000",
+      "dotnetRunMessages": "true"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/danmu",
+      "publishAllPorts": true
     }
   }
 }
