@@ -3,7 +3,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +12,8 @@ using BDanMuLib.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using BDanMuLib.Extensions;
+using System.Net.Http;
 
 namespace BDanMuLib
 {
@@ -29,10 +30,7 @@ namespace BDanMuLib
     /// </summary>
     public class DanMuCore
     {
-        /// <summary>
-        /// 用户直播地址
-        /// </summary>
-        private const string BroadCastUrl = "https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=";
+
 
         // /// <summary>
         // /// 直播弹幕地址
@@ -52,7 +50,7 @@ namespace BDanMuLib
         /// <summary>
         /// Http客户端
         /// </summary>
-        private static HttpClient _httpClient;
+        private HttpClient _httpClient;
 
         /// <summary>
         /// TCP客户端
@@ -80,7 +78,10 @@ namespace BDanMuLib
         private const short ProtocolVersion = 2;
 
 
-        private Guid Key
+        /// <summary>
+        /// 前端数据唯一性
+        /// </summary>
+        private static Guid Key
         {
             get
             {
@@ -104,7 +105,7 @@ namespace BDanMuLib
             try
             {
                 if (_isConnected) throw new InvalidOperationException();
-                
+
                 string token;
                 try
                 {
@@ -114,7 +115,7 @@ namespace BDanMuLib
                     };
 
                     //请求的内容
-                    var requestContent = await _httpClient.GetStringAsync(BroadCastUrl + roomId);
+                    var requestContent = await _httpClient.GetStringAsync(ApiUrls.BroadCastUrl + roomId);
 
                     var dataJToken = JObject.Parse(requestContent)["data"];
 
@@ -191,8 +192,8 @@ namespace BDanMuLib
             {
                 while (this._isConnected)
                 {
-                    await SendHeartbeatAsync();
-                    //心跳只需要30秒激活一次
+                    await SendSocketDataAsync(0, 16, ProtocolVersion, 2, 1, string.Empty);
+                    //心跳只需要30秒激活一次,偏移检查
                     await Task.Delay(30000);
                 }
             }
@@ -213,7 +214,7 @@ namespace BDanMuLib
                 var stableBuffer = new byte[16];
                 while (this._isConnected)
                 {
-                    await ReadAsync(_netStream, stableBuffer, 0, 16);
+                    await _netStream.ReadBAsync(stableBuffer, 0, 16);
 
                     var protocol = ProtocolStruts.FromBuffer(stableBuffer);
                     if (protocol.PacketLength < 16)
@@ -228,7 +229,7 @@ namespace BDanMuLib
 
                     var buffer = new byte[payLoadLength];
 
-                    await ReadAsync(_netStream, buffer, 0, payLoadLength);
+                    await _netStream.ReadBAsync(buffer, 0, payLoadLength);
                     if (protocol.Version == 2 && protocol.OperateType == OperateType.DetailCommand) // 处理deflate消息
                     {
                         await using (var ms = new MemoryStream(buffer, 2, payLoadLength - 2)) // Skip 0x78 0xDA
@@ -239,11 +240,11 @@ namespace BDanMuLib
                             {
                                 while (true)
                                 {
-                                    await ReadAsync(deflate, headerBuffer, 0, 16);
+                                    await deflate.ReadBAsync(headerBuffer, 0, 16);
                                     var protocolInfo = ProtocolStruts.FromBuffer(headerBuffer);
                                     payLoadLength = protocolInfo.PacketLength - 16;
                                     var danMuKuBuffer = new byte[payLoadLength];
-                                    await ReadAsync(deflate, danMuKuBuffer, 0, payLoadLength);
+                                    await deflate.ReadBAsync(danMuKuBuffer, 0, payLoadLength);
                                     await HandleMsg(protocol.OperateType, danMuKuBuffer);
                                 }
                             }
@@ -302,7 +303,7 @@ namespace BDanMuLib
 
                                     var mid = info[2][0].Value<string>();
                                     var isAdmin = info[2][2].Value<bool>();
-                                    var time = ConvertStringToDateTime(info[0][4].Value<string>());
+                                    var time = info[0][4].Value<string>().ConvertStringToDateTime();
                                     var userName = info[2][1].Value<string>();
                                     var audRank = info[4][4].Value<int>();
                                     var comment = info[1].Value<string>();
@@ -457,14 +458,6 @@ namespace BDanMuLib
             }
         }
 
-        /// <summary>
-        /// 发送心跳包
-        /// </summary>
-        /// <returns></returns>
-        private async Task SendHeartbeatAsync()
-        {
-            await SendSocketDataAsync(0, 16, ProtocolVersion, 2, 1, string.Empty);
-        }
 
         /// <summary>
         /// 发送套字节数据
@@ -521,42 +514,21 @@ namespace BDanMuLib
             try
             {
                 _tcpClient.Close();
+                _tcpClient.Dispose();
+                _tcpClient = null;
+
+                _httpClient.Dispose();
+                _httpClient = null;
+
+                _netStream.Dispose();
+                _netStream = null;
             }
             catch (Exception)
             {
                 // ignored
             }
 
-            _netStream = null;
-        }
 
-
-        private static async Task ReadAsync(Stream stream, byte[] buffer, int offset, int count)
-        {
-            if (offset + count > buffer.Length)
-                throw new ArgumentException();
-
-            var read = 0;
-            while (read < count)
-            {
-                var available = await stream.ReadAsync(buffer, offset, count - read);
-
-                read += available;
-                offset += available;
-
-                if (available == 0)
-                {
-                    throw new ObjectDisposedException(null);
-                }
-            }
-        }
-
-        private DateTime ConvertStringToDateTime(string timeStamp)
-        {
-            DateTime dtStart = new DateTime(1970, 1, 1).ToLocalTime();
-            long lTime = long.Parse(timeStamp + "0000");
-            TimeSpan toNow = new(lTime);
-            return dtStart.Add(toNow);
         }
     }
 }
