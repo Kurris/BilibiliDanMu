@@ -17,13 +17,13 @@
 - 解决方案 
 ![](./assets/sln.png)
 - **BDanMuLib** 为核心库,处理tcp连接B站弹幕服务器,解析msg内容,整个实现大概600行代码
-![](.\assets\core.png)
+![](./assets/core.png)
 - **DanmMuServer** 是dotnetcore signalR服务器,实现和前端即时通讯
 	- 目前只对前端输出以下内容
-	![](.\assets\signalR.png)  
+	![](./assets/signalR.png)  
 
 - **TestInConsole** 测试核心库的输出内容
-![](.\assets\console.gif)
+![](./assets/console.gif)
 
 
 ### 前端UI实现 
@@ -38,12 +38,7 @@
 
 ### 全屏窗口无边框csgo
 
-![](.\assets\csgo.gif)
-
-
-
-
-
+![](./assets/csgo.gif)
 
 
 ### 还没有完善的
