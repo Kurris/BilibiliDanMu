@@ -9,7 +9,7 @@ namespace TestInConsole
     {
         static async Task Main(string[] args)
         {
-            DanMuCore core = new ();
+            DanMuCore core = new DanMuCore();
             core.ReceiveMessage += Core_ReceiveMessage;
 
             await core.ConnectAsync(6750632);

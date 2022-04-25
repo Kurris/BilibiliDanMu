@@ -5,19 +5,20 @@
         <div id="info">
             <div id="top">
                 <div id="roomInfo">
-                    观看过: {{watched}}
+                    观看过: {{ watched }}
                 </div>
                 <div id="hot">
-                    人气值: {{hot}}
+                    人气值: {{ hot }}
                 </div>
             </div>
             <div id="interact_word">
-                {{interactWord}}
+                {{ interactWord }}
             </div>
             <div id="comment" ref="comment">
                 <transition-group appear tag="ul">
                     <li v-for="item in comments" :key="item.key" class="item">
-                        <dan-mu :isAdmin="item.isAdmin" :userName="item.userName" :comment="item.comment" :avatarUrl="item.faceUrl" />
+                        <dan-mu :isAdmin="item.isAdmin" :userName="item.userName" :comment="item.comment"
+                            :avatarUrl="item.faceUrl" />
                     </li>
                 </transition-group>
             </div>
@@ -50,7 +51,6 @@ export default {
             tempData: [],
             time: new Date(),
             queue: null,
-            avatarUrl: "http://i2.hdslb.com/bfs/face/e4306a8bd5bfed253b660ed5b7680246e8402c08.jpg"
         }
     },
     methods: {
@@ -145,6 +145,7 @@ export default {
 #top {
     display: flex;
 }
+
 #hot {
     margin-left: 10px;
 }
@@ -158,13 +159,16 @@ export default {
     opacity: 0;
     transform: translateY(10px);
 }
+
 .v-enter-active,
 .v-lerve-active {
     transition: all 1s;
 }
+
 .v-move {
     transition: all 1s;
 }
+
 .v-leave-active {
     position: absolute;
 }
