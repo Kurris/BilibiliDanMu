@@ -88,7 +88,7 @@ app.on('ready', async () => {
 	if (isDevelopment && !process.env.IS_TEST) {
 		// Install Vue Devtools
 		try {
-			// await installExtension(VUEJS_DEVTOOLS)
+			await installExtension(VUEJS_DEVTOOLS)
 		} catch (e) {
 			console.error('Vue Devtools failed to install:', e.toString())
 		}
