@@ -1,90 +1,73 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using BDanmuLib.Models;
 using BDanMuLib;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 
 namespace DanMuServer
 {
     public class DanMuHub : Hub
     {
-        private static string _id;
         private static DanMuCore _danmu;
-        private readonly IConfiguration _configuration;
-
-        public DanMuHub(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
-        static DanMuHub()
-        {
-        }
-
+        private static string _id;
+        private static IHubCallerClients _clients;
 
         public override async Task OnConnectedAsync()
         {
             _id = Context.ConnectionId;
+            await Console.Out.WriteLineAsync($"{Context.ConnectionId}:连接成功");
+        }
+
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            if (_danmu != null)
+            {
+                _danmu.Disconnect();
+                _danmu = null;
+            }
+            _clients = null;
+            _id = null;
+            await Console.Out.WriteLineAsync(Context.ConnectionId + "断开连接");
+        }
+
+
+        public async Task Start(object roomId)
+        {
             if (_danmu != null)
             {
                 _danmu.Disconnect();
             }
+            _clients = Clients;
             _danmu = new DanMuCore();
-            await _danmu.ConnectAsync(int.Parse(_configuration.GetSection("RoomId").Value));
+            await Task.Factory.StartNew(() =>
+              {
+                  _danmu.ReceiveMessage += (type, obj) =>
+                        { 
+                            switch (type)
+                            {
+                                case MessageType.DANMU_MSG:
+                                    _clients?.Client(_id).SendAsync("addDanmu", obj);
+                                    break;
+                                case MessageType.INTERACT_WORD:
+                                    _clients?.Client(_id).SendAsync("joinRoom", obj);
+                                    break;
+                                case MessageType.WATCHED_CHANGE:
+                                    _clients?.Client(_id).SendAsync("watched", obj);
+                                    break;
+                                case MessageType.NONE:
+                                    _clients?.Client(_id).SendAsync("hot", obj);
+                                    break;
+                                case MessageType.ENTRY_EFFECT:
+                                    _clients?.Client(_id).SendAsync("entry_effect", obj.ToString());
+                                    break;
+                                default:
+                                    break;
+                            }
+                        };
+              });
 
-            Console.WriteLine(Context.ConnectionId + "成功连接");
-            await base.OnConnectedAsync();
-
-
-            _danmu.ReceiveMessage += (type, obj) =>
-            {
-                if (!string.IsNullOrEmpty(_id))
-                {
-                    switch (type)
-                    {
-                        case MessageType.DANMU_MSG:
-                            Clients.Client(_id).SendAsync("addDanmu", obj);
-                            break;
-                        case MessageType.INTERACT_WORD:
-                            Clients.Client(_id).SendAsync("joinRoom", obj);
-                            break;
-                        case MessageType.WATCHED_CHANGE:
-                            Clients.Client(_id).SendAsync("watched", obj);
-                            break;
-                        case MessageType.NONE:
-                            Clients.Client(_id).SendAsync("hot", obj);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            };
-
-            while (true)
-            {
-                await Task.Delay(1000);
-                if (string.IsNullOrEmpty(_id))
-                {
-                    break;
-                }
-            }
-        }
-
-        public override Task OnDisconnectedAsync(Exception exception)
-        {
-            _id = string.Empty;
-            _danmu.Disconnect();
-            _danmu = null;
-            Console.WriteLine(Context.ConnectionId + "断开连接");
-            return base.OnDisconnectedAsync(exception);
-        }
-
-
-        public void Disconnect()
-        {
-            _id = string.Empty;
+            await _danmu.ConnectAsync(int.Parse(roomId.ToString()));
+            Console.WriteLine(Context.ConnectionId + $"成功连接房间:{roomId}");
         }
     }
 }

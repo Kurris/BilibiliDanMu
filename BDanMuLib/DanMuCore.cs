@@ -3,7 +3,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +12,10 @@ using BDanMuLib.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using BDanMuLib.Extensions;
+using System.Net.Http;
+using System.Reflection;
+using System.Text.Json.Nodes;
 
 namespace BDanMuLib
 {
@@ -29,10 +32,12 @@ namespace BDanMuLib
     /// </summary>
     public class DanMuCore
     {
-        /// <summary>
-        /// 用户直播地址
-        /// </summary>
-        private const string BroadCastUrl = "https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=";
+
+        static DanMuCore()
+        {
+            getEmotes();
+        }
+
 
         // /// <summary>
         // /// 直播弹幕地址
@@ -53,6 +58,21 @@ namespace BDanMuLib
         /// Http客户端
         /// </summary>
         private static HttpClient _httpClient;
+        public static HttpClient Client
+        {
+            get
+            {
+                if (_httpClient == null)
+                {
+                    _httpClient = new HttpClient()
+                    {
+                        Timeout = TimeSpan.FromSeconds(30),
+                    };
+                }
+
+                return _httpClient;
+            }
+        }
 
         /// <summary>
         /// TCP客户端
@@ -80,7 +100,10 @@ namespace BDanMuLib
         private const short ProtocolVersion = 2;
 
 
-        private Guid Key
+        /// <summary>
+        /// 前端数据唯一性
+        /// </summary>
+        private static Guid Key
         {
             get
             {
@@ -92,7 +115,16 @@ namespace BDanMuLib
         /// <summary>
         /// 头像
         /// </summary>
-        private readonly Dictionary<string, string> _faceUrls = new Dictionary<string, string>();
+        private static Dictionary<string, string> _emotes;
+
+
+        private static void getEmotes()
+        {
+
+            var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "emote.json"), Encoding.UTF8);
+            _emotes = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+        }
+
 
         /// <summary>
         /// 连接直播弹幕服务器
@@ -104,17 +136,12 @@ namespace BDanMuLib
             try
             {
                 if (_isConnected) throw new InvalidOperationException();
-                
+
                 string token;
                 try
                 {
-                    _httpClient ??= new HttpClient()
-                    {
-                        Timeout = TimeSpan.FromSeconds(5)
-                    };
-
                     //请求的内容
-                    var requestContent = await _httpClient.GetStringAsync(BroadCastUrl + roomId);
+                    var requestContent = await Client.GetStringAsync(ApiUrls.BroadCastUrl + roomId);
 
                     var dataJToken = JObject.Parse(requestContent)["data"];
 
@@ -191,8 +218,8 @@ namespace BDanMuLib
             {
                 while (this._isConnected)
                 {
-                    await SendHeartbeatAsync();
-                    //心跳只需要30秒激活一次
+                    await SendSocketDataAsync(0, 16, ProtocolVersion, 2, 1, string.Empty);
+                    //心跳只需要30秒激活一次,偏移检查
                     await Task.Delay(30000);
                 }
             }
@@ -213,7 +240,7 @@ namespace BDanMuLib
                 var stableBuffer = new byte[16];
                 while (this._isConnected)
                 {
-                    await ReadAsync(_netStream, stableBuffer, 0, 16);
+                    await _netStream.ReadBAsync(stableBuffer, 0, 16);
 
                     var protocol = ProtocolStruts.FromBuffer(stableBuffer);
                     if (protocol.PacketLength < 16)
@@ -228,7 +255,7 @@ namespace BDanMuLib
 
                     var buffer = new byte[payLoadLength];
 
-                    await ReadAsync(_netStream, buffer, 0, payLoadLength);
+                    await _netStream.ReadBAsync(buffer, 0, payLoadLength);
                     if (protocol.Version == 2 && protocol.OperateType == OperateType.DetailCommand) // 处理deflate消息
                     {
                         await using (var ms = new MemoryStream(buffer, 2, payLoadLength - 2)) // Skip 0x78 0xDA
@@ -239,11 +266,11 @@ namespace BDanMuLib
                             {
                                 while (true)
                                 {
-                                    await ReadAsync(deflate, headerBuffer, 0, 16);
+                                    await deflate.ReadBAsync(headerBuffer, 0, 16);
                                     var protocolInfo = ProtocolStruts.FromBuffer(headerBuffer);
                                     payLoadLength = protocolInfo.PacketLength - 16;
                                     var danMuKuBuffer = new byte[payLoadLength];
-                                    await ReadAsync(deflate, danMuKuBuffer, 0, payLoadLength);
+                                    await deflate.ReadBAsync(danMuKuBuffer, 0, payLoadLength);
                                     await HandleMsg(protocol.OperateType, danMuKuBuffer);
                                 }
                             }
@@ -284,7 +311,7 @@ namespace BDanMuLib
                 case OperateType.DetailCommand:
 
                     var json = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
-                    var cmd = string.Empty;
+                    string cmd;
                     try
                     {
 
@@ -302,10 +329,19 @@ namespace BDanMuLib
 
                                     var mid = info[2][0].Value<string>();
                                     var isAdmin = info[2][2].Value<bool>();
-                                    var time = ConvertStringToDateTime(info[0][4].Value<string>());
+                                    var time = info[0][4].Value<string>().ConvertStringToDateTime();
                                     var userName = info[2][1].Value<string>();
                                     var audRank = info[4][4].Value<int>();
                                     var comment = info[1].Value<string>();
+
+                                    foreach (var item in _emotes)
+                                    {
+                                        string emote = "[" + item.Key + "]";
+                                        if (comment.Contains(emote))
+                                        {
+                                            comment = comment.Replace(emote, "<img height=\"20\" width=\"20\" src=\"" + item.Value + "\"/>");
+                                        }
+                                    }
 
                                     var medal = info[3];
                                     var hasMedal = medal.Any();
@@ -317,24 +353,27 @@ namespace BDanMuLib
                                         level = medal[0].Value<string>();
                                     }
 
-
-                                    if (!_faceUrls.TryGetValue(mid, out var faceUrl))
+                                    string faceUrl = null;
+                                    try
                                     {
-                                        try
+                                        string response = await Client.GetStringAsync($"https://space.bilibili.com/{mid}");
+                                        int i = response.IndexOf("href=\"//i0.hdslb.com");
+                                        if (i == -1)
                                         {
-                                            var userJson = await _httpClient.GetStringAsync(ApiUrls.UserInfo + mid);
-                                            var userInfo = JObject.Parse(userJson)["data"];
-                                            faceUrl = userInfo["face"].Value<string>();
+                                            i = response.IndexOf("href=\"//i1.hdslb.com");
+                                            if (i == -1)
+                                            {
+                                                i = response.IndexOf("href=\"//i2.hdslb.com");
+                                            }
                                         }
-                                        catch
-                                        {
-
-                                        }
-                                        finally
-                                        {
-                                            _faceUrls.Add(mid, faceUrl);
-                                        }
+                                        response = response.Substring(i);
+                                        faceUrl = string.Concat("http:", response.AsSpan(6, response.IndexOf(".jpg\">") - 2));
                                     }
+                                    catch (Exception)
+                                    {
+
+                                    }
+
 
                                     ReceiveMessage?.Invoke(MessageType.DANMU_MSG, new
                                     {
@@ -352,19 +391,21 @@ namespace BDanMuLib
                                     });
                                 }
                                 break;
-                            case MessageType.SEND_GIFT:
-                                {
-                                    var dataJToken = jObj["data"];
-                                    var userName = dataJToken["uname"].Value<string>();
-                                    var action = dataJToken["action"].Value<string>();
-                                    var giftName = dataJToken["giftName"].Value<string>();
-                                    var num = dataJToken["num"].Value<int>();
+                            //case MessageType.SEND_GIFT:
+                            //    {
+                            //        var dataJToken = jObj["data"];
+                            //        var userName = dataJToken["uname"].Value<string>();
+                            //        var action = dataJToken["action"].Value<string>();
+                            //        var giftName = dataJToken["giftName"].Value<string>();
+                            //        var num = dataJToken["num"].Value<int>();
 
-                                    ReceiveMessage?.Invoke(MessageType.SEND_GIFT, $"{userName}{action}{giftName} x {num}");
-                                }
-                                break;
+                            //        ReceiveMessage?.Invoke(MessageType.SEND_GIFT, $"{userName}{action}{giftName} x {num}");
+                            //    }
+                            //    break;
                             case MessageType.WELCOME:
+                                {
 
+                                }
                                 break;
                             case MessageType.WELCOME_GUARD:
                                 break;
@@ -379,63 +420,71 @@ namespace BDanMuLib
                                 {
                                     var dataToken = jObj["data"];
                                     var userName = dataToken["uname"].Value<string>();
-                                    ReceiveMessage?.Invoke(MessageType.INTERACT_WORD, $"{userName} 进入直播间");
+                                    ReceiveMessage?.Invoke(cmdCommand, $"{userName} 进入直播间");
                                     break;
                                 }
-                            case MessageType.ONLINE_RANK_COUNT:
-                                {
-                                    var rank = jObj["data"]["count"].Value<string>();
-                                    ReceiveMessage?.Invoke(MessageType.ONLINE_RANK_COUNT, rank);
-                                }
-                                break;
+                            //case MessageType.ONLINE_RANK_COUNT:
+                            //    {
+                            //        var rank = jObj["data"]["count"].Value<string>();
+                            //        ReceiveMessage?.Invoke(cmdCommand, rank);
+                            //    break;
+                            //    }
+
                             case MessageType.NOTICE_MSG:
                                 break;
                             case MessageType.STOP_LIVE_ROOM_LIST:
                                 break;
-                            case MessageType.WATCHED_CHANGE:
-                                {
-                                    var watchedNum = jObj["data"]["num"].Value<string>();
-                                    ReceiveMessage?.Invoke(MessageType.WATCHED_CHANGE, watchedNum);
-                                }
-                                break;
+                            //case MessageType.WATCHED_CHANGE:
+                            //    {
+                            //        var watchedNum = jObj["data"]["num"].Value<string>();
+                            //        ReceiveMessage?.Invoke(MessageType.WATCHED_CHANGE, watchedNum);
+                            //    }
+                            //    break;
                             case MessageType.ROOM_REAL_TIME_MESSAGE_UPDATE:
                                 break;
                             case MessageType.LIVE_INTERACTIVE_GAME:
-                                break;
-                            case MessageType.HOT_RANK_CHANGED:
                                 {
-                                    var rank = jObj["data"]["rank"].Value<string>();
-                                    ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED, rank);
+
                                 }
                                 break;
+                            //case MessageType.HOT_RANK_CHANGED:
+                            //    {
+                            //        var rank = jObj["data"]["rank"].Value<string>();
+                            //        ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED, rank);
+                            //    }
+                            //    break;
                             case MessageType.HOT_ROOM_NOTIFY:
                                 break;
-                            case MessageType.HOT_RANK_CHANGED_V2:
-                                {
-                                    var rank = jObj["data"]["rank"].Value<string>();
-                                    ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED_V2, rank);
-                                }
-                                break;
-                            case MessageType.ONLINE_RANK_TOP3:
-                                {
-                                    var list = jObj["data"]["list"].ToList();
-                                    ReceiveMessage?.Invoke(MessageType.ONLINE_RANK_TOP3, list);
-                                }
-                                break;
-                            case MessageType.ONLINE_RANK_V2:
-                                {
-                                    var list = jObj["data"]["list"];
-                                }
-                                break;
-                            case MessageType.COMBO_SEND:
-                                {
-                                    var action = jObj["data"]["action"].Value<string>();
-                                    var gift = jObj["data"]["gift_name"].Value<string>();
-                                    var sendUser = jObj["data"]["uname"].Value<string>();
-                                    var combo = jObj["data"]["combo_num"].Value<int>();
-                                }
-                                break;
+                            //case MessageType.HOT_RANK_CHANGED_V2:
+                            //    {
+                            //        var rank = jObj["data"]["rank"].Value<string>();
+                            //        ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED_V2, rank);
+                            //    }
+                            //    break;
+                            //case MessageType.ONLINE_RANK_TOP3:
+                            //    {
+                            //        var list = jObj["data"]["list"].ToList();
+                            //        ReceiveMessage?.Invoke(MessageType.ONLINE_RANK_TOP3, list);
+                            //    }
+                            //    break;
+                            //case MessageType.ONLINE_RANK_V2:
+                            //    {
+                            //        var list = jObj["data"]["list"];
+                            //    }
+                            //    break;
+                            //case MessageType.COMBO_SEND:
+                            //    {
+                            //        var action = jObj["data"]["action"].Value<string>();
+                            //        var gift = jObj["data"]["gift_name"].Value<string>();
+                            //        var sendUser = jObj["data"]["uname"].Value<string>();
+                            //        var combo = jObj["data"]["combo_num"].Value<int>();
+                            //    }
+                            //    break;
                             case MessageType.ENTRY_EFFECT:
+                                {
+                                    var data = jObj["data"];
+                                    ReceiveMessage?.Invoke(cmdCommand, data);
+                                }
                                 break;
                             case MessageType.NONE:
                             case MessageType.WIDGET_BANNER:
@@ -457,14 +506,6 @@ namespace BDanMuLib
             }
         }
 
-        /// <summary>
-        /// 发送心跳包
-        /// </summary>
-        /// <returns></returns>
-        private async Task SendHeartbeatAsync()
-        {
-            await SendSocketDataAsync(0, 16, ProtocolVersion, 2, 1, string.Empty);
-        }
 
         /// <summary>
         /// 发送套字节数据
@@ -521,42 +562,21 @@ namespace BDanMuLib
             try
             {
                 _tcpClient.Close();
+                _tcpClient.Dispose();
+                _tcpClient = null;
+
+                _httpClient.Dispose();
+                _httpClient = null;
+
+                _netStream.Dispose();
+                _netStream = null;
             }
             catch (Exception)
             {
                 // ignored
             }
 
-            _netStream = null;
-        }
 
-
-        private static async Task ReadAsync(Stream stream, byte[] buffer, int offset, int count)
-        {
-            if (offset + count > buffer.Length)
-                throw new ArgumentException();
-
-            var read = 0;
-            while (read < count)
-            {
-                var available = await stream.ReadAsync(buffer, offset, count - read);
-
-                read += available;
-                offset += available;
-
-                if (available == 0)
-                {
-                    throw new ObjectDisposedException(null);
-                }
-            }
-        }
-
-        private DateTime ConvertStringToDateTime(string timeStamp)
-        {
-            DateTime dtStart = new DateTime(1970, 1, 1).ToLocalTime();
-            long lTime = long.Parse(timeStamp + "0000");
-            TimeSpan toNow = new(lTime);
-            return dtStart.Add(toNow);
         }
     }
 }

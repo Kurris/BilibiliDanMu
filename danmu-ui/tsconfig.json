@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "types": [
+      "element-plus/global"
+    ]
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "electron-main/**/*.ts",
+    "electron-preload/**/*.ts",
+    "electron/background.ts",
+    "src/utils/queue.js"
+  ]
+}
