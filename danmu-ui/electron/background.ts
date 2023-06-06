@@ -1,22 +1,26 @@
 import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from "electron";
 import path from "path";
 
-import iconvLite from 'iconv-lite';
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
+import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
 
 let danmu: ChildProcessWithoutNullStreams;
+console.log();
 
-ipcMain.on('set-ignore-mouse-events', (event, ...args) => {
-  BrowserWindow.fromWebContents(event!.sender)!.setIgnoreMouseEvents(...args)
-})
+
+if (process.platform == 'darwin') {
+  exec("lsof -i:5000 | grep -v PID | awk '{print $2}' | xargs kill -9")
+}
+
 
 
 ipcMain.on('ignoreMouse', (event, args) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win != null) {
-    // win.setFullScreen(true);
-    // win.setIgnoreMouseEvents(true);
-    // win.setAlwaysOnTop(true, 'pop-up-menu')
+    if (process.platform != 'darwin') {
+      win.setFullScreen(true);
+      win.setIgnoreMouseEvents(true);
+      win.setAlwaysOnTop(true, 'pop-up-menu')
+    }
   }
 })
 
@@ -31,7 +35,7 @@ const createWindow = () => {
     frame: false,
     // fullscreen: true,
     webPreferences: {
-      contextIsolation: false, // 是否开启隔离上下文
+      contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
       preload: path.join(__dirname, "../electron/preload.js"), // 需要引用js文件
     },
@@ -86,28 +90,28 @@ app.whenReady().then(() => {
 
 // 关闭窗口
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
+  if (danmu.pid != null) {
+    spawn('kill', [danmu!.pid.toString()])
   }
+  app.quit();
 });
-
-
 
 
 const runExec = () => {
 
-  return
+  const targetPath = app.isPackaged ? path.join(process.cwd(), '/resources/danmu-exe/') : path.join(__dirname, '../danmu-exe/')
+  console.log(targetPath);
 
-  if (app.isPackaged) {
-    danmu = spawn(path.join(process.cwd(), '/resources/danmu-exe/DanMuServer.exe'), {});
-  } else {
-    danmu = spawn(path.join(__dirname, "../danmu-exe/DanMuServer.exe"), {});
-  }
+  danmu = spawn('dotnet', ['DanMuServer.dll', '--urls', 'http://*:5000'], {
+    cwd: targetPath
+  });
+  //21263282
+
 
   // 输出相关的数据
   danmu.stdout.on('data', (data) => {
     try {
-      console.log('data from child: ' + iconvLite.decode(data, 'cp936'));
+      console.log('data from child: ' + data);
     } catch (error) {
       console.log(error)
     }
@@ -117,19 +121,20 @@ const runExec = () => {
   danmu.stderr.on('data', (data) => {
 
     try {
-      console.log('error from child: ' + iconvLite.decode(data, 'cp936'));
+      console.log('error from child: ' + data);
     } catch (error) {
       console.log(error)
     }
   });
 
   // 子进程结束时输出
-  danmu.on('close', (code) => {
-
+  danmu.on('close', (data) => {
     try {
-      console.log('child exists with code: ' + iconvLite.decode(code, 'cp936'));
+      console.log('child exists with code: ' + data);
     } catch (error) {
       console.log(error)
     }
   });
 }
+
+

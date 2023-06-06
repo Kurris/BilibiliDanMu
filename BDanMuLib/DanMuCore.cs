@@ -339,7 +339,7 @@ namespace BDanMuLib
                                         string emote = "[" + item.Key + "]";
                                         if (comment.Contains(emote))
                                         {
-                                            comment = comment.Replace(emote, "<img height=\"20\" width=\"20\" src=\"" + item.Value + "\"/>");
+                                            comment = comment.Replace(emote, "<img referrer=\"no-referrer\" height=\"20\" width=\"20\" src=\"" + item.Value + "\"/>");
                                         }
                                     }
 
@@ -391,17 +391,17 @@ namespace BDanMuLib
                                     });
                                 }
                                 break;
-                            //case MessageType.SEND_GIFT:
-                            //    {
-                            //        var dataJToken = jObj["data"];
-                            //        var userName = dataJToken["uname"].Value<string>();
-                            //        var action = dataJToken["action"].Value<string>();
-                            //        var giftName = dataJToken["giftName"].Value<string>();
-                            //        var num = dataJToken["num"].Value<int>();
+                            case MessageType.SEND_GIFT:
+                                {
+                                    var dataJToken = jObj["data"];
+                                    var userName = dataJToken["uname"].Value<string>();
+                                    var action = dataJToken["action"].Value<string>();
+                                    var giftName = dataJToken["giftName"].Value<string>();
+                                    var num = dataJToken["num"].Value<int>();
 
-                            //        ReceiveMessage?.Invoke(MessageType.SEND_GIFT, $"{userName}{action}{giftName} x {num}");
-                            //    }
-                            //    break;
+                                    ReceiveMessage?.Invoke(MessageType.SEND_GIFT, $"{userName}{action}{giftName} x {num}");
+                                }
+                                break;
                             case MessageType.WELCOME:
                                 {
 
@@ -455,18 +455,18 @@ namespace BDanMuLib
                             //    break;
                             case MessageType.HOT_ROOM_NOTIFY:
                                 break;
-                            //case MessageType.HOT_RANK_CHANGED_V2:
-                            //    {
-                            //        var rank = jObj["data"]["rank"].Value<string>();
-                            //        ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED_V2, rank);
-                            //    }
-                            //    break;
-                            //case MessageType.ONLINE_RANK_TOP3:
-                            //    {
-                            //        var list = jObj["data"]["list"].ToList();
-                            //        ReceiveMessage?.Invoke(MessageType.ONLINE_RANK_TOP3, list);
-                            //    }
-                            //    break;
+                            case MessageType.HOT_RANK_CHANGED_V2:
+                                {
+                                    var rank = jObj["data"]["rank"].Value<string>();
+                                    ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED_V2, rank);
+                                }
+                                break;
+                            case MessageType.ONLINE_RANK_TOP3:
+                                {
+                                    var list = jObj["data"]["list"].ToList();
+                                    ReceiveMessage?.Invoke(MessageType.ONLINE_RANK_TOP3, list);
+                                }
+                                break;
                             //case MessageType.ONLINE_RANK_V2:
                             //    {
                             //        var list = jObj["data"]["list"];
@@ -486,14 +486,20 @@ namespace BDanMuLib
                                     ReceiveMessage?.Invoke(cmdCommand, data);
                                 }
                                 break;
+                            case MessageType.LIKE_INFO_V3_UPDATE:
+                                {
+
+                                }
+                                break;
                             case MessageType.NONE:
                             case MessageType.WIDGET_BANNER:
                             default:
                                 break;
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        Console.WriteLine(ex.Message);
                     }
 
                     break;

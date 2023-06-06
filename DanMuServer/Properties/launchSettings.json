@@ -12,16 +12,15 @@
     "DanMuServer": {
       "commandName": "Project",
       "launchUrl": "danmu",
+      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:5000",
-      "dotnetRunMessages": "true"
+      }
     },
     "Docker": {
       "commandName": "Docker",
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/danmu",
-      "publishAllPorts": true
+      "environmentVariables": {}
     }
   }
 }

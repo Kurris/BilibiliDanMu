@@ -124,5 +124,8 @@ namespace BDanmuLib.Models
         /// 舰长进入
         /// </summary>
         ENTRY_EFFECT,
+
+        LIKE_INFO_V3_UPDATE,
+
     }
 }

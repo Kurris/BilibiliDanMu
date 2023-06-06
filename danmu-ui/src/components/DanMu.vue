@@ -61,6 +61,7 @@ const props = defineProps<{
 const connection = new HubConnectionBuilder()
     .withUrl("http://localhost:5000/danmu")
     .configureLogging(LogLevel.Debug)
+    .withAutomaticReconnect()
     .build();
 
 
@@ -173,7 +174,16 @@ onBeforeMount(() => {
         item.copy_writing = item.copy_writing.replace('%>', '</span>')
         state.entryEffectQueue.enqueue(item)
     })
+    //重连或者首次
+    connection.onreconnected(id => {
+
+    })
+    //无法连接
+    connection.onclose(err => {
+
+    })
     connection.start();
+
 })
 
 </script>
