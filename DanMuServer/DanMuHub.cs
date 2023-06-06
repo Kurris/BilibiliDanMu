@@ -15,7 +15,7 @@ namespace DanMuServer
         public override async Task OnConnectedAsync()
         {
             _id = Context.ConnectionId;
-            await Console.Out.WriteLineAsync($"{Context.ConnectionId}:连接成功");
+            await Console.Out.WriteLineAsync($"{Context.ConnectionId}:connect server successfully");
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
@@ -27,7 +27,7 @@ namespace DanMuServer
             }
             _clients = null;
             _id = null;
-            await Console.Out.WriteLineAsync(Context.ConnectionId + "断开连接");
+            await Console.Out.WriteLineAsync($"{Context.ConnectionId} disconnect room");
         }
 
 
@@ -42,7 +42,7 @@ namespace DanMuServer
             await Task.Factory.StartNew(() =>
               {
                   _danmu.ReceiveMessage += (type, obj) =>
-                        { 
+                        {
                             switch (type)
                             {
                                 case MessageType.DANMU_MSG:
@@ -60,6 +60,9 @@ namespace DanMuServer
                                 case MessageType.ENTRY_EFFECT:
                                     _clients?.Client(_id).SendAsync("entry_effect", obj.ToString());
                                     break;
+                                case MessageType.SUPER_CHAT_MESSAGE:
+                                    _clients?.Client(_id).SendAsync("sc", obj);
+                                    break;
                                 default:
                                     break;
                             }
@@ -67,7 +70,7 @@ namespace DanMuServer
               });
 
             await _danmu.ConnectAsync(int.Parse(roomId.ToString()));
-            Console.WriteLine(Context.ConnectionId + $"成功连接房间:{roomId}");
+            await Console.Out.WriteLineAsync($"{Context.ConnectionId} connect room successfully: {roomId}");
         }
     }
 }

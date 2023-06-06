@@ -52,7 +52,9 @@
     "releaseInfo": {
       "releaseNotes": "版本更新的具体内容"
     },
-    "extraResources": ["danmu-exe/**"]
+    "extraResources": [
+      "danmu-exe/**"
+    ]
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.1.0",
@@ -63,6 +65,7 @@
     "sass": "^1.62.1",
     "sass-loader": "^13.3.1",
     "vue": "^3.3.2",
+    "vue-drag-resize": "^2.0.3",
     "vue-router": "^4.2.0"
   },
   "devDependencies": {

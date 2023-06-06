@@ -1,27 +1,45 @@
 <template>
   <div id="app">
-    <div id="setting" class="set-room">
-      <div class="container">
-        <div class="title">设置面板</div>
-        <span>请输出房间号:</span>
-        <el-input v-model="roomId" type="number"></el-input>
-        <el-button id="btn" @click="connectRoom">连接房间</el-button>
-      </div>
-    </div>
-    <DanMu :room-id="roomId" ref="danmu" />
+    <el-drawer v-model="isDrawer" title="设置面板" direction="rtl">
+      <DmSetting @connect-room="connectRoom" @set-raise="setRaise" :is-drawer="isDrawer" @cover="cover" />
+    </el-drawer>
+
+    <DanMu :room-id="currentRoomId" ref="danmu" @on-drag-stop="onDragStop" :danmu-count="currentDanmuCount"
+      :entry-effect-direction="currentEntryEffectDirection" />
+
   </div>
 </template>
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
+import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
 
-const roomId = ref(23982773);
-
+const currentRoomId = ref();
+const isDrawer = ref(true)
 const danmu = ref<InstanceType<typeof DanMu>>()
+const currentDanmuCount = ref(15)
+const currentEntryEffectDirection = ref('left')
 
-const connectRoom = () => {
-  danmu.value!.connectRoom()
+const connectRoom = (roomId: number) => {
+  currentRoomId.value = roomId
+  nextTick(() => {
+    danmu.value!.connectRoom()
+  })
+}
+
+const onDragStop = () => {
+  console.log('drawer');
+
+  isDrawer.value = true
+}
+const cover = () => {
+  isDrawer.value = false
+}
+
+const setRaise = (danmuCount: number, entryEffectDirection: string) => {
+  currentDanmuCount.value = danmuCount
+  currentEntryEffectDirection.value = entryEffectDirection
 }
 
 </script>
@@ -29,11 +47,6 @@ const connectRoom = () => {
 <style scoped lang="scss">
 @import 'styles/global.scss';
 
-#app {
-  overflow-y: hidden;
-  overflow-x: hidden;
-  overflow: hidden;
-}
 
 .set-room {
   position: absolute;

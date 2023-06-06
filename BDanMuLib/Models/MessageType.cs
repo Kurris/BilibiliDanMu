@@ -86,7 +86,7 @@ namespace BDanmuLib.Models
         ROOM_REAL_TIME_MESSAGE_UPDATE,
 
         /// <summary>
-        /// 投喂相关
+        /// 实时交互游戏
         /// </summary>
         LIVE_INTERACTIVE_GAME,
 
@@ -95,6 +95,10 @@ namespace BDanmuLib.Models
         /// </summary>
         HOT_RANK_CHANGED,
 
+
+        /// <summary>
+        /// 热度房间推荐
+        /// </summary>
         HOT_ROOM_NOTIFY,
 
         WIDGET_BANNER,
@@ -127,5 +131,26 @@ namespace BDanmuLib.Models
 
         LIKE_INFO_V3_UPDATE,
 
+        DANMU_AGGREGATION,
+        LIKE_INFO_V3_CLICK,
+        POPULARITY_RED_POCKET_WINNER_LIST,
+        POPULARITY_RED_POCKET_START,
+
+        /// <summary>
+        /// 上舰之类
+        /// </summary>
+        GUARD_BUY,
+
+        /// <summary>
+        /// SC
+        /// </summary>
+        SUPER_CHAT_MESSAGE,
+
+
+        USER_TOAST_MSG,
+
+        SUPER_CHAT_MESSAGE_JPN,
+
+        POPULAR_RANK_CHANGED,
     }
 }

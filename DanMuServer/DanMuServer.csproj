@@ -13,7 +13,4 @@
 	<ItemGroup>
 		<ProjectReference Include="..\BDanMuLib\BDanMuLib.csproj" />
 	</ItemGroup>
-
-
-
 </Project>

@@ -14,8 +14,6 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using BDanMuLib.Extensions;
 using System.Net.Http;
-using System.Reflection;
-using System.Text.Json.Nodes;
 
 namespace BDanMuLib
 {
@@ -333,6 +331,7 @@ namespace BDanMuLib
                                     var userName = info[2][1].Value<string>();
                                     var audRank = info[4][4].Value<int>();
                                     var comment = info[1].Value<string>();
+                                    //var extra = info[0][15].Value<string>();
 
                                     foreach (var item in _emotes)
                                     {
@@ -366,8 +365,24 @@ namespace BDanMuLib
                                                 i = response.IndexOf("href=\"//i2.hdslb.com");
                                             }
                                         }
-                                        response = response.Substring(i);
-                                        faceUrl = string.Concat("http:", response.AsSpan(6, response.IndexOf(".jpg\">") - 2));
+                                        if (i == -1)
+                                        {
+                                            //var body = new
+                                            //{
+                                            //    uid = int.Parse(mid)
+                                            //};
+                                            //var content = new StringContent(JsonConvert.SerializeObject(body));
+                                            //var userInfoResponse = await Client.PostAsync("https://tenapi.cn/v2/biliinfo", content);
+                                            //if (userInfoResponse.IsSuccessStatusCode)
+                                            //{
+                                            //    var contentString = await userInfoResponse.Content.ReadAsStringAsync();
+                                            //}
+                                        }
+                                        else
+                                        {
+                                            response = response.Substring(i);
+                                            faceUrl = string.Concat("http:", response.AsSpan(6, response.IndexOf(".jpg\">") - 2));
+                                        }
                                     }
                                     catch (Exception)
                                     {
@@ -434,12 +449,12 @@ namespace BDanMuLib
                                 break;
                             case MessageType.STOP_LIVE_ROOM_LIST:
                                 break;
-                            //case MessageType.WATCHED_CHANGE:
-                            //    {
-                            //        var watchedNum = jObj["data"]["num"].Value<string>();
-                            //        ReceiveMessage?.Invoke(MessageType.WATCHED_CHANGE, watchedNum);
-                            //    }
-                            //    break;
+                            case MessageType.WATCHED_CHANGE:
+                                {
+                                    var watchedNum = jObj["data"]["num"].Value<string>();
+                                    ReceiveMessage?.Invoke(MessageType.WATCHED_CHANGE, watchedNum);
+                                }
+                                break;
                             case MessageType.ROOM_REAL_TIME_MESSAGE_UPDATE:
                                 break;
                             case MessageType.LIVE_INTERACTIVE_GAME:
@@ -453,18 +468,18 @@ namespace BDanMuLib
                             //        ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED, rank);
                             //    }
                             //    break;
-                            case MessageType.HOT_ROOM_NOTIFY:
-                                break;
-                            case MessageType.HOT_RANK_CHANGED_V2:
-                                {
-                                    var rank = jObj["data"]["rank"].Value<string>();
-                                    ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED_V2, rank);
-                                }
-                                break;
+                            //case MessageType.HOT_ROOM_NOTIFY:
+                            //    break;
+                            //case MessageType.HOT_RANK_CHANGED_V2:
+                            //    {
+                            //        var rank = jObj["data"]["rank"].Value<string>();
+                            //        ReceiveMessage?.Invoke(MessageType.HOT_RANK_CHANGED_V2, rank);
+                            //    }
+                            //    break;
                             case MessageType.ONLINE_RANK_TOP3:
                                 {
                                     var list = jObj["data"]["list"].ToList();
-                                    ReceiveMessage?.Invoke(MessageType.ONLINE_RANK_TOP3, list);
+                                    ReceiveMessage?.Invoke(cmdCommand, list);
                                 }
                                 break;
                             //case MessageType.ONLINE_RANK_V2:
@@ -491,6 +506,16 @@ namespace BDanMuLib
 
                                 }
                                 break;
+                            case MessageType.GUARD_BUY:
+                                {
+
+                                }
+                                break;
+                            case MessageType.SUPER_CHAT_MESSAGE:
+                                {
+                                    ReceiveMessage?.Invoke(cmdCommand, jObj["data"]);
+                                    break;
+                                }
                             case MessageType.NONE:
                             case MessageType.WIDGET_BANNER:
                             default:
