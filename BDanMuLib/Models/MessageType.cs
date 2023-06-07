@@ -109,7 +109,7 @@ namespace BDanmuLib.Models
         HOT_RANK_CHANGED_V2,
 
         /// <summary>
-        /// 榜单前三更新
+        /// 榜单前三更新(貌似不会触发了)
         /// </summary>
         ONLINE_RANK_TOP3,
 

@@ -20,15 +20,19 @@
                 <div class="rows">
                     <transition-group appear tag="ul" name="danmu" key="danmu">
                         <template v-for="item in state.comments.filter(x => x.mid != '')" :key="item.key">
-                            <div class="message">
+                            <div :class="{ 'message': true, 'bg-color': item.color != '' }">
                                 <div class="avatar-medal-name ">
 
-                                    <el-avatar :size="28"
+                                    <el-avatar :size="28" v-if="showAvatar"
                                         :src="item.faceUrl ?? 'http://i0.hdslb.com/bfs/face/member/noface.jpg'"></el-avatar>
                                     <div style="color:red;border: 1px solid red; border-radius: 12%;" v-if="item.isAdmin">
                                         <span class="admin">房</span>
                                     </div>
-                                    <template v-if="item.hasMedal">
+                                    <div v-if="item.top3 > 0"
+                                        style="font-size: 8px;border: 1px solid #ff5283 ;border-radius:12%; background-color: #ff5283;">
+                                        <span>榜单 {{ item.top3 }}</span>
+                                    </div>
+                                    <template v-if="item.hasMedal && showMedal">
                                         <div class="medal">
                                             <span class="medal-name">{{ item.medalName }}</span>
                                             <span class="medal-lvl"> {{ item.level }}</span>
@@ -70,7 +74,9 @@ import VueDragResize from 'vue-drag-resize'
 const props = defineProps<{
     roomId?: number,
     danmuCount: number,
-    entryEffectDirection: string
+    entryEffectDirection: string,
+    showAvatar: boolean,
+    showMedal: boolean
 }>()
 
 const direction = ref('translateX(-230px)');
@@ -118,6 +124,8 @@ const state = reactive({
         hasMedal: false,
         medalName: '',
         level: 0,
+        top3: 0,
+        color: '',
         key: '',
     }],
     tempData: [],
@@ -144,6 +152,10 @@ const resize = (newRect) => {
 const connectRoom = () => {
     if (props.roomId != null) {
         if (connection.state == HubConnectionState.Connected) {
+            state.comments.splice(0, state.comments.length)
+            state.queue.clear()
+            state.entryEffects.splice(0, state.entryEffects.length)
+            state.entryEffectQueue.clear()
             connection.invoke("Start", props.roomId).catch(err => {
                 console.log(err)
             })
@@ -392,7 +404,11 @@ onBeforeMount(() => {
     transform: v-bind(direction);
 }
 
-
+.bg-color {
+    // background-color: #e5f1f9;
+    // border-radius: 3%;
+    // opacity: 0.2;
+}
 
 
 li {

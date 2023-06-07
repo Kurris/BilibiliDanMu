@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from "electron";
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut } from "electron";
 import path from "path";
 
 import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
@@ -15,7 +15,6 @@ if (process.platform == 'darwin') {
 
 ipcMain.on('ignoreMouse', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  win!.setFullScreen(true)
   win!.setIgnoreMouseEvents(true);
   win!.setAlwaysOnTop(true, 'pop-up-menu')
   win!.setSkipTaskbar(true)
@@ -54,11 +53,14 @@ const createWindow = () => {
 
   tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '../electron/setting.png')))
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Item1', type: 'checkbox' },
-    { label: 'Item2', type: 'checkbox' },
+    // { label: 'Item1', type: 'checkbox' },
+    // { label: 'Item2', type: 'checkbox' },
     {
-      label: '设置', click: () => {
-
+      label: '取消覆盖', click: () => {
+        // win.webContents.send('setting', 'setting')
+        win!.setIgnoreMouseEvents(false);
+        win!.setAlwaysOnTop(false, 'pop-up-menu')
+        win!.setSkipTaskbar(false)
       }
     },
     {

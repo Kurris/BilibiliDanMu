@@ -16,6 +16,12 @@
                 <el-radio label="bottom">下向上</el-radio>
             </el-radio-group>
         </el-form-item>
+        <el-form-item label="是否显示头像">
+            <el-switch v-model="form.showAvatar" />
+        </el-form-item>
+        <el-form-item label="是否显示牌子">
+            <el-switch v-model="form.showMedal" />
+        </el-form-item>
         <!-- <el-form-item label="Activity zone">
                 <el-select v-model="form.region" placeholder="please select your zone">
                     <el-option label="Zone one" value="shanghai" />
@@ -33,9 +39,7 @@
                     <el-time-picker v-model="form.date2" placeholder="Pick a time" style="width: 100%" />
                 </el-col>
             </el-form-item>
-            <el-form-item label="Instant delivery">
-                <el-switch v-model="form.delivery" />
-            </el-form-item>
+        
             <el-form-item label="Activity type">
                 <el-checkbox-group v-model="form.type">
                     <el-checkbox label="Online activities" name="type" />
@@ -67,18 +71,20 @@ const form = reactive({
     type: [],
     entryEffectDirection: 'left',
     desc: '',
+    showAvatar: true,
+    showMedal: true,
 })
 
 
 
 const emits = defineEmits<{
     (e: 'connectRoom', roomId: number): number,
-    (e: 'setRaise', danmuCount: number, entryEffectDirection: string): number
+    (e: 'setRaise', danmuCount: number, entryEffectDirection: string, showAvatar: boolean, showMedal: boolean): void
     (e: 'cover'): void
 }>()
 
 const onSubmit = () => {
-    emits('setRaise', form.danmuCount, form.entryEffectDirection)
+    emits('setRaise', form.danmuCount, form.entryEffectDirection, form.showAvatar, form.showMedal)
 }
 
 

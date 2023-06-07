@@ -5,7 +5,8 @@
     </el-drawer>
 
     <DanMu :room-id="currentRoomId" ref="danmu" @on-drag-stop="onDragStop" :danmu-count="currentDanmuCount"
-      :entry-effect-direction="currentEntryEffectDirection" />
+      :entry-effect-direction="currentEntryEffectDirection" :show-avatar="currentShowAvatar"
+      :show-medal="currentShowMedal" />
 
   </div>
 </template>
@@ -15,11 +16,13 @@ import { nextTick, ref } from 'vue';
 import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
 
-const currentRoomId = ref();
+const currentRoomId = ref<number>();
 const isDrawer = ref(true)
 const danmu = ref<InstanceType<typeof DanMu>>()
 const currentDanmuCount = ref(15)
 const currentEntryEffectDirection = ref('left')
+const currentShowAvatar = ref(true)
+const currentShowMedal = ref(true)
 
 const connectRoom = (roomId: number) => {
   currentRoomId.value = roomId
@@ -37,9 +40,11 @@ const cover = () => {
   isDrawer.value = false
 }
 
-const setRaise = (danmuCount: number, entryEffectDirection: string) => {
+const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: boolean, showMedal: boolean) => {
   currentDanmuCount.value = danmuCount
   currentEntryEffectDirection.value = entryEffectDirection
+  currentShowAvatar.value = showAvatar;
+  currentShowMedal.value = showMedal
 }
 
 </script>

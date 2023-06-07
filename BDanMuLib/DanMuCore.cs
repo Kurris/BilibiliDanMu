@@ -331,7 +331,9 @@ namespace BDanMuLib
                                     var userName = info[2][1].Value<string>();
                                     var audRank = info[4][4].Value<int>();
                                     var comment = info[1].Value<string>();
-                                    //var extra = info[0][15].Value<string>();
+                                    var top3 = info[4][4].Value<int>();
+                                    var color = info[2][7].Value<string>();
+                                    //#e5f1f9
 
                                     foreach (var item in _emotes)
                                     {
@@ -402,6 +404,8 @@ namespace BDanMuLib
                                         hasMedal,
                                         medalName,
                                         level,
+                                        top3,
+                                        color,
                                         key = Key,
                                     });
                                 }
@@ -417,19 +421,7 @@ namespace BDanMuLib
                                     ReceiveMessage?.Invoke(MessageType.SEND_GIFT, $"{userName}{action}{giftName} x {num}");
                                 }
                                 break;
-                            case MessageType.WELCOME:
-                                {
-
-                                }
-                                break;
                             case MessageType.WELCOME_GUARD:
-                                break;
-                            case MessageType.SYS_MSG:
-                                break;
-                            case MessageType.PREPARING:
-                            case MessageType.LIVE:
-                                break;
-                            case MessageType.WISH_BOTTLE:
                                 break;
                             case MessageType.INTERACT_WORD:
                                 {
@@ -446,8 +438,6 @@ namespace BDanMuLib
                             //    }
 
                             case MessageType.NOTICE_MSG:
-                                break;
-                            case MessageType.STOP_LIVE_ROOM_LIST:
                                 break;
                             case MessageType.WATCHED_CHANGE:
                                 {
@@ -516,8 +506,6 @@ namespace BDanMuLib
                                     ReceiveMessage?.Invoke(cmdCommand, jObj["data"]);
                                     break;
                                 }
-                            case MessageType.NONE:
-                            case MessageType.WIDGET_BANNER:
                             default:
                                 break;
                         }
