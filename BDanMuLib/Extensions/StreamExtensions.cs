@@ -9,7 +9,7 @@ namespace BDanMuLib.Extensions
 {
     internal static class StreamExtensions
     {
-        internal static async Task ReadBAsync(this Stream stream, byte[] buffer, int offset, int count)
+        internal static async Task<bool> ReadBAsync(this Stream stream, byte[] buffer, int offset, int count)
         {
             if (offset + count > buffer.Length)
                 throw new ArgumentException();
@@ -24,9 +24,11 @@ namespace BDanMuLib.Extensions
 
                 if (available == 0)
                 {
-                    throw new ObjectDisposedException(null);
+                    return false;
                 }
             }
+
+            return true;
         }
     }
 }

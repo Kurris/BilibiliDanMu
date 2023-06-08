@@ -15,9 +15,10 @@ if (process.platform == 'darwin') {
 
 ipcMain.on('ignoreMouse', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  win!.setIgnoreMouseEvents(true);
-  win!.setAlwaysOnTop(true, 'pop-up-menu')
-  win!.setSkipTaskbar(true)
+  win?.setFullScreen(true)
+  win?.setIgnoreMouseEvents(true);
+  win?.setAlwaysOnTop(true, 'pop-up-menu')
+  win?.setSkipTaskbar(true)
 })
 
 
@@ -37,9 +38,11 @@ const createWindow = () => {
   });
 
   // win.webContents.openDevTools({ mode: 'undocked' })
-  // globalShortcut.register("CommandOrControl+Shift+i", function () {
-  //   win.webContents.openDevTools();
-  // });
+  globalShortcut.register("CommandOrControl+Shift+i", function () {
+    win!.setIgnoreMouseEvents(false);
+    win!.setAlwaysOnTop(false, 'pop-up-menu')
+    win!.setSkipTaskbar(false)
+  });
 
   // 如果打包了，渲染index.html
   if (app.isPackaged) {

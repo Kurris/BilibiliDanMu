@@ -55,22 +55,7 @@ namespace BDanMuLib
         /// <summary>
         /// Http客户端
         /// </summary>
-        private static HttpClient _httpClient;
-        public static HttpClient Client
-        {
-            get
-            {
-                if (_httpClient == null)
-                {
-                    _httpClient = new HttpClient()
-                    {
-                        Timeout = TimeSpan.FromSeconds(30),
-                    };
-                }
-
-                return _httpClient;
-            }
-        }
+        private static HttpClient Client = new();
 
         /// <summary>
         /// TCP客户端
@@ -264,15 +249,21 @@ namespace BDanMuLib
                             {
                                 while (true)
                                 {
-                                    await deflate.ReadBAsync(headerBuffer, 0, 16);
+                                    if (!await deflate.ReadBAsync(headerBuffer, 0, 16))
+                                    {
+                                        break;
+                                    }
                                     var protocolInfo = ProtocolStruts.FromBuffer(headerBuffer);
                                     payLoadLength = protocolInfo.PacketLength - 16;
                                     var danMuKuBuffer = new byte[payLoadLength];
-                                    await deflate.ReadBAsync(danMuKuBuffer, 0, payLoadLength);
+                                    if (!await deflate.ReadBAsync(danMuKuBuffer, 0, payLoadLength))
+                                    {
+                                        break;
+                                    }
                                     await HandleMsg(protocol.OperateType, danMuKuBuffer);
                                 }
                             }
-                            catch (Exception)
+                            catch
                             {
                                 // ignored
                             }
@@ -369,16 +360,7 @@ namespace BDanMuLib
                                         }
                                         if (i == -1)
                                         {
-                                            //var body = new
-                                            //{
-                                            //    uid = int.Parse(mid)
-                                            //};
-                                            //var content = new StringContent(JsonConvert.SerializeObject(body));
-                                            //var userInfoResponse = await Client.PostAsync("https://tenapi.cn/v2/biliinfo", content);
-                                            //if (userInfoResponse.IsSuccessStatusCode)
-                                            //{
-                                            //    var contentString = await userInfoResponse.Content.ReadAsStringAsync();
-                                            //}
+
                                         }
                                         else
                                         {
@@ -408,6 +390,7 @@ namespace BDanMuLib
                                         color,
                                         key = Key,
                                     });
+
                                 }
                                 break;
                             case MessageType.SEND_GIFT:
@@ -503,7 +486,7 @@ namespace BDanMuLib
                                 break;
                             case MessageType.SUPER_CHAT_MESSAGE:
                                 {
-                                    ReceiveMessage?.Invoke(cmdCommand, jObj["data"]);
+                                    ReceiveMessage?.Invoke(cmdCommand, jObj["data"].ToString());
                                     break;
                                 }
                             default:
@@ -583,9 +566,6 @@ namespace BDanMuLib
                 _tcpClient.Close();
                 _tcpClient.Dispose();
                 _tcpClient = null;
-
-                _httpClient.Dispose();
-                _httpClient = null;
 
                 _netStream.Dispose();
                 _netStream = null;

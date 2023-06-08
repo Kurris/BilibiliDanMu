@@ -71,6 +71,7 @@ import EntryEffect from './EntryEffect.vue'
 import VueDragResize from 'vue-drag-resize'
 
 
+
 const props = defineProps<{
     roomId?: number,
     danmuCount: number,
@@ -138,7 +139,8 @@ const state = reactive({
 
 
 const emits = defineEmits<{
-    (e: 'onDragStop'): void
+    (e: 'onDragStop'): void,
+    (e: 'onSc', msg: any): void
 }>()
 
 const resize = (newRect) => {
@@ -168,12 +170,13 @@ const onDragStop = () => {
     emits('onDragStop')
 }
 
+
+
 defineExpose({
     connectRoom
 })
 
 onBeforeMount(() => {
-
 
     //弹幕设置
     setInterval(() => {
@@ -241,6 +244,7 @@ onBeforeMount(() => {
 
     connection.on("sc", p => {
         state.sc = p
+        emits('onSc', JSON.parse(p))
     })
 
     connection.on("entry_effect", p => {

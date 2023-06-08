@@ -6,8 +6,7 @@
 
     <DanMu :room-id="currentRoomId" ref="danmu" @on-drag-stop="onDragStop" :danmu-count="currentDanmuCount"
       :entry-effect-direction="currentEntryEffectDirection" :show-avatar="currentShowAvatar"
-      :show-medal="currentShowMedal" />
-
+      :show-medal="currentShowMedal" @on-sc="sc" />
   </div>
 </template>
 <script setup lang="ts">
@@ -15,6 +14,7 @@
 import { nextTick, ref } from 'vue';
 import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
+import { ElNotification } from 'element-plus'
 
 const currentRoomId = ref<number>();
 const isDrawer = ref(true)
@@ -45,11 +45,39 @@ const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: 
   currentEntryEffectDirection.value = entryEffectDirection
   currentShowAvatar.value = showAvatar;
   currentShowMedal.value = showMedal
+
 }
+
+const sc = (data) => {
+  console.log(data);
+  ElNotification({
+    dangerouslyUseHTMLString: true,
+    duration: 1000 * 20,
+    showClose: false,
+    message: ` <div style='width:300px;background-color: ${data.background_color};font-size: 10px;'>
+      <div style="display: flex;align-items: center; justify-content: space-between;height: 40px;padding: 8px;">
+        <div class="avatar-medal-name">
+          <div class="medal">
+            <span class="medal-name">${data.medal_info.medal_name}</span>
+            <span class="medal-lvl">${data.medal_info.medal_level}</span>
+          </div>
+          <div class="name" style="color='${data.user_info.name_color}'">${data.user_info.uname}</div>
+        </div>
+        <div>
+          ${data.price * 10}电池
+        </div>
+      </div>
+      <div style="background-color: #2A60B2;padding: 10px;color: ${data.message_font_color};font-size: 10px;">
+        ${data.message}
+      </div>
+    </div>`,
+  })
+}
+
 
 </script>
 
-<style scoped lang="scss">
+<style   lang="scss">
 @import 'styles/global.scss';
 
 
@@ -79,6 +107,50 @@ const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: 
       justify-content: center;
       align-items: center;
     }
+  }
+}
+
+.avatar-medal-name {
+  font-size: 13px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+
+  .medal {
+    padding: 1.2px;
+    border-radius: 12%;
+
+    .medal-name {
+      border: 1px solid orange;
+      background-color: orange;
+
+      padding: {
+        left: 3px;
+        right: 3px;
+      }
+    }
+
+    .medal-lvl {
+      border: 1px solid orange;
+      font-weight: bolder;
+
+      padding: {
+        left: 3px;
+        right: 3px;
+      }
+    }
+  }
+
+  .name {
+    margin-right: 3.5px;
+
+    padding: {
+      left: 3px;
+      right: 3px;
+    }
+
+    border-radius: 10%;
+    color: black;
   }
 }
 </style>
