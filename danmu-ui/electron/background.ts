@@ -29,7 +29,8 @@ const createWindow = () => {
   const win = new BrowserWindow({
     transparent: true,
     frame: false,
-    fullscreen: true,
+    // fullscreen: true,
+    resizable: true,
     webPreferences: {
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
@@ -38,10 +39,11 @@ const createWindow = () => {
   });
 
   // win.webContents.openDevTools({ mode: 'undocked' })
-  globalShortcut.register("CommandOrControl+Shift+i", function () {
-    win!.setIgnoreMouseEvents(false);
-    win!.setAlwaysOnTop(false, 'pop-up-menu')
-    win!.setSkipTaskbar(false)
+  globalShortcut.register("CommandOrControl+Shift+i", () => {
+    win.setIgnoreMouseEvents(false);
+    win.setAlwaysOnTop(false, 'pop-up-menu')
+    win.setSkipTaskbar(false);
+    win.webContents.send('unIgnoreMouse')
   });
 
   // 如果打包了，渲染index.html
@@ -61,9 +63,10 @@ const createWindow = () => {
     {
       label: '取消覆盖', click: () => {
         // win.webContents.send('setting', 'setting')
-        win!.setIgnoreMouseEvents(false);
-        win!.setAlwaysOnTop(false, 'pop-up-menu')
-        win!.setSkipTaskbar(false)
+        win.setIgnoreMouseEvents(false);
+        win.setAlwaysOnTop(false, 'pop-up-menu')
+        win.setSkipTaskbar(false);
+        win.webContents.send('unIgnoreMouse')
       }
     },
     {
@@ -73,7 +76,7 @@ const createWindow = () => {
       }
     }
   ])
-  tray.setToolTip('B站直播辅助工具')
+  tray.setToolTip('直播辅助工具')
   tray.setContextMenu(contextMenu)
   tray.on('click', () => {
     win.show()

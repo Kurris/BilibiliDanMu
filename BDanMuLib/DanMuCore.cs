@@ -158,8 +158,6 @@ namespace BDanMuLib
                 _isConnected = true;
                 _ = HeartBeatLoop();
                 _ = ReceiveMessageLoop();
-
-                Console.WriteLine("连接房间号:" + roomId);
                 return true;
             }
             catch (Exception)
@@ -326,14 +324,43 @@ namespace BDanMuLib
                                     var color = info[2][7].Value<string>();
                                     //#e5f1f9
 
-                                    foreach (var item in _emotes)
+                                    if (info[0][13].Any())
                                     {
-                                        string emote = "[" + item.Key + "]";
-                                        if (comment.Contains(emote))
+                                        var emoteUnique = info[0][13]["emoticon_unique"].Value<string>();
+                                        var width = info[0][13]["width"].Value<int>();
+                                        var height = info[0][13]["height"].Value<int>();
+                                        if (width == height)
                                         {
-                                            comment = comment.Replace(emote, "<img referrer=\"no-referrer\" height=\"20\" width=\"20\" src=\"" + item.Value + "\"/>");
+                                            width = 40;
+                                            height = 40;
+                                        }
+                                        else
+                                        {
+                                            height /= 2;
+                                            width /= 2;
+                                        }
+                                        var extra = JObject.Parse(info[0][15]["extra"].Value<string>());
+
+                                        var emoticon_unique = extra["emoticon_unique"].Value<string>();
+
+                                        if (emoticon_unique == emoteUnique)
+                                        {
+                                            comment = "<img referrer=\"no-referrer\" height=\"" + height + "\" width=\"" + width + "\" src=\"" + info[0][13]["url"] + "\"/>";
                                         }
                                     }
+                                    else
+                                    {
+                                        foreach (var item in _emotes)
+                                        {
+                                            string emote = "[" + item.Key + "]";
+                                            if (comment.Contains(emote))
+                                            {
+                                                comment = comment.Replace(emote, "<img referrer=\"no-referrer\" height=\"20\" width=\"20\" src=\"" + item.Value + "\"/>");
+                                            }
+                                        }
+                                    }
+
+
 
                                     var medal = info[3];
                                     var hasMedal = medal.Any();
@@ -401,7 +428,7 @@ namespace BDanMuLib
                                     var giftName = dataJToken["giftName"].Value<string>();
                                     var num = dataJToken["num"].Value<int>();
 
-                                    ReceiveMessage?.Invoke(MessageType.SEND_GIFT, $"{userName}{action}{giftName} x {num}");
+                                    ReceiveMessage?.Invoke(cmdCommand, dataJToken);
                                 }
                                 break;
                             case MessageType.WELCOME_GUARD:

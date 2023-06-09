@@ -1,65 +1,61 @@
 <template>
     <div id="danmu">
-        <VueDragResize :w="380" :h="600" @dragging="resize" @dragstop="onDragStop">
-            <div class="danmu">
-                <div class=" header">
+        <div class="danmu">
+            <div class=" header">
+                <div style="display: flex;">
                     <div style="display: flex;">
-                        <div style="display: flex;">
-                            <svg style="color: red;" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                fill="currentColor" class="bi bi-fire" viewBox="0 0 16 16">
-                                <path
-                                    d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16Zm0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15Z" />
-                            </svg>
-                            <div> : {{ state.hot }}</div>
-                        </div>
-                        <div style="margin-left: 20px;"> 观看人数: {{ state.watched }}</div>
-                        <div style="margin-left: 20px;" v-if="state.interactWord != null">{{ state.interactWord }}</div>
+                        <svg style="color: red;" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            fill="currentColor" class="bi bi-fire" viewBox="0 0 16 16">
+                            <path
+                                d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16Zm0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15Z" />
+                        </svg>
+                        <div> : {{ state.hot }}</div>
                     </div>
+                    <div style="margin-left: 20px;"> 观看人数: {{ state.watched }}</div>
+                    <div style="margin-left: 20px;" v-if="state.interactWord != null">{{ state.interactWord }}</div>
                 </div>
+            </div>
 
-                <div class="rows">
-                    <transition-group appear tag="ul" name="danmu" key="danmu">
-                        <template v-for="item in state.comments.filter(x => x.mid != '')" :key="item.key">
-                            <div :class="{ 'message': true, 'bg-color': item.color != '' }">
-                                <div class="avatar-medal-name ">
+            <div class="rows">
+                <transition-group appear tag="ul" name="danmu" key="danmu">
+                    <template v-for="item in state.comments.filter(x => x.mid != '')" :key="item.key">
+                        <div :class="{ 'message': true, 'bg-color': item.color != '' }">
+                            <div class="avatar-medal-name ">
 
-                                    <el-avatar :size="28" v-if="showAvatar"
-                                        :src="item.faceUrl ?? 'http://i0.hdslb.com/bfs/face/member/noface.jpg'"></el-avatar>
-                                    <div style="color:red;border: 1px solid red; border-radius: 12%;" v-if="item.isAdmin">
-                                        <span class="admin">房</span>
-                                    </div>
-                                    <div v-if="item.top3 > 0"
-                                        style="font-size: 8px;border: 1px solid #ff5283 ;border-radius:12%; background-color: #ff5283;">
-                                        <span>榜单 {{ item.top3 }}</span>
-                                    </div>
-                                    <template v-if="item.hasMedal && showMedal">
-                                        <div class="medal">
-                                            <span class="medal-name">{{ item.medalName }}</span>
-                                            <span class="medal-lvl"> {{ item.level }}</span>
-                                        </div>
-                                    </template>
-                                    <div class="name">{{ item.userName }}</div>
+                                <el-avatar :size="28" v-if="showAvatar"
+                                    :src="item.faceUrl ?? 'http://i0.hdslb.com/bfs/face/member/noface.jpg'"></el-avatar>
+                                <div style="color:red;border: 1px solid red; border-radius: 12%;" v-if="item.isAdmin">
+                                    <span class="admin">房</span>
                                 </div>
-                                <div v-html="item.comment" class="comment">
+                                <div v-if="item.top3 > 0"
+                                    style="font-size: 8px;border: 1px solid #ff5283 ;border-radius:12%; background-color: #ff5283;">
+                                    <span>榜单 {{ item.top3 }}</span>
                                 </div>
+                                <template v-if="item.hasMedal && showMedal">
+                                    <div class="medal">
+                                        <span class="medal-name">{{ item.medalName }}</span>
+                                        <span class="medal-lvl"> {{ item.level }}</span>
+                                    </div>
+                                </template>
+                                <div class="name">{{ item.userName }}</div>
                             </div>
-                        </template>
-                    </transition-group>
-                </div>
-            </div>
-            <div class="join-room">
-
-            </div>
-            <div class="entryEffect">
-                <transition-group appear tag="ul" name="entry" key="entry">
-                    <template v-for="item in state.entryEffects" :key="item.uid">
-                        <EntryEffect :face="item.face" :backgroundUrl="item.web_basemap_url" :msg="item.copy_writing" />
+                            <div v-html="item.comment" class="comment">
+                            </div>
+                        </div>
                     </template>
                 </transition-group>
             </div>
+        </div>
+        <div class="join-room">
 
-
-        </VueDragResize>
+        </div>
+        <div class="entryEffect">
+            <transition-group appear tag="ul" name="entry" key="entry">
+                <template v-for="item in state.entryEffects" :key="item.uid">
+                    <EntryEffect :face="item.face" :backgroundUrl="item.web_basemap_url" :msg="item.copy_writing" />
+                </template>
+            </transition-group>
+        </div>
 
     </div>
 </template>
@@ -68,7 +64,6 @@ import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr'
 import Queue from '../utils/queue.js'
 import EntryEffect from './EntryEffect.vue'
-import VueDragResize from 'vue-drag-resize'
 
 
 
@@ -103,12 +98,6 @@ const connection = new HubConnectionBuilder()
 
 const count = ref(7);
 
-const position = reactive({
-    width: 0,
-    height: 0,
-    top: 0,
-    left: 0
-})
 
 const state = reactive({
     hot: 0,
@@ -139,16 +128,8 @@ const state = reactive({
 
 
 const emits = defineEmits<{
-    (e: 'onDragStop'): void,
     (e: 'onSc', msg: any): void
 }>()
-
-const resize = (newRect) => {
-    position.width = newRect.width;
-    position.height = newRect.height;
-    position.top = newRect.top;
-    position.left = newRect.left;
-}
 
 
 const connectRoom = () => {
@@ -165,11 +146,6 @@ const connectRoom = () => {
         }
     }
 }
-
-const onDragStop = () => {
-    emits('onDragStop')
-}
-
 
 
 defineExpose({
@@ -193,6 +169,7 @@ onBeforeMount(() => {
 
     }, 300);
 
+    //舰长
     setInterval(() => {
         var item = state.entryEffectQueue.dequeue();
         if (item == null) {
@@ -207,11 +184,10 @@ onBeforeMount(() => {
 
     }, 300);
 
+    //处理进入房间信息
     setInterval(() => {
         state.interactWord = null
     }, 3000);
-
-
 
 
     setInterval(() => {
@@ -251,6 +227,7 @@ onBeforeMount(() => {
         let item = JSON.parse(p)
         item.copy_writing = item.copy_writing.replace('<%', '<span style="color:yellow">')
         item.copy_writing = item.copy_writing.replace('%>', '</span>')
+
         state.entryEffectQueue.enqueue(item)
     })
     //重连或者首次
@@ -270,11 +247,7 @@ onBeforeMount(() => {
 </script>
 <style scoped lang="scss">
 .danmu {
-    position: absolute;
-    height: 50vh;
-    width: 45vh;
-    top: 25vh;
-    left: 0;
+    min-width: 30vh;
     text-overflow: ellipsis;
 
     .header {
@@ -359,12 +332,9 @@ onBeforeMount(() => {
 
 .entryEffect {
     position: absolute;
-    height: 50vh;
-    width: 45vh;
-    top: 25vh;
+    top: 20px;
     left: 0;
 }
-
 
 .danmu-move {
     transition: all 0.5s ease;
@@ -394,7 +364,6 @@ onBeforeMount(() => {
 
 .entry-enter-active,
 .entry-leave-active {
-    position: absolute;
     transition: all 2s ease;
 }
 
@@ -406,12 +375,6 @@ onBeforeMount(() => {
 .entry-leave-to {
     opacity: 0;
     transform: v-bind(direction);
-}
-
-.bg-color {
-    // background-color: #e5f1f9;
-    // border-radius: 3%;
-    // opacity: 0.2;
 }
 
 
