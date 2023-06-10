@@ -1,15 +1,23 @@
 // eslint-disable-next-line no-undef
 const { ipcRenderer, contextBridge } = require('electron')
 
-ipcRenderer.on('unIgnoreMouse', () => {
-  console.log('unIgnoreMouse')
-  let unIgnoreMouse = document.getElementById('unIgnoreMouse')
-  unIgnoreMouse?.click()
-})
-
 contextBridge.exposeInMainWorld('api', {
   ignoreMouse: () => {
     ipcRenderer.send('ignoreMouse')
   },
-  ligy: 'yes'
+  setMini: () => {
+    ipcRenderer.send('setMini')
+  },
+  setMax: () => {
+    ipcRenderer.send('setMax')
+  },
+  setToTray: () => {
+    ipcRenderer.send('setToTray')
+  },
+  dragTitle: (position) => {
+    ipcRenderer.send('dragTitle', position)
+  },
+  restoreSize: () => {
+    ipcRenderer.send('restoreSize')
+  }
 })

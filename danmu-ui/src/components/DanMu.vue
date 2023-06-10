@@ -19,7 +19,7 @@
             <div class="rows">
                 <transition-group appear tag="ul" name="danmu" key="danmu">
                     <template v-for="item in state.comments.filter(x => x.mid != '')" :key="item.key">
-                        <div :class="{ 'message': true, 'bg-color': item.color != '' }">
+                        <div :class="{ 'message': true }">
                             <div class="avatar-medal-name ">
 
                                 <el-avatar :size="28" v-if="showAvatar"
@@ -34,12 +34,13 @@
                                 <template v-if="item.hasMedal && showMedal">
                                     <div class="medal">
                                         <span class="medal-name">{{ item.medalName }}</span>
-                                        <span class="medal-lvl"> {{ item.level }}</span>
+                                        <span class="medal-lvl"> {{ item.medalLevel }}</span>
                                     </div>
                                 </template>
                                 <div class="name">{{ item.userName }}</div>
                             </div>
-                            <div v-html="item.comment" class="comment">
+
+                            <div v-html="item.comment" :class="{ 'comment': true, 'comment-bg-color': item.color != '' }">
                             </div>
                         </div>
                     </template>
@@ -66,7 +67,6 @@ import Queue from '../utils/queue.js'
 import EntryEffect from './EntryEffect.vue'
 
 
-
 const props = defineProps<{
     roomId?: number,
     danmuCount: number,
@@ -84,7 +84,7 @@ watch(() => props.entryEffectDirection, (newVal) => {
     } else if (newVal == 'right') {
         direction.value = 'translateX(230px)'
     } else if (newVal == 'bottom') {
-        direction.value = 'translateY(-230px)'
+        direction.value = 'translateY(130px)'
     }
 })
 
@@ -113,7 +113,7 @@ const state = reactive({
         audRank: 0,
         hasMedal: false,
         medalName: '',
-        level: 0,
+        medalLevel: 0,
         top3: 0,
         color: '',
         key: '',
@@ -220,7 +220,7 @@ onBeforeMount(() => {
 
     connection.on("sc", p => {
         state.sc = p
-        emits('onSc', JSON.parse(p))
+        emits('onSc', p)
     })
 
     connection.on("entry_effect", p => {
@@ -330,6 +330,16 @@ onBeforeMount(() => {
     }
 }
 
+.comment-bg-color {
+    background-color: rgba($color: #a5cbfc, $alpha: 0.4);
+
+    margin: {
+        left: 5px;
+    }
+
+    border-radius: 10%;
+}
+
 .entryEffect {
     position: absolute;
     top: 20px;
@@ -355,7 +365,6 @@ onBeforeMount(() => {
     opacity: 0;
     transform: translateY(-30px);
 }
-
 
 
 .entry-move {

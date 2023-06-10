@@ -11,9 +11,8 @@ using BDanmuLib.Models;
 using BDanMuLib.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 using BDanMuLib.Extensions;
-using System.Net.Http;
+using BDanMuLib.Utils;
 
 namespace BDanMuLib
 {
@@ -28,34 +27,8 @@ namespace BDanMuLib
     /// <summary>
     /// 弹幕库核心
     /// </summary>
-    public class DanMuCore
+    public class DanMuCore : IDisposable
     {
-
-        static DanMuCore()
-        {
-            getEmotes();
-        }
-
-
-        // /// <summary>
-        // /// 直播弹幕地址
-        // /// </summary>
-        // private string[] _defaultHosts = { "livecmt-2.bilibili.com", "livecmt-1.bilibili.com" };
-
-        /// <summary>
-        /// 直播服务地址DNS
-        /// </summary>
-        private string _chatHost = "chat.bilibili.com";
-
-        /// <summary>
-        /// TCP端口
-        /// </summary>
-        private int _chatPort = 2243;
-
-        /// <summary>
-        /// Http客户端
-        /// </summary>
-        private static HttpClient Client = new();
 
         /// <summary>
         /// TCP客户端
@@ -71,42 +44,12 @@ namespace BDanMuLib
         /// 是否已经连接
         /// </summary>
         private bool _isConnected;
+        private bool _disposed;
 
         /// <summary>
         /// 接受消息
         /// </summary>
         public event ReceiveMessage ReceiveMessage;
-
-        /// <summary>
-        /// 协议版本
-        /// </summary>
-        private const short ProtocolVersion = 2;
-
-
-        /// <summary>
-        /// 前端数据唯一性
-        /// </summary>
-        private static Guid Key
-        {
-            get
-            {
-                return Guid.NewGuid();
-            }
-        }
-
-
-        /// <summary>
-        /// 头像
-        /// </summary>
-        private static Dictionary<string, string> _emotes;
-
-
-        private static void getEmotes()
-        {
-
-            var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "emote.json"), Encoding.UTF8);
-            _emotes = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
-        }
 
 
         /// <summary>
@@ -120,40 +63,24 @@ namespace BDanMuLib
             {
                 if (_isConnected) throw new InvalidOperationException();
 
-                string token;
-                try
-                {
-                    //请求的内容
-                    var requestContent = await Client.GetStringAsync(ApiUrls.BroadCastUrl + roomId);
-
-                    var dataJToken = JObject.Parse(requestContent)["data"];
-
-                    token = dataJToken["token"].Value<string>();
-                    _chatHost = dataJToken["host"].Value<string>();
-                    _chatPort = dataJToken["port"].Value<int>();
-
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
+                var broadCastInfo = await RequestUtils.GetBroadCastInfoAsync(roomId);
 
                 _tcpClient = new TcpClient();
 
-                var ipAddress = await Dns.GetHostAddressesAsync(_chatHost);
+                var ipAddresses = await Dns.GetHostAddressesAsync(broadCastInfo.Host);
 
-                var index = new Random().Next(ipAddress.Length);
+                var index = new Random().Next(ipAddresses.Length);
 
                 if (_tcpClient.Connected)
                 {
                     throw new SocketException((int)SocketError.SocketError);
                 }
-                await _tcpClient.ConnectAsync(ipAddress[index], _chatPort);
+                await _tcpClient.ConnectAsync(ipAddresses[index], broadCastInfo.Port);
 
                 //同步流
                 _netStream = Stream.Synchronized(_tcpClient.GetStream());
 
-                if (!await SendJoinRoom(roomId, token)) return false;
+                if (!await SendJoinRoom(roomId, broadCastInfo.Token)) return false;
 
                 _isConnected = true;
                 _ = HeartBeatLoop();
@@ -174,18 +101,16 @@ namespace BDanMuLib
         /// <returns></returns>
         private async Task<bool> SendJoinRoom(int RoomId, string Token)
         {
-            var packageModel = new
+            var body = JsonConvert.SerializeObject(new
             {
                 roomid = RoomId,
                 uid = 0,
-                protover = ProtocolVersion,
+                protover = 2,
                 token = Token,
                 platform = "web"
-            };
+            });
 
-            var body = JsonConvert.SerializeObject(packageModel);
-
-            await SendSocketDataAsync(0, 16, ProtocolVersion, 7, 1, body);
+            await SendSocketDataAsync(16, 7, 1, 2, body);
             return true;
         }
 
@@ -199,7 +124,7 @@ namespace BDanMuLib
             {
                 while (this._isConnected)
                 {
-                    await SendSocketDataAsync(0, 16, ProtocolVersion, 2, 1, string.Empty);
+                    await SendSocketDataAsync(16, 2, 1, 2, string.Empty);
                     //心跳只需要30秒激活一次,偏移检查
                     await Task.Delay(30000);
                 }
@@ -298,127 +223,17 @@ namespace BDanMuLib
                 case OperateType.DetailCommand:
 
                     var json = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
-                    string cmd;
+                    var jObj = JObject.Parse(json);
+                    string cmd = jObj.Value<string>("cmd");
+
                     try
                     {
-
-                        var jObj = JObject.Parse(json);
-                        cmd = jObj.Value<string>("cmd");
-
-
                         var cmdCommand = (MessageType)Enum.Parse(typeof(MessageType), cmd);
 
                         switch (cmdCommand)
                         {
                             case MessageType.DANMU_MSG:
-                                {
-                                    var info = jObj["info"];
-
-                                    var mid = info[2][0].Value<string>();
-                                    var isAdmin = info[2][2].Value<bool>();
-                                    var time = info[0][4].Value<string>().ConvertStringToDateTime();
-                                    var userName = info[2][1].Value<string>();
-                                    var audRank = info[4][4].Value<int>();
-                                    var comment = info[1].Value<string>();
-                                    var top3 = info[4][4].Value<int>();
-                                    var color = info[2][7].Value<string>();
-                                    //#e5f1f9
-
-                                    if (info[0][13].Any())
-                                    {
-                                        var emoteUnique = info[0][13]["emoticon_unique"].Value<string>();
-                                        var width = info[0][13]["width"].Value<int>();
-                                        var height = info[0][13]["height"].Value<int>();
-                                        if (width == height)
-                                        {
-                                            width = 40;
-                                            height = 40;
-                                        }
-                                        else
-                                        {
-                                            height /= 2;
-                                            width /= 2;
-                                        }
-                                        var extra = JObject.Parse(info[0][15]["extra"].Value<string>());
-
-                                        var emoticon_unique = extra["emoticon_unique"].Value<string>();
-
-                                        if (emoticon_unique == emoteUnique)
-                                        {
-                                            comment = "<img referrer=\"no-referrer\" height=\"" + height + "\" width=\"" + width + "\" src=\"" + info[0][13]["url"] + "\"/>";
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var item in _emotes)
-                                        {
-                                            string emote = "[" + item.Key + "]";
-                                            if (comment.Contains(emote))
-                                            {
-                                                comment = comment.Replace(emote, "<img referrer=\"no-referrer\" height=\"20\" width=\"20\" src=\"" + item.Value + "\"/>");
-                                            }
-                                        }
-                                    }
-
-
-
-                                    var medal = info[3];
-                                    var hasMedal = medal.Any();
-                                    string medalName = null;
-                                    string level = null;
-                                    if (hasMedal)
-                                    {
-                                        medalName = medal[1].Value<string>();
-                                        level = medal[0].Value<string>();
-                                    }
-
-                                    string faceUrl = null;
-                                    try
-                                    {
-                                        string response = await Client.GetStringAsync($"https://space.bilibili.com/{mid}");
-                                        int i = response.IndexOf("href=\"//i0.hdslb.com");
-                                        if (i == -1)
-                                        {
-                                            i = response.IndexOf("href=\"//i1.hdslb.com");
-                                            if (i == -1)
-                                            {
-                                                i = response.IndexOf("href=\"//i2.hdslb.com");
-                                            }
-                                        }
-                                        if (i == -1)
-                                        {
-
-                                        }
-                                        else
-                                        {
-                                            response = response.Substring(i);
-                                            faceUrl = string.Concat("http:", response.AsSpan(6, response.IndexOf(".jpg\">") - 2));
-                                        }
-                                    }
-                                    catch (Exception)
-                                    {
-
-                                    }
-
-
-                                    ReceiveMessage?.Invoke(MessageType.DANMU_MSG, new
-                                    {
-                                        mid,
-                                        faceUrl,
-                                        comment,
-                                        isAdmin,
-                                        time,
-                                        userName,
-                                        audRank,
-                                        hasMedal,
-                                        medalName,
-                                        level,
-                                        top3,
-                                        color,
-                                        key = Key,
-                                    });
-
-                                }
+                                ReceiveMessage?.Invoke(cmdCommand, await jObj.FromDanMuMsgAsync());
                                 break;
                             case MessageType.SEND_GIFT:
                                 {
@@ -430,6 +245,15 @@ namespace BDanMuLib
 
                                     ReceiveMessage?.Invoke(cmdCommand, dataJToken);
                                 }
+                                break;
+                            case MessageType.ENTRY_EFFECT:
+                                {
+                                    var data = jObj["data"];
+                                    ReceiveMessage?.Invoke(cmdCommand, data);
+                                }
+                                break;
+                            case MessageType.SUPER_CHAT_MESSAGE:
+                                ReceiveMessage?.Invoke(cmdCommand, jObj.FromSuperChat());
                                 break;
                             case MessageType.WELCOME_GUARD:
                                 break;
@@ -495,12 +319,7 @@ namespace BDanMuLib
                             //        var combo = jObj["data"]["combo_num"].Value<int>();
                             //    }
                             //    break;
-                            case MessageType.ENTRY_EFFECT:
-                                {
-                                    var data = jObj["data"];
-                                    ReceiveMessage?.Invoke(cmdCommand, data);
-                                }
-                                break;
+
                             case MessageType.LIKE_INFO_V3_UPDATE:
                                 {
 
@@ -511,11 +330,6 @@ namespace BDanMuLib
 
                                 }
                                 break;
-                            case MessageType.SUPER_CHAT_MESSAGE:
-                                {
-                                    ReceiveMessage?.Invoke(cmdCommand, jObj["data"].ToString());
-                                    break;
-                                }
                             default:
                                 break;
                         }
@@ -546,37 +360,31 @@ namespace BDanMuLib
         /// <param name="param"></param>
         /// <param name="body"></param>
         /// <returns></returns>
-        private async Task SendSocketDataAsync(int packLength, short magic, short ver, int action, int param = 1, string body = "")
+        private async Task SendSocketDataAsync(short magic, int action, int param = 1, short ver = 2, string body = "")
         {
             var playLoad = Encoding.UTF8.GetBytes(body);
-            if (packLength == 0)
+
+            var buffer = new byte[playLoad.Length + 16];
+
+            await using var ms = new MemoryStream(buffer);
+            var b = EndianBitConverter.BigEndian.GetBytes(buffer.Length);
+
+            await ms.WriteAsync(b.AsMemory(0, 4));
+            b = EndianBitConverter.BigEndian.GetBytes(magic);
+            await ms.WriteAsync(b.AsMemory(0, 2));
+            b = EndianBitConverter.BigEndian.GetBytes(ver);
+            await ms.WriteAsync(b.AsMemory(0, 2));
+            b = EndianBitConverter.BigEndian.GetBytes(action);
+            await ms.WriteAsync(b.AsMemory(0, 4));
+            b = EndianBitConverter.BigEndian.GetBytes(param);
+            await ms.WriteAsync(b.AsMemory(0, 4));
+
+            if (playLoad.Length > 0)
             {
-                packLength = playLoad.Length + 16;
+                await ms.WriteAsync(playLoad);
             }
-            var buffer = new byte[packLength];
 
-            // ReSharper disable once ConvertToUsingDeclaration
-            await using (var ms = new MemoryStream(buffer))
-            {
-                var b = EndianBitConverter.BigEndian.GetBytes(buffer.Length);
-
-                await ms.WriteAsync(b, 0, 4);
-                b = EndianBitConverter.BigEndian.GetBytes(magic);
-                await ms.WriteAsync(b, 0, 2);
-                b = EndianBitConverter.BigEndian.GetBytes(ver);
-                await ms.WriteAsync(b, 0, 2);
-                b = EndianBitConverter.BigEndian.GetBytes(action);
-                await ms.WriteAsync(b, 0, 4);
-                b = EndianBitConverter.BigEndian.GetBytes(param);
-                await ms.WriteAsync(b, 0, 4);
-
-                if (playLoad.Length > 0)
-                {
-                    await ms.WriteAsync(playLoad, 0, playLoad.Length);
-                }
-
-                await _netStream.WriteAsync(buffer, 0, buffer.Length);
-            }
+            await _netStream.WriteAsync(buffer);
         }
 
         /// <summary>
@@ -584,25 +392,47 @@ namespace BDanMuLib
         /// </summary>
         public void Disconnect()
         {
+            if (_disposed)
+            {
+                return;
+            }
+            Dispose();
+        }
+
+        /// <summary>
+        /// 释放
+        /// </summary>
+        public void Dispose()
+        {
             if (!_isConnected) return;
 
             _isConnected = false;
 
             try
             {
-                _tcpClient.Close();
-                _tcpClient.Dispose();
-                _tcpClient = null;
+                if (_tcpClient != null)
+                {
+                    _tcpClient.Close();
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
+                }
 
-                _netStream.Dispose();
-                _netStream = null;
+                if (_netStream != null)
+                {
+                    _netStream.Close();
+                    _netStream.Dispose();
+                    _netStream = null;
+                }
+
             }
-            catch (Exception)
+            catch
             {
-                // ignored
+
             }
-
-
+            finally
+            {
+                _disposed = true;
+            }
         }
     }
 }

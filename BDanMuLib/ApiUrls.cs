@@ -9,15 +9,26 @@ namespace BDanMuLib
     internal class ApiUrls
     {
         /// <summary>
-        /// 用户信息
+        /// 用户信息(容易被ban ip)
         /// </summary>
-        public const string UserInfo = "https://api.bilibili.com/x/space/acc/info?mid=";
+        public const string UserInfoUrl = "https://api.bilibili.com/x/space/acc/info?mid=";
 
 
         /// <summary>
         /// 用户直播地址
         /// </summary>
         public const string BroadCastUrl = "https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=";
+
+
+        /// <summary>
+        /// 获取房间信息
+        /// </summary>
+        public const string GetRoomInfoUrl = "https://api.live.bilibili.com/room/v1/Room/get_info?room_id=";
+
+        /// <summary>
+        /// 获取礼物列表
+        /// </summary>
+        public const string GetGiftListUrl = "https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/roomGiftConfig?platform=pc&room_id=6750632&area_parent_id=2&area_id=92&source=live&build=0&global_version=1686301230003";
 
 
         /// <summary>

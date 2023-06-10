@@ -4,6 +4,7 @@ html,body {
     overflow-x: hidden; /* 隐藏水平滚动条 */
 }
 
+
 .el-notification__group {
     margin: {
       left: 0 !important;
@@ -14,4 +15,14 @@ html,body {
   .el-notification {
     width: unset !important;
     padding: 0 !important;
+    border: unset;
   }
+
+ .draggable{
+  // -webkit-app-region: drag;
+  user-select: none;
+ }
+
+ .noDraggable{
+  -webkit-app-region: no-drag;
+ }

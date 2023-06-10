@@ -135,6 +135,7 @@ namespace BDanmuLib.Models
         LIKE_INFO_V3_CLICK,
         POPULARITY_RED_POCKET_WINNER_LIST,
         POPULARITY_RED_POCKET_START,
+        COMMON_NOTICE_DANMAKU,
 
         /// <summary>
         /// 上舰之类
@@ -152,5 +153,14 @@ namespace BDanmuLib.Models
         SUPER_CHAT_MESSAGE_JPN,
 
         POPULAR_RANK_CHANGED,
+
+
+        /// <summary>
+        /// 直播区排名改变
+        /// </summary>
+        AREA_RANK_CHANGED,
+
+
+        GUARD_HONOR_THOUSAND,
     }
 }

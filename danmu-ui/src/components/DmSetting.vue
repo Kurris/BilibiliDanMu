@@ -2,18 +2,18 @@
     <el-form :model="form" label-width="120px">
         <el-form-item label="房间号">
             <div style="display: flex;">
-                <el-input type="number" v-model="form.roomId" />
+                <el-input-number v-model="form.roomId" />
                 <el-button @click="connectRoom" type="warning" style="margin-left: 20px;">连接房间</el-button>
             </div>
         </el-form-item>
         <el-form-item label="弹幕数显示">
-            <el-input type="number" v-model="form.danmuCount" />
+            <el-input-number type="number" v-model="form.danmuCount" />
         </el-form-item>
         <el-form-item label="弹窗提醒方向">
             <el-radio-group v-model="form.entryEffectDirection">
                 <el-radio label="left">左到右</el-radio>
                 <el-radio label="right">右向左</el-radio>
-                <el-radio label="bottom">下向上</el-radio>
+                <!-- <el-radio label="bottom">下向上</el-radio> -->
             </el-radio-group>
         </el-form-item>
         <el-form-item label="是否显示头像">
@@ -21,6 +21,9 @@
         </el-form-item>
         <el-form-item label="是否显示牌子">
             <el-switch v-model="form.showMedal" />
+        </el-form-item>
+        <el-form-item label="是否窗口边框">
+            <el-switch v-model="form.showWindow" />
         </el-form-item>
         <!-- <el-form-item label="Activity zone">
                 <el-select v-model="form.region" placeholder="please select your zone">
@@ -52,18 +55,14 @@
             <el-form-item label="Activity form">
                 <el-input v-model="form.desc" type="textarea" />
             </el-form-item> -->
-        <el-form-item>
-            <el-button type="primary" @click="onSubmit">设置</el-button>
-            <el-button id="ignoreMouse" type="danger" @click="emits('cover')">覆盖全屏</el-button>
-        </el-form-item>
     </el-form>
 </template>
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 
 const form = reactive({
     roomId: 6750632,
-    danmuCount: 15,
+    danmuCount: 10,
     region: '',
     date1: '',
     date2: '',
@@ -73,19 +72,20 @@ const form = reactive({
     desc: '',
     showAvatar: true,
     showMedal: true,
+    showWindow: true,
 })
 
+watch(() => JSON.stringify(form), (newValue) => {
+    // console.log(newValue);
+    emits('setRaise', form.danmuCount, form.entryEffectDirection, form.showAvatar, form.showMedal, form.showWindow)
+})
 
 
 const emits = defineEmits<{
     (e: 'connectRoom', roomId: number): number,
-    (e: 'setRaise', danmuCount: number, entryEffectDirection: string, showAvatar: boolean, showMedal: boolean): void
-    (e: 'cover'): void
+    (e: 'setRaise', danmuCount: number, entryEffectDirection: string, showAvatar: boolean, showMedal: boolean, showWindow: boolean): void
 }>()
 
-const onSubmit = () => {
-    emits('setRaise', form.danmuCount, form.entryEffectDirection, form.showAvatar, form.showMedal)
-}
 
 
 const connectRoom = () => {
