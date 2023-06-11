@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BDanmuLib.Models;
 using BDanMuLib;
@@ -8,66 +9,36 @@ namespace DanMuServer
 {
     public class DanMuHub : Hub
     {
-        private static DanMuCore _danmu;
         private static string _id;
-        private static IHubCallerClients _clients;
+        private static CancellationTokenSource _source;
 
         public override async Task OnConnectedAsync()
         {
             _id = Context.ConnectionId;
-            await Console.Out.WriteLineAsync($"{Context.ConnectionId}:连接成功");
+            _source = new CancellationTokenSource();
+            await Console.Out.WriteLineAsync($"{Context.ConnectionId}:connect server successfully");
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            if (_danmu != null)
-            {
-                _danmu.Disconnect();
-                _danmu = null;
-            }
-            _clients = null;
+            _source.Cancel();
+            await DanMuCore.DisconnectAsync();
             _id = null;
-            await Console.Out.WriteLineAsync(Context.ConnectionId + "断开连接");
+            await Console.Out.WriteLineAsync($"{Context.ConnectionId} disconnect room");
         }
 
 
-        public async Task Start(object roomId)
+        public async Task Start(int roomId)
         {
-            if (_danmu != null)
+            await DanMuCore.ConnectAsync(roomId, async result =>
             {
-                _danmu.Disconnect();
-            }
-            _clients = Clients;
-            _danmu = new DanMuCore();
-            await Task.Factory.StartNew(() =>
-              {
-                  _danmu.ReceiveMessage += (type, obj) =>
-                        { 
-                            switch (type)
-                            {
-                                case MessageType.DANMU_MSG:
-                                    _clients?.Client(_id).SendAsync("addDanmu", obj);
-                                    break;
-                                case MessageType.INTERACT_WORD:
-                                    _clients?.Client(_id).SendAsync("joinRoom", obj);
-                                    break;
-                                case MessageType.WATCHED_CHANGE:
-                                    _clients?.Client(_id).SendAsync("watched", obj);
-                                    break;
-                                case MessageType.NONE:
-                                    _clients?.Client(_id).SendAsync("hot", obj);
-                                    break;
-                                case MessageType.ENTRY_EFFECT:
-                                    _clients?.Client(_id).SendAsync("entry_effect", obj.ToString());
-                                    break;
-                                default:
-                                    break;
-                            }
-                        };
-              });
+                if (!_source.IsCancellationRequested)
+                {
+                    await Clients.Client(_id).SendAsync(result.Type.ToString(), result.Info);
+                }
+            }, _source.Token);
 
-            await _danmu.ConnectAsync(int.Parse(roomId.ToString()));
-            Console.WriteLine(Context.ConnectionId + $"成功连接房间:{roomId}");
+            await Console.Out.WriteLineAsync("done");
         }
     }
 }

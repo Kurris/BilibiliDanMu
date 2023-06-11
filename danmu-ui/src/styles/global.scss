@@ -1,6 +1,28 @@
-body {
+html,body {
     background: transparent;
+    overflow-y: hidden; /* 隐藏垂直滚动条 */
+    overflow-x: hidden; /* 隐藏水平滚动条 */
 }
 
 
+.el-notification__group {
+    margin: {
+      left: 0 !important;
+      right: 0 !important;
+    }
+  }
+  
+  .el-notification {
+    width: unset !important;
+    padding: 0 !important;
+    border: unset;
+  }
 
+ .draggable{
+  // -webkit-app-region: drag;
+  user-select: none;
+ }
+
+ .noDraggable{
+  -webkit-app-region: no-drag;
+ }

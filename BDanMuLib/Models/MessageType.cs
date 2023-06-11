@@ -16,6 +16,11 @@ namespace BDanmuLib.Models
         NONE,
 
         /// <summary>
+        /// 热度
+        /// </summary>
+        HOT,
+
+        /// <summary>
         /// 弹幕信息
         /// </summary>
         DANMU_MSG,
@@ -86,7 +91,7 @@ namespace BDanmuLib.Models
         ROOM_REAL_TIME_MESSAGE_UPDATE,
 
         /// <summary>
-        /// 投喂相关
+        /// 实时交互游戏
         /// </summary>
         LIVE_INTERACTIVE_GAME,
 
@@ -95,6 +100,10 @@ namespace BDanmuLib.Models
         /// </summary>
         HOT_RANK_CHANGED,
 
+
+        /// <summary>
+        /// 热度房间推荐
+        /// </summary>
         HOT_ROOM_NOTIFY,
 
         WIDGET_BANNER,
@@ -105,7 +114,7 @@ namespace BDanmuLib.Models
         HOT_RANK_CHANGED_V2,
 
         /// <summary>
-        /// 榜单前三更新
+        /// 榜单前三更新(貌似不会触发了)
         /// </summary>
         ONLINE_RANK_TOP3,
 
@@ -127,5 +136,38 @@ namespace BDanmuLib.Models
 
         LIKE_INFO_V3_UPDATE,
 
+        DANMU_AGGREGATION,
+        LIKE_INFO_V3_CLICK,
+        POPULARITY_RED_POCKET_WINNER_LIST,
+        POPULARITY_RED_POCKET_START,
+        COMMON_NOTICE_DANMAKU,
+
+        /// <summary>
+        /// 上舰之类
+        /// </summary>
+        GUARD_BUY,
+
+        /// <summary>
+        /// SC
+        /// </summary>
+        SUPER_CHAT_MESSAGE,
+
+
+        USER_TOAST_MSG,
+        SUPER_CHAT_MESSAGE_DELETE,
+        SUPER_CHAT_MESSAGE_JPN,
+
+        POPULAR_RANK_CHANGED,
+
+
+        /// <summary>
+        /// 直播区排名改变
+        /// </summary>
+        AREA_RANK_CHANGED,
+
+
+        GUARD_HONOR_THOUSAND,
+
+        ROOM_BLOCK_MSG,
     }
 }

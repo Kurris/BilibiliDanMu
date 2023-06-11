@@ -1,18 +1,23 @@
+// eslint-disable-next-line no-undef
 const { ipcRenderer, contextBridge } = require('electron')
 
-ipcRenderer.send('test', 'testing')
 contextBridge.exposeInMainWorld('api', {
   ignoreMouse: () => {
     ipcRenderer.send('ignoreMouse')
+  },
+  setMini: () => {
+    ipcRenderer.send('setMini')
+  },
+  setMax: () => {
+    ipcRenderer.send('setMax')
+  },
+  setToTray: () => {
+    ipcRenderer.send('setToTray')
+  },
+  dragTitle: (position) => {
+    ipcRenderer.send('dragTitle', position)
+  },
+  restoreSize: () => {
+    ipcRenderer.send('restoreSize')
   }
 })
-
-// window.addEventListener('DOMContentLoaded', () => {
-//   const el = document.getElementById('setting')
-//   el.addEventListener('mouseenter', () => {
-//     ipcRenderer.send('set-ignore-mouse-events', false)
-//   })
-//   el.addEventListener('mouseleave', () => {
-//     ipcRenderer.send('set-ignore-mouse-events', true, { forward: true })
-//   })
-// })

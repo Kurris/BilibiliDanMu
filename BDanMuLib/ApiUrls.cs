@@ -9,9 +9,9 @@ namespace BDanMuLib
     internal class ApiUrls
     {
         /// <summary>
-        /// 用户信息
+        /// 用户信息(容易被ban ip)
         /// </summary>
-        public const string UserInfo = "https://api.bilibili.com/x/space/acc/info?mid=";
+        public const string UserInfoUrl = "https://api.bilibili.com/x/space/acc/info?mid=";
 
 
         /// <summary>
@@ -21,11 +21,19 @@ namespace BDanMuLib
 
 
         /// <summary>
+        /// 获取房间信息
+        /// </summary>
+        public const string RoomInfoUrl = "https://api.live.bilibili.com/room/v1/Room/get_info?room_id=";
+
+        /// <summary>
+        /// 获取礼物列表
+        /// </summary>
+        public const string GiftListUrl = "https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/roomGiftConfig";
+
+
+        /// <summary>
         /// 表情包地址
         /// </summary>
-        /// <remarks>
-        /// 需要登录
-        /// </remarks>
         public const string EmoteUrl = "https://api.bilibili.com/x/emote/setting/panel?business=reply";
     }
 }
