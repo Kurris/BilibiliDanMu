@@ -16,6 +16,11 @@ namespace BDanmuLib.Models
         NONE,
 
         /// <summary>
+        /// 热度
+        /// </summary>
+        HOT,
+
+        /// <summary>
         /// 弹幕信息
         /// </summary>
         DANMU_MSG,
@@ -149,7 +154,7 @@ namespace BDanmuLib.Models
 
 
         USER_TOAST_MSG,
-
+        SUPER_CHAT_MESSAGE_DELETE,
         SUPER_CHAT_MESSAGE_JPN,
 
         POPULAR_RANK_CHANGED,
@@ -162,5 +167,7 @@ namespace BDanmuLib.Models
 
 
         GUARD_HONOR_THOUSAND,
+
+        ROOM_BLOCK_MSG,
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BDanMuLib.Models;
 using BDanMuLib.Utils;
@@ -23,7 +24,16 @@ namespace BDanMuLib.Extensions
             var color = info[2][7].Value<string>();
             //#e5f1f9
 
-            if (info[0][13].Any())
+            //debug
+            if (userName.Equals("kurris", StringComparison.OrdinalIgnoreCase))
+            {
+
+            }
+
+            var extra = JObject.Parse(info[0][15]["extra"].Value<string>());
+
+            //处理点击即可发送的弹幕表情(不显示在文本框中的表情)
+            if (info[0][13].HasValues)
             {
                 var emoteUnique = info[0][13]["emoticon_unique"].Value<string>();
                 var width = info[0][13]["width"].Value<int>();
@@ -38,9 +48,8 @@ namespace BDanMuLib.Extensions
                     height /= 2;
                     width /= 2;
                 }
-                var extra = JObject.Parse(info[0][15]["extra"].Value<string>());
-                var emoticon_unique = extra["emoticon_unique"].Value<string>();
 
+                var emoticon_unique = extra["emoticon_unique"].Value<string>();
                 if (emoticon_unique == emoteUnique)
                 {
                     var url = info[0][13]["url"].Value<string>();
@@ -49,7 +58,8 @@ namespace BDanMuLib.Extensions
             }
             else
             {
-                comment = EmoteUtils.HandleCommentWithEmote(comment);
+                //处理弹幕中的表情一般为[dog]格式
+                comment = EmoteUtils.HandleCommentWithEmote(comment, extra);
             }
 
             var medal = info[3];
@@ -118,6 +128,41 @@ namespace BDanMuLib.Extensions
             _ = ChannelUtils.PublishAsync(superChatInfo.Message);
 
             return superChatInfo;
+        }
+
+        public static WatchedInfo FromWatchedChanged(this JObject jObj)
+        {
+            var watchedNum = jObj["data"]["num"].Value<int>();
+            return new WatchedInfo(watchedNum);
+        }
+
+
+        public static InteractWordInfo FromInteractWord(this JObject jObj)
+        {
+            var data = jObj["data"];
+            var userName = data["uname"].Value<string>();
+
+            return new InteractWordInfo()
+            {
+                UserName = $"{userName} 进入直播间"
+            };
+        }
+
+        public static EntryEffectInfo FromEntryEffect(this JObject jObj)
+        {
+            var data = jObj["data"];
+            var copyWriting = data["copy_writing"].Value<string>();
+
+            copyWriting = copyWriting.Replace("<%", "<span style=\"color:yellow\">");
+            copyWriting = copyWriting.Replace("%>", "</span>");
+
+
+            return new EntryEffectInfo()
+            {
+                Face = data["face"].Value<string>(),
+                Message = copyWriting,
+                BaseImageUrl = data["web_basemap_url"].Value<string>(),
+            };
         }
     }
 }

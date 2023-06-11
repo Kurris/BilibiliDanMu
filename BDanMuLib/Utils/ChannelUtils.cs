@@ -9,7 +9,7 @@ namespace BDanMuLib.Utils
     {
         public static async Task PublishAsync(string message)
         {
-            await BoundedChannel.Value.Writer.WriteAsync(message);
+            await _boundedChannel.Value.Writer.WriteAsync(message);
         }
 
 
@@ -17,7 +17,7 @@ namespace BDanMuLib.Utils
         /// 通过懒加载创建有限容量通道
         /// </summary>
         /// <remarks>默认容量为 1000</remarks>
-        private static readonly Lazy<Channel<string>> BoundedChannel = new(() =>
+        private static readonly Lazy<Channel<string>> _boundedChannel = new(() =>
         {
             //20够sc用了吧...
             var channel = Channel.CreateBounded<string>(new BoundedChannelOptions(20)

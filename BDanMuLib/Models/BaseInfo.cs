@@ -4,6 +4,6 @@ namespace BDanMuLib.Models
 {
     public abstract class BaseInfo
     {
-        public Guid Key { get; } = Guid.NewGuid();
+        public string Key { get; } = Guid.NewGuid().ToString().Replace("-", string.Empty);
     }
 }

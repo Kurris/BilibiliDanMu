@@ -9,10 +9,11 @@
                             <path
                                 d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16Zm0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15Z" />
                         </svg>
-                        <div> : {{ state.hot }}</div>
+                        <div> : {{ state.hot.hot }}</div>
                     </div>
-                    <div style="margin-left: 20px;"> 观看人数: {{ state.watched }}</div>
-                    <div style="margin-left: 20px;" v-if="state.interactWord != null">{{ state.interactWord }}</div>
+                    <div style="margin-left: 20px;"> 观看人数: {{ state.watched.num }}</div>
+                    <div style="margin-left: 20px;" v-if="state.interactWord != null">{{ state.interactWord.userName }}
+                    </div>
                 </div>
             </div>
 
@@ -52,8 +53,8 @@
         </div>
         <div class="entryEffect">
             <transition-group appear tag="ul" name="entry" key="entry">
-                <template v-for="item in state.entryEffects" :key="item.uid">
-                    <EntryEffect :face="item.face" :backgroundUrl="item.web_basemap_url" :msg="item.copy_writing" />
+                <template v-for="item in state.entryEffects" :key="item.key">
+                    <EntryEffect :face="item.face" :backgroundUrl="item.baseImageUrl" :msg="item.message" />
                 </template>
             </transition-group>
         </div>
@@ -139,7 +140,7 @@ const connectRoom = () => {
             state.queue.clear()
             state.entryEffects.splice(0, state.entryEffects.length)
             state.entryEffectQueue.clear()
-            connection.invoke("Start", props.roomId).catch(err => {
+            connection.invoke("Start", Number(props.roomId)).catch(err => {
                 console.log(err)
             })
             return true;
@@ -181,8 +182,7 @@ onBeforeMount(() => {
         if (state.entryEffects.length > 3) {
             state.entryEffects.shift()
         }
-
-    }, 300);
+    }, 1000);
 
     //处理进入房间信息
     setInterval(() => {
@@ -202,33 +202,29 @@ onBeforeMount(() => {
     }, 1000);
 
     //弹幕消息
-    connection.on("addDanmu", p => {
+    connection.on("DANMU_MSG", p => {
         state.queue.enqueue(p)
     })
 
-    connection.on("joinRoom", p => {
+    connection.on("INTERACT_WORD", p => {
         state.interactWord = p
     })
 
-    connection.on("watched", p => {
+    connection.on("WATCHED_CHANGE", p => {
         state.watched = p
     })
 
-    connection.on("hot", p => {
+    connection.on("HOT", p => {
         state.hot = p
     })
 
-    connection.on("sc", p => {
+    connection.on("SUPER_CHAT_MESSAGE", p => {
         state.sc = p
         emits('onSc', p)
     })
 
-    connection.on("entry_effect", p => {
-        let item = JSON.parse(p)
-        item.copy_writing = item.copy_writing.replace('<%', '<span style="color:yellow">')
-        item.copy_writing = item.copy_writing.replace('%>', '</span>')
-
-        state.entryEffectQueue.enqueue(item)
+    connection.on("ENTRY_EFFECT", p => {
+        state.entryEffectQueue.enqueue(p)
     })
     //重连或者首次
     connection.onreconnected(id => {

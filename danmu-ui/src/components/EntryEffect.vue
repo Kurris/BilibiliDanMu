@@ -20,6 +20,23 @@ defineProps<{
     backgroundUrl: string
 }>()
 
+
+// {
+//                 "level": 1,
+//                 "img": "https://i0.hdslb.com/bfs/live/39164ebfdd39db3d284b1221765e7e57f5a49958.png",
+//                 "name": "总督"
+//             },
+//             {
+//                 "level": 2,
+//                 "img": "https://i0.hdslb.com/bfs/live/09937c3beb0608e267a50ac3c7125c3f2d709098.png",
+//                 "name": "提督"
+//             },
+//             {
+//                 "level": 3,
+//                 "img": "https://i0.hdslb.com/bfs/live/80f732943cc3367029df65e267960d56736a82ee.png",
+//                 "name": "舰长"
+//             }
+
 </script>
 <style scoped lang="scss">
 .entry-effect {

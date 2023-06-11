@@ -23,20 +23,17 @@ namespace BDanMuLib
         /// <summary>
         /// 获取房间信息
         /// </summary>
-        public const string GetRoomInfoUrl = "https://api.live.bilibili.com/room/v1/Room/get_info?room_id=";
+        public const string RoomInfoUrl = "https://api.live.bilibili.com/room/v1/Room/get_info?room_id=";
 
         /// <summary>
         /// 获取礼物列表
         /// </summary>
-        public const string GetGiftListUrl = "https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/roomGiftConfig?platform=pc&room_id=6750632&area_parent_id=2&area_id=92&source=live&build=0&global_version=1686301230003";
+        public const string GiftListUrl = "https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/roomGiftConfig";
 
 
         /// <summary>
         /// 表情包地址
         /// </summary>
-        /// <remarks>
-        /// 需要登录
-        /// </remarks>
         public const string EmoteUrl = "https://api.bilibili.com/x/emote/setting/panel?business=reply";
     }
 }

@@ -1,6 +1,6 @@
 <template>
     <el-form :model="form" label-width="120px">
-        <el-form-item label="房间号">
+        <el-form-item label="房间号(支持短号)">
             <div style="display: flex;">
                 <el-input-number v-model="form.roomId" />
                 <el-button @click="connectRoom" type="warning" style="margin-left: 20px;">连接房间</el-button>
@@ -9,7 +9,7 @@
         <el-form-item label="弹幕数显示">
             <el-input-number type="number" v-model="form.danmuCount" />
         </el-form-item>
-        <el-form-item label="弹窗提醒方向">
+        <el-form-item label="舰长提醒方向">
             <el-radio-group v-model="form.entryEffectDirection">
                 <el-radio label="left">左到右</el-radio>
                 <el-radio label="right">右向左</el-radio>
