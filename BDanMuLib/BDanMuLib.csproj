@@ -7,9 +7,11 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="System.Speech" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Microsoft.Extensions.Logging" />
+  </ItemGroup>
   <ItemGroup>
     <None Update="emote.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

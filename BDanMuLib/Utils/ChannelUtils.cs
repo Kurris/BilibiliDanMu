@@ -46,7 +46,8 @@ namespace BDanMuLib.Utils
                 while (await reader.WaitToReadAsync())
                 {
                     if (!reader.TryRead(out var message)) continue;
-                    message.Speak();
+
+                    //todo
                 }
             }, TaskCreationOptions.LongRunning); //LongRunning单独一个线程处理Channel任务
         }

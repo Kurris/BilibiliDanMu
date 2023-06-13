@@ -1,6 +1,4 @@
-﻿
-
-using BDanmuLib.Models;
+﻿using BDanmuLib.Enums;
 using BDanMuLib;
 using BDanMuLib.Extensions;
 using BDanMuLib.Models;
@@ -14,20 +12,22 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-var danmuCore = new DanMuCore();
 
-int roomId = 6750632;
+int roomId = 5558;
 
-await danmuCore.ConnectAsync(roomId, async result =>
+await DanMuCore.ConnectAsync(roomId, async result =>
 {
-    await Console.Out.WriteLineAsync($"{result.Type}:{JsonConvert.SerializeObject(result.Info)}");
+    if (result.Type == MessageType.ENTRY_EFFECT)
+    {
+        await Console.Out.WriteLineAsync($"{result.Type}:{JsonConvert.SerializeObject(result.Info)}");
+    }
 });
 
 
 //"突出一个三十分钟前没这个人".Speak();
 
 
-//var roomInfo = RequestUtils.GetRoomInfoAsync(roomId).Result;
+//var roomidoomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
 //var gifts = await RequestUtils.GetGiftListAsync(roomId);
 //var giftInfos = GiftUtils.GiftInfos;
 

@@ -8,6 +8,7 @@ namespace DanMuServer
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHostedService<DanMuService>();
             services.AddSignalR();
             services.AddCors(options =>
             {

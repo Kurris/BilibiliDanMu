@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BDanMuLib.Emuns;
 using BDanMuLib.Models;
 using BDanMuLib.Utils;
 using Newtonsoft.Json.Linq;
@@ -22,72 +23,41 @@ namespace BDanMuLib.Extensions
             var comment = info[1].Value<string>();
             var top3 = info[4][4].Value<int>();
             var color = info[2][7].Value<string>();
-            //#e5f1f9
+            var uniqueComment = info[0][13];
+            var extra = JObject.Parse(info[0][15]["extra"].Value<string>());
+
+            if (!string.IsNullOrEmpty(color) && !new[] { "#00D1F1", "#E17AFF" }.Contains(color))
+            {
+                Console.WriteLine(userName + " : " + color);
+            }
 
             //debug
             if (userName.Equals("kurris", StringComparison.OrdinalIgnoreCase))
             {
-
             }
 
-            var extra = JObject.Parse(info[0][15]["extra"].Value<string>());
-
-            //处理点击即可发送的弹幕表情(不显示在文本框中的表情)
-            if (info[0][13].HasValues)
-            {
-                var emoteUnique = info[0][13]["emoticon_unique"].Value<string>();
-                var width = info[0][13]["width"].Value<int>();
-                var height = info[0][13]["height"].Value<int>();
-                if (width == height)
-                {
-                    width = 40;
-                    height = 40;
-                }
-                else
-                {
-                    height /= 2;
-                    width /= 2;
-                }
-
-                var emoticon_unique = extra["emoticon_unique"].Value<string>();
-                if (emoticon_unique == emoteUnique)
-                {
-                    var url = info[0][13]["url"].Value<string>();
-                    comment = "<img referrer=\"no-referrer\" height=\"" + height + "\" width=\"" + width + "\" src=\"" + url + "\"/>";
-                }
-            }
-            else
-            {
-                //处理弹幕中的表情一般为[dog]格式
-                comment = EmoteUtils.HandleCommentWithEmote(comment, extra);
-            }
+            //表情处理
+            comment = uniqueComment.HasValues
+                ? comment = EmoteUtils.HandleCommentEmoteUnique(uniqueComment, extra)
+                : comment = EmoteUtils.HandleCommentWithEmote(comment, extra);
 
             var medal = info[3];
             var hasMedal = medal.Any();
-            string medalName = null;
-            int level = 0;
-            if (hasMedal)
-            {
-                medalName = medal[1].Value<string>();
-                level = medal[0].Value<int>();
-            }
-
-            string faceUrl = await RequestUtils.GetUserAvatarFromSpaceHtmlAsync(mid);
 
             return new BarrageInfo()
             {
                 Mid = mid,
-                FaceUrl = faceUrl,
+                FaceUrl = await AvatarUtils.Get(mid),
                 Comment = comment,
                 IsAdmin = isAdmin,
                 Time = time,
                 UserName = userName,
                 AudRank = audRank,
                 HasMedal = hasMedal,
-                MedalName = medalName,
-                MedalLevel = level,
+                MedalName = hasMedal ? medal[1].Value<string>() : string.Empty,
+                MedalLevel = hasMedal ? medal[0].Value<int>() : 0,
                 Top3 = top3,
-                Color = color,
+                Guard = GuardType.CheckGuardByColor(color),
             };
         }
 
@@ -123,9 +93,10 @@ namespace BDanMuLib.Extensions
             };
 
 
+            //var speakText = string.Concat(superChatInfo.UserName, "发送了", superChatInfo.Num, "条", superChatInfo.GiftName, ",", superChatInfo.Message);
             //sc channel speak
-            _ = ChannelUtils.PublishAsync(string.Concat(superChatInfo.UserName, "发送了", superChatInfo.Num, "条", superChatInfo.GiftName));
-            _ = ChannelUtils.PublishAsync(superChatInfo.Message);
+            //windows only
+            //_ = ChannelUtils.PublishAsync();
 
             return superChatInfo;
         }
@@ -162,6 +133,29 @@ namespace BDanMuLib.Extensions
                 Face = data["face"].Value<string>(),
                 Message = copyWriting,
                 BaseImageUrl = data["web_basemap_url"].Value<string>(),
+            };
+        }
+
+        public static SendGiftInfo FromSendGift(this JObject jObj)
+        {
+
+            var data = jObj["data"];
+            var userName = data["uname"].Value<string>();
+            var action = data["action"].Value<string>();
+            var giftId = data["giftId"].Value<int>();
+            var giftName = data["giftName"].Value<string>();
+            var price = data["price"].Value<int>();
+            var num = data["num"].Value<int>();
+
+            var gifUrl = GiftUtils.GetGifUrl(giftId);
+
+            return new SendGiftInfo()
+            {
+                From = userName,
+                GiftName = giftName,
+                Price = price,
+                Num = num,
+                GifUrl = gifUrl
             };
         }
     }

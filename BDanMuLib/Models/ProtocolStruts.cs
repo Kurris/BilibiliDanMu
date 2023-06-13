@@ -1,6 +1,6 @@
 ﻿using System;
 using BDanMuLib.Converters;
-using BDanmuLib.Models;
+using BDanmuLib.Enums;
 
 namespace BDanMuLib.Models
 {
@@ -42,7 +42,7 @@ namespace BDanMuLib.Models
         internal static ProtocolStruts FromBuffer(byte[] buffer)
         {
             if (buffer.Length < 16) throw new ArgumentException();
-            
+
             return new ProtocolStruts
             {
                 PacketLength = EndianBitConverter.BigEndian.ToInt32(buffer, 0),

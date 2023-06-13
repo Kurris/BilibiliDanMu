@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BDanmuLib.Models
+namespace BDanmuLib.Enums
 {
     /// <summary>
     /// 具体命令
@@ -148,12 +148,16 @@ namespace BDanmuLib.Models
         GUARD_BUY,
 
         /// <summary>
-        /// SC
+        /// sc
         /// </summary>
         SUPER_CHAT_MESSAGE,
 
 
         USER_TOAST_MSG,
+
+        /// <summary>
+        /// sc 删除
+        /// </summary>
         SUPER_CHAT_MESSAGE_DELETE,
         SUPER_CHAT_MESSAGE_JPN,
 
@@ -169,5 +173,11 @@ namespace BDanmuLib.Models
         GUARD_HONOR_THOUSAND,
 
         ROOM_BLOCK_MSG,
+
+        WIDGET_GIFT_STAR_PROCESS,
+
+        TRADING_SCORE,
+
+        VOICE_CHAT_UPDATE,
     }
 }

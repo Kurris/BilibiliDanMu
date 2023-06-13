@@ -1,4 +1,5 @@
 ﻿using System;
+using BDanMuLib.Emuns;
 
 namespace BDanMuLib.Models
 {
@@ -15,7 +16,7 @@ namespace BDanMuLib.Models
         public string MedalName { get; set; }
         public int MedalLevel { get; set; }
         public int Top3 { get; set; }
-        public string Color { get; set; }
+        public GuardType Guard { get; set; }
 
     }
 }

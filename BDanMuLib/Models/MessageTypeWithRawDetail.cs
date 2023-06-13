@@ -1,4 +1,4 @@
-﻿using BDanmuLib.Models;
+﻿using BDanmuLib.Enums;
 
 namespace BDanMuLib.Models
 {

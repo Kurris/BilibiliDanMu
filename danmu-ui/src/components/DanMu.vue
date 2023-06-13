@@ -1,7 +1,8 @@
 <template>
     <div id="danmu">
+
         <div class="danmu">
-            <div class=" header">
+            <div class="header">
                 <div style="display: flex;">
                     <div style="display: flex;">
                         <svg style="color: red;" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -12,13 +13,14 @@
                         <div> : {{ state.hot.hot }}</div>
                     </div>
                     <div style="margin-left: 20px;"> 观看人数: {{ state.watched.num }}</div>
-                    <div style="margin-left: 20px;" v-if="state.interactWord != null">{{ state.interactWord.userName }}
+                    <div class="interactWord" v-if="state.interactWord != null">{{
+                        state.interactWord.userName }}
                     </div>
                 </div>
             </div>
 
             <div class="rows">
-                <transition-group appear tag="ul" name="danmu" key="danmu">
+                <transition-group appear tag="ul" name="danmu">
                     <template v-for="item in state.comments.filter(x => x.mid != '')" :key="item.key">
                         <div :class="{ 'message': true }">
                             <div class="avatar-medal-name ">
@@ -41,24 +43,32 @@
                                 <div class="name">{{ item.userName }}</div>
                             </div>
 
-                            <div v-html="item.comment" :class="{ 'comment': true, 'comment-bg-color': item.color != '' }">
-                            </div>
+                            <div v-html="item.comment" class="comment" :style="{ 'color': item.guard.fontColor }" />
                         </div>
                     </template>
                 </transition-group>
             </div>
         </div>
-        <div class="join-room">
 
-        </div>
+
         <div class="entryEffect">
-            <transition-group appear tag="ul" name="entry" key="entry">
+            <transition-group appear tag="ul" name="entry">
                 <template v-for="item in state.entryEffects" :key="item.key">
                     <EntryEffect :face="item.face" :backgroundUrl="item.baseImageUrl" :msg="item.message" />
                 </template>
             </transition-group>
         </div>
 
+
+    </div>
+
+    <div class="gift">
+        <template v-for="item in state.gifts" :key="item.key">
+            <el-image style="width: 100px; height: 100px" :src="item.gifUrl" fit='fill' />
+            <div>
+                {{ item.from }} 投喂 {{ item.giftName }} x{{ item.num }}
+            </div>
+        </template>
     </div>
 </template>
 <script setup lang="ts">
@@ -66,6 +76,7 @@ import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr'
 import Queue from '../utils/queue.js'
 import EntryEffect from './EntryEffect.vue'
+
 
 
 const props = defineProps<{
@@ -76,14 +87,14 @@ const props = defineProps<{
     showMedal: boolean
 }>()
 
-const direction = ref('translateX(-230px)');
+const direction = ref('translateX(-130px)');
 
 
 watch(() => props.entryEffectDirection, (newVal) => {
     if (newVal == 'left') {
-        direction.value = 'translateX(-230px)'
+        direction.value = 'translateX(-130px)'
     } else if (newVal == 'right') {
-        direction.value = 'translateX(230px)'
+        direction.value = 'translateX(130px)'
     } else if (newVal == 'bottom') {
         direction.value = 'translateY(130px)'
     }
@@ -101,26 +112,40 @@ const count = ref(7);
 
 
 const state = reactive({
-    hot: 0,
-    watched: 0,
-    interactWord: '',
+    hot: {
+        hot: 0
+    },
+    watched: {
+        num: 0
+    },
+    interactWord: {
+        userName: ''
+    },
     comments: [{
         mid: '',
         faceUrl: '',
         comment: '',
         isAdmin: false,
-        time: new Date(),
         userName: '',
         audRank: 0,
         hasMedal: false,
         medalName: '',
         medalLevel: 0,
         top3: 0,
-        color: '',
+        time: new Date(),
+        guard: {
+            level: 0,
+            name: '',
+            frameUrl: '',
+            fontColor: '',
+            fansMedalIconUrl: '',
+            starFrameUrl: ''
+        },
         key: '',
     }],
+    gifts: [
+    ],
     tempData: [],
-    time: new Date(),
     queue: new Queue(),
     entryEffects: [],
     entryEffectQueue: new Queue(),
@@ -140,6 +165,8 @@ const connectRoom = () => {
             state.queue.clear()
             state.entryEffects.splice(0, state.entryEffects.length)
             state.entryEffectQueue.clear()
+
+            //signalR start
             connection.invoke("Start", Number(props.roomId)).catch(err => {
                 console.log(err)
             })
@@ -163,14 +190,16 @@ onBeforeMount(() => {
         }
 
         state.comments.push(item)
-        state.time = new Date()
         if (state.comments.length > props.danmuCount) {
-            state.comments.shift()
+            const i = state.comments.length - props.danmuCount
+            for (let index = 0; index < i; index++) {
+                state.comments.shift()
+            }
         }
 
     }, 300);
 
-    //舰长
+    //舰长进去
     setInterval(() => {
         var item = state.entryEffectQueue.dequeue();
         if (item == null) {
@@ -182,12 +211,7 @@ onBeforeMount(() => {
         if (state.entryEffects.length > 3) {
             state.entryEffects.shift()
         }
-    }, 1000);
-
-    //处理进入房间信息
-    setInterval(() => {
-        state.interactWord = null
-    }, 3000);
+    }, 300);
 
 
     setInterval(() => {
@@ -200,6 +224,11 @@ onBeforeMount(() => {
         }
 
     }, 1000);
+
+    //处理进入房间信息
+    setInterval(() => {
+        state.interactWord = null
+    }, 3000);
 
     //弹幕消息
     connection.on("DANMU_MSG", p => {
@@ -226,6 +255,19 @@ onBeforeMount(() => {
     connection.on("ENTRY_EFFECT", p => {
         state.entryEffectQueue.enqueue(p)
     })
+
+    connection.on("SEND_GIFT", p => {
+        state.gifts.shift()
+        state.gifts.push(p)
+    })
+
+    connection.on("READ_SC", p => {
+        let u = new SpeechSynthesisUtterance(p)
+        u.lang = 'zh-CN'
+        u.rate = 0.8
+        window.speechSynthesis.speak(u)
+    })
+
     //重连或者首次
     connection.onreconnected(id => {
         console.log(id);
@@ -234,27 +276,32 @@ onBeforeMount(() => {
     //无法连接
     connection.onclose(err => {
         console.log(err);
-
     })
     connection.start();
+
+    // connection.start().then(() => {
+    //     connectRoom()
+    // })
 
 })
 
 </script>
 <style scoped lang="scss">
 .danmu {
-    min-width: 30vh;
-    text-overflow: ellipsis;
 
     .header {
-
+        white-space: nowrap;
         margin-bottom: 20px;
 
         text-shadow: 0 0 2px hsl(40, 28.57%, 28.82%), 0 0 2px hsl(40, 28.57%, 28.82%), 0 0 2px hsl(40, 28.57%, 28.82%);
-        // /*多个叠加*/
         font-size: 12.5px;
         font-weight: bolder;
         color: white;
+
+        .interactWord {
+            margin-left: 20px;
+            text-overflow: ellipsis;
+        }
     }
 
     .rows {
@@ -313,12 +360,8 @@ onBeforeMount(() => {
             }
 
             .comment {
-
-                display: flex;
-                align-items: center;
-
+                vertical-align: middle;
                 text-shadow: 0 0 2px hsl(40, 28.57%, 28.82%), 0 0 2px hsl(40, 28.57%, 28.82%), 0 0 2px hsl(40, 28.57%, 28.82%);
-                // /*多个叠加*/
                 font-size: 14.5px;
                 font-weight: bolder;
             }
@@ -326,50 +369,42 @@ onBeforeMount(() => {
     }
 }
 
-.comment-bg-color {
-    background-color: rgba($color: #a5cbfc, $alpha: 0.4);
-
-    margin: {
-        left: 5px;
-    }
-
-    border-radius: 10%;
-}
-
 .entryEffect {
     position: absolute;
-    top: 20px;
-    left: 0;
+    top: 50px;
 }
 
+
 .danmu-move {
-    transition: all 0.5s ease;
+    transition: all 0.3s ease;
 }
 
 .danmu-enter-active,
 .danmu-leave-active {
     position: absolute;
-    transition: all 0.5s ease;
+    transition: all 0.3s ease;
 }
 
 .danmu-enter-from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateX(-30px);
 }
 
 .danmu-leave-to {
     opacity: 0;
-    transform: translateY(-30px);
+    transform: translateX(-30px);
 }
 
 
+
 .entry-move {
-    transition: all 0.5s ease;
+    transition: all 0.3s ease;
 }
 
 .entry-enter-active,
 .entry-leave-active {
-    transition: all 2s ease;
+    position: absolute;
+    transition: all 0.3s ease;
 }
 
 .entry-enter-from {
@@ -382,12 +417,31 @@ onBeforeMount(() => {
     transform: v-bind(direction);
 }
 
-
 li {
     list-style: none;
 }
 
 ul {
     padding: 0 0 0 0;
+}
+
+
+.gift {
+    position: fixed;
+    left: 50%;
+    transform: translate(-50%);
+    top: 50px;
+    color: #ae93ea;
+    background-color: transparent;
+    text-align: center;
+
+    letter-spacing: 0.2rem;
+    font-size: 1rem;
+
+    background-image: -webkit-linear-gradient(left, #147B96, #E6D205 25%, #147B96 50%, #E6D205 75%, #147B96);
+    -webkit-text-fill-color: transparent;
+    font-weight: bolder;
+    -webkit-background-clip: text;
+    -webkit-background-size: 200% 100%;
 }
 </style>

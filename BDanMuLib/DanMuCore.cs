@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using BDanMuLib.Converters;
-using BDanmuLib.Models;
+using BDanmuLib.Enums;
 using BDanMuLib.Models;
 using Newtonsoft.Json.Linq;
 using BDanMuLib.Extensions;
@@ -39,7 +39,10 @@ namespace BDanMuLib
         public static async Task ConnectAsync(int roomId, Action<Result> onReceive = null, CancellationToken cancellation = default)
         {
             if (_stream != null) await DisconnectAsync();
-
+            cancellation.Register(async () =>
+            {
+                await DisconnectAsync();
+            });
 
             //房间,直播ip和port信息
             var roomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
@@ -47,7 +50,7 @@ namespace BDanMuLib
             var ipAddresses = await Dns.GetHostAddressesAsync(broadCastInfo.Host, cancellation);
 
             var tcpClient = new TcpClient();
-            await tcpClient.ConnectAsync(ipAddresses[new Random().Next(ipAddresses.Length)], broadCastInfo.Port);
+            await tcpClient.ConnectAsync(broadCastInfo.Host, broadCastInfo.Port, cancellation);
             if (!tcpClient.Connected)
             {
                 throw new SocketException((int)SocketError.ConnectionRefused);
@@ -58,15 +61,29 @@ namespace BDanMuLib
             await _stream.SendJoinRoomAsync(roomInfo.RoomId, broadCastInfo.Token, cancellation);
             _ = _stream.SendHeartBeatLoopAsync(cancellation);
 
-            await Console.Out.WriteLineAsync($"connect room successfully: {roomId}");
-            await ReceiveRawMessageLoopAsync().ForEachAwaitAsync(async (x, _) =>
-             {
-                 var result = await HandleRawMessageAsync(x);
-                 if (result.Type != MessageType.NONE)
-                 {
-                     onReceive?.Invoke(result);
-                 }
-             });
+            await Console.Out.WriteLineAsync($"Connect room:{roomId} successfully");
+
+            try
+            {
+                await ReceiveRawMessageLoopAsync(cancellation).ForEachAwaitAsync(async (x, _) =>
+                {
+                    var result = await HandleRawMessageAsync(x);
+                    if (result.Type != MessageType.NONE)
+                    {
+                        onReceive?.Invoke(result);
+                        onReceive?.Invoke(new Result(MessageType.SUPER_CHAT_MESSAGE, new SuperChatInfo()));
+                    }
+
+                }, cancellation);
+            }
+            catch (TaskCanceledException)
+            {
+                await Console.Out.WriteLineAsync($"Task Canceled");
+            }
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync(ex.Message);
+            }
         }
 
 
@@ -107,7 +124,7 @@ namespace BDanMuLib
                     await using var deflate = new DeflateStream(ms, CompressionMode.Decompress);
                     var headerBuffer = new byte[length];
 
-                    while (true)
+                    while (!cancellation.IsCancellationRequested)
                     {
                         if (!await deflate.ReadBAsync(headerBuffer, 0, length, cancellation))
                         {
@@ -169,37 +186,22 @@ namespace BDanMuLib
         {
             if (info.Type == MessageType.HOT)
             {
-                return new Result(info.Type, new HotInfo() { Hot = info.Raw });
+                return new Result(info.Type, new HotInfo(info.Raw));
             }
 
             var jObj = JObject.Parse(info.Raw);
 
-            switch (info.Type)
+            return info.Type switch
             {
-                case MessageType.DANMU_MSG:
-                    return new Result(info.Type, await jObj.FromDanMuMsgAsync());
-                case MessageType.SEND_GIFT:
-                    {
-                        var dataJToken = jObj["data"];
-                        var userName = dataJToken["uname"].Value<string>();
-                        var action = dataJToken["action"].Value<string>();
-                        var giftName = dataJToken["giftName"].Value<string>();
-                        var num = dataJToken["num"].Value<int>();
-                    }
-                    break;
-                case MessageType.ENTRY_EFFECT:
-                    return new Result(info.Type, jObj.FromEntryEffect());
-                case MessageType.SUPER_CHAT_MESSAGE:
-                    return new Result(info.Type, jObj.FromSuperChat());
-                case MessageType.INTERACT_WORD:
-                    return new Result(info.Type, jObj.FromInteractWord());
-                case MessageType.WATCHED_CHANGE:
-                    return new Result(info.Type, jObj.FromWatchedChanged());
-            }
-
-            return Result.Default;
+                MessageType.DANMU_MSG => new Result(info.Type, await jObj.FromDanMuMsgAsync()),
+                MessageType.SEND_GIFT => new Result(info.Type, jObj.FromSendGift()),
+                MessageType.ENTRY_EFFECT => new Result(info.Type, jObj.FromEntryEffect()),
+                MessageType.SUPER_CHAT_MESSAGE => new Result(info.Type, jObj.FromSuperChat()),
+                MessageType.INTERACT_WORD => new Result(info.Type, jObj.FromInteractWord()),
+                MessageType.WATCHED_CHANGE => new Result(info.Type, jObj.FromWatchedChanged()),
+                _ => Result.Default
+            };
         }
-
 
         /// <summary>
         /// 断开连接

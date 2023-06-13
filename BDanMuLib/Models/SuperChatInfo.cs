@@ -18,11 +18,11 @@ namespace BDanMuLib.Models
         public int MedalLevel { get; set; }
 
 
-      
         public string BackgroundImage { get; set; }
         public string BackgroundPriceColor { get; set; }
         public string BackgroundBottomColor { get; set; }
         public string MessageFontColor { get; set; }
+
 
         public int Price { get; set; }
         public string Message { get; set; }
@@ -30,5 +30,8 @@ namespace BDanMuLib.Models
 
         public int GiftId { get; set; }
         public string GiftName { get; set; }
+
+
+        public string SpeakText => string.Concat(UserName, "发送了", Num, "条", GiftName, ",", Message);
     }
 }

@@ -58,5 +58,16 @@ namespace BDanMuLib.Utils
         });
 
         public static List<GiftInfo> GiftInfos => _giftInfos.Value;
+
+        private static readonly Lazy<Dictionary<int, GiftInfo>> _dicGiftInfos = new Lazy<Dictionary<int, GiftInfo>>(() =>
+        {
+            return GiftInfos.ToDictionary(x => x.Id, x => x);
+        });
+
+        public static string GetGifUrl(int id)
+        {
+            var exists = _dicGiftInfos.Value.TryGetValue(id, out var info);
+            return exists ? info.Gif : string.Empty;
+        }
     }
 }

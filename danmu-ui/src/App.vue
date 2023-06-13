@@ -1,55 +1,43 @@
 <template>
   <div id="danmu-app">
-    <div id="title" class="draggable" v-if="currentShowWindow">
-      <div class="operator">
-        <el-icon id="setMini" class="noDraggable">
-          <SemiSelect />
-        </el-icon>
-        <el-icon id="setMax" class="noDraggable">
-          <FullScreen />
-        </el-icon>
-        <el-icon id="setToTray" class="noDraggable">
-          <Close />
-        </el-icon>
-      </div>
-
-    </div>
-
+    <div class="title electron-draggable" />
     <div class="main-container" v-show="currentShowWindow">
+      <v-d-r :min-width="200" :w="380" :h="550" :x="200" :y="200" @dragging="resize" @resize="resize"
+        :is-resizable="false" :parent-limitation="false" :draggable="true" classNameDragging="dragging-class">
+        <el-icon class="setting-btn" @click="isDrawer = !isDrawer">
+          <Setting />
+        </el-icon>
 
+        <DanMu :room-id="currentRoomId" ref="danmu" :danmu-count="currentDanmuCount"
+          :entry-effect-direction="currentEntryEffectDirection" :show-avatar="currentShowAvatar"
+          :show-medal="currentShowMedal" @on-sc="sc" />
+      </v-d-r>
     </div>
 
     <el-drawer v-model="isDrawer" title="设置面板" direction="rtl" :show-close="false">
       <DmSetting @connect-room="connectRoom" @set-raise="setRaise" :is-drawer="isDrawer" />
     </el-drawer>
-
-    <VueDragResize min-width="200" :w="380" :h="550" @dragging="resize" @resize="resize" style="margin-top: 65px;">
-      <el-icon class="setting-btn" @click="isDrawer = !isDrawer">
-        <Setting />
-      </el-icon>
-      <DanMu :room-id="currentRoomId" ref="danmu" :danmu-count="currentDanmuCount"
-        :entry-effect-direction="currentEntryEffectDirection" :show-avatar="currentShowAvatar"
-        :show-medal="currentShowMedal" @on-sc="sc" />
-    </VueDragResize>
   </div>
 </template>
 <script setup lang="ts">
 
-import { nextTick, ref, reactive, h } from 'vue';
+import { nextTick, ref, reactive, h, onBeforeMount } from 'vue';
 import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
 import { ElNotification } from 'element-plus'
-import VueDragResize from 'vue-drag-resize'
-import { registerTitleEvent } from '../electron/render.js'
+import Queue from './utils/queue.ts'
+
+
 
 const currentRoomId = ref<number>();
 const isDrawer = ref(false)
 const danmu = ref<InstanceType<typeof DanMu>>()
-const currentDanmuCount = ref(15)
+const currentDanmuCount = ref(10)
 const currentEntryEffectDirection = ref('left')
 const currentShowAvatar = ref(true)
 const currentShowMedal = ref(true)
 const currentShowWindow = ref(true)
+const queue = new Queue<string>();
 
 
 const connectRoom = (roomId: number) => {
@@ -80,17 +68,19 @@ const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: 
   currentShowAvatar.value = showAvatar;
   currentShowMedal.value = showMedal
   currentShowWindow.value = showWindow
-
-  if (currentShowWindow.value) {
-    nextTick(() => {
-      registerTitleEvent()
-    })
-  }
 }
 
+//用户自定义处理css
+// const testCustomCss = ref(`.main-container {
+//    background-color: black;
+//    left:60px;
+// }`)
+
+// document.getElementById('user-customer').innerHTML = testCustomCss.value;
+
+
 const sc = (data) => {
-  // https://i0.hdslb.com/bfs/live/09937c3beb0608e267a50ac3c7125c3f2d709098.png
-  //  <img   width="35" height="35" style="position:absolute;"/>
+
   ElNotification({
     dangerouslyUseHTMLString: true,
     duration: 1000 * 120,
@@ -125,8 +115,8 @@ const sc = (data) => {
     `
     }),
   })
-}
 
+}
 
 
 </script>
@@ -137,8 +127,7 @@ const sc = (data) => {
 $radius : 1.2%;
 
 
-#title {
-  background-color: #22252a;
+.title {
   color: #afadad;
   height: 60px;
   position: absolute;
@@ -167,15 +156,16 @@ $radius : 1.2%;
 }
 
 
+.dragging-class {
+  background-color: aqua;
+}
+
 .main-container {
   position: absolute;
   width: 100%;
   height: calc(100vh - 60px);
   top: 60px;
-  left: 0;
-  border: 2px solid #1f2228;
-  border-radius: 0% 0% $radius $radius;
-  background-color: black;
+  // background-color: black;
 }
 
 .setting-btn {

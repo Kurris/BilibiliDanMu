@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BDanmuLib.Models
+namespace BDanmuLib.Enums
 {
     /// <summary>
     /// 操作码
