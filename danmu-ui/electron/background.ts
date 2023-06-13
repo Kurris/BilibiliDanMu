@@ -67,12 +67,12 @@ const createWindow = () => {
     show: false,
     // transparent: true,
     frame: false,
-    titleBarStyle: "hidden",
+    titleBarStyle: "hidden",//customButtonsOnHover 可以自定义缩小,放大,关闭按钮
     titleBarOverlay: {
-      // color: 'e17aff',
-      // symbolColor
-      // height: 50
-    }, // 需要设置titleBarStyle才生效
+      color: '#ffffff',
+      // symbolColor 符号颜色
+      height: 5
+    }, // 需要设置titleBarStyle才生效, mac设置:true , windows使用该对象即可
     resizable: true,
     height: 850,
     width: 1380,

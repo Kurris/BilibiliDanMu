@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using BDanMuLib.Emuns;
+using BDanMuLib.Enums;
 using BDanMuLib.Models;
 using BDanMuLib.Utils;
 using Newtonsoft.Json.Linq;
@@ -89,7 +90,7 @@ namespace BDanMuLib.Extensions
 
                 Message = info["message"].Value<string>(),
                 MessageFontColor = info["message_font_color"].Value<string>(),
-                Price = info["price"].Value<int>() * 10,
+                Price = info["price"].Value<int>(),
             };
 
 
@@ -140,6 +141,7 @@ namespace BDanMuLib.Extensions
         {
 
             var data = jObj["data"];
+            var uid = data["uid"].Value<long>();
             var userName = data["uname"].Value<string>();
             var action = data["action"].Value<string>();
             var giftId = data["giftId"].Value<int>();
@@ -147,15 +149,71 @@ namespace BDanMuLib.Extensions
             var price = data["price"].Value<int>();
             var num = data["num"].Value<int>();
 
+
+            var coinType = CoinType.CheckCoinType(data["coin_type"].Value<string>());
             var gifUrl = GiftUtils.GetGifUrl(giftId);
 
             return new SendGiftInfo()
             {
+                Uid = uid,
                 From = userName,
                 GiftName = giftName,
                 Price = price,
                 Num = num,
-                GifUrl = gifUrl
+                GifUrl = gifUrl,
+                CoinType = coinType
+            };
+        }
+
+        public static GuardBuyInfo FromGuardBuy(this JObject jObj)
+        {
+
+            var data = jObj["data"];
+
+
+            return new GuardBuyInfo()
+            {
+                Uid = data["uid"].Value<long>(),
+                UserName = data["username"].Value<string>(),
+                GiftName = data["gift_name"].Value<string>(),
+                Price = data["price"].Value<int>(),
+                Num = data["num"].Value<int>(),
+                GiftId = data["gift_id"].Value<int>(),
+                GuardType = GuardType.CheckGuardByLevel(data[key: "guard_level"].Value<int>())
+            };
+        }
+
+        public static UserToastMsgInfo FromUserToastMsg(this JObject jObj)
+        {
+            //price为实际金瓜子标价，即rmb*1000
+
+            var data = jObj["data"];
+
+            var msg = data["toast_msg"].Value<string>();
+            var userName = data["username"].Value<string>();
+            var unit = data["unit"].Value<string>();
+            var uid = data["uid"].Value<long>();
+            var roleName = data["role_name"].Value<string>();
+            var num = data["num"].Value<int>();
+            var guardType = data["guard_level"].Value<int>();
+            var effectId = data["effect_id"].Value<int>();
+            var targetGuardCount = data["target_guard_count"].Value<int>();
+            var price = data["price"].Value<int>();
+            var priceString = (price / 1000) * num + " CNY";
+
+            return new UserToastMsgInfo
+            {
+                Uid = uid,
+                UserName = userName,
+                Unit = unit,
+                RoleName = roleName,
+                Num = num,
+                GuardType = GuardType.CheckGuardByLevel(guardType),
+                EffectId = effectId,
+                TargetGuardCount = targetGuardCount,
+                PriceString = priceString,
+                Price = price,
+                Message = msg,
             };
         }
     }
