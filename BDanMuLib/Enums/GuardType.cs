@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 using BDanMuLib.Emuns;
 using Microsoft.VisualBasic;
 
@@ -60,6 +62,13 @@ namespace BDanMuLib.Emuns
             if (color.Equals("#00D1F1")) return GuardType.舰长;
             if (color.Equals("#E17AFF")) return GuardType.提督;
             return GuardType.总督; // 自定义的#F82818,没有总督大哥的数据
+        }
+
+        public static GuardType CheckGuardByLevel(int level)
+        {
+            return typeof(GuardType).GetProperties(BindingFlags.Static | BindingFlags.Public)
+                .Select(x => x.GetValue(null) as GuardType)
+                .FirstOrDefault(x => x.Level == level);
         }
     }
 }

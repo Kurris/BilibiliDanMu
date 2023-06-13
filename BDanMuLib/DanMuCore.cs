@@ -36,7 +36,7 @@ namespace BDanMuLib
         /// <param name="onReceive">消息处理方法</param>
         /// <returns></returns>
         /// <exception cref="SocketException"></exception>
-        public static async Task ConnectAsync(int roomId, Action<Result> onReceive = null, CancellationToken cancellation = default)
+        public static async Task ConnectAsync(int roomId, Action<Result> onReceive, CancellationToken cancellation = default)
         {
             if (_stream != null) await DisconnectAsync();
             cancellation.Register(async () =>
@@ -70,8 +70,7 @@ namespace BDanMuLib
                     var result = await HandleRawMessageAsync(x);
                     if (result.Type != MessageType.NONE)
                     {
-                        onReceive?.Invoke(result);
-                        onReceive?.Invoke(new Result(MessageType.SUPER_CHAT_MESSAGE, new SuperChatInfo()));
+                        onReceive.Invoke(result);
                     }
 
                 }, cancellation);
@@ -82,7 +81,8 @@ namespace BDanMuLib
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync(ex.Message);
+                //await Console.Out.WriteLineAsync(ex.Message);
+                throw ex;
             }
         }
 
@@ -199,6 +199,8 @@ namespace BDanMuLib
                 MessageType.SUPER_CHAT_MESSAGE => new Result(info.Type, jObj.FromSuperChat()),
                 MessageType.INTERACT_WORD => new Result(info.Type, jObj.FromInteractWord()),
                 MessageType.WATCHED_CHANGE => new Result(info.Type, jObj.FromWatchedChanged()),
+                MessageType.GUARD_BUY => new Result(info.Type, jObj.FromWatchedChanged()),
+                MessageType.USER_TOAST_MSG => new Result(info.Type, jObj.FromUserToastMsg()),
                 _ => Result.Default
             };
         }

@@ -81,6 +81,7 @@ namespace BDanMuLib.Utils
 
             return new RoomInfo()
             {
+                Uid = data["uid"].Value<long>(),
                 RoomId = data["room_id"].Value<int>(),
                 ShortRoomId = data["short_id"].Value<int>(),
                 Title = data["title"].Value<string>(),
@@ -91,6 +92,10 @@ namespace BDanMuLib.Utils
                 AreaId = data["area_id"].Value<int>(),
                 AreaName = data["area_name"].Value<string>(),
                 LiveStatus = data["live_status"].Value<int>(),
+                LiveTime = data["live_time"].Value<DateTime>(),
+                BackgroundUrl = data["background"].Value<string>(),
+                KeyFrameUrl = data["keyframe"].Value<string>(),
+                UserCoverUrl = data["user_cover"].Value<string>(),
             };
         }
 
@@ -170,5 +175,52 @@ namespace BDanMuLib.Utils
 
         }
 
+
+
+
+        public static async Task GetBroadCastStreamUrlAsync(int roomId)
+        {
+            var roomInfo = await GetRoomInfoAsync(roomId);
+
+            using var content = new FormUrlEncodedContent(new Dictionary<string, string>()
+            {
+                ["cid"] = roomInfo.RoomId.ToString(),
+                ["platform"] = "web", //h5:hls方式  , web:http-flv方式
+                ["quality"] = "4", //2.流畅 3.高清 4.原画
+                                   //["qn"] = 80：流畅 150：高清 400：蓝光 10000：原画 20000：4K 30000：杜比
+            });
+
+            var response = await _client.GetStringAsync(ApiUrls.BroadCastStreamUrl + "?" + await content.ReadAsStringAsync());
+            var jObj = JObject.Parse(response);
+            var urlInfos = jObj["data"]["durl"];
+
+            urlInfos.ToList().ForEach(x =>
+            {
+                var url = x["url"].Value<string>();
+            });
+        }
+
+        public static async Task GetStreamerInfoAsync(long mid)
+        {
+            using var content = new FormUrlEncodedContent(new Dictionary<string, string>()
+            {
+                ["uid"] = mid.ToString(),
+            });
+
+            var response = await _client.GetStringAsync(ApiUrls.StreamerInfoUrl + "?" + await content.ReadAsStringAsync());
+            var jObj = JObject.Parse(response);
+            var data = jObj["data"];
+
+            var info = data["info"];
+
+            var userName = info["uname"].Value<string>();
+            var face = info["face"].Value<string>();
+
+            var level = data["exp"]["master_level"]["level"].Value<int>();
+            var followerNum = data["follower_num"].Value<int>();
+
+
+            var news = data["room_news"]["content"].Value<string>();
+        }
     }
 }

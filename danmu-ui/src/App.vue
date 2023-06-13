@@ -1,9 +1,22 @@
 <template>
   <div id="danmu-app">
-    <div class="title electron-draggable" />
+    <div class="title electron-draggable">
+      <!-- 自定义按钮 win.titleBarStyle.customButtonsOnHover-->
+      <!-- <div class="operator">
+        <el-icon id="setMini" class="noDraggable">
+          <SemiSelect />
+        </el-icon>
+        <el-icon id="setMax" class="noDraggable">
+          <FullScreen />
+        </el-icon>
+        <el-icon id="setToTray" class="noDraggable">
+          <Close />
+        </el-icon>
+      </div> -->
+    </div>
     <div class="main-container" v-show="currentShowWindow">
-      <v-d-r :min-width="200" :w="380" :h="550" :x="200" :y="200" @dragging="resize" @resize="resize"
-        :is-resizable="false" :parent-limitation="false" :draggable="true" classNameDragging="dragging-class">
+      <v-d-r :min-width="200" :w="380" :h="550" :x="200" :y="200" @dragging="resize" @resize="resize" :resizable="false"
+        :parent-limitation="false" :draggable="true" classNameDragging="dragging-class">
         <el-icon class="setting-btn" @click="isDrawer = !isDrawer">
           <Setting />
         </el-icon>
@@ -21,11 +34,10 @@
 </template>
 <script setup lang="ts">
 
-import { nextTick, ref, reactive, h, onBeforeMount } from 'vue';
+import { nextTick, ref, reactive, h } from 'vue';
 import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
 import { ElNotification } from 'element-plus'
-import Queue from './utils/queue.ts'
 
 
 
@@ -37,7 +49,6 @@ const currentEntryEffectDirection = ref('left')
 const currentShowAvatar = ref(true)
 const currentShowMedal = ref(true)
 const currentShowWindow = ref(true)
-const queue = new Queue<string>();
 
 
 const connectRoom = (roomId: number) => {
@@ -75,7 +86,6 @@ const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: 
 //    background-color: black;
 //    left:60px;
 // }`)
-
 // document.getElementById('user-customer').innerHTML = testCustomCss.value;
 
 
@@ -105,7 +115,7 @@ const sc = (data) => {
 
         <img src="${data.backgroundImage}" width="100" height="40" style="position:absolute;top:0;;right:-8px;"/>
         <div style="color:${data.backgroundPriceColor};position:absolute;top:8px;right:25px;">
-            ${data.price}电池
+            ${data.priceString}
         </div>
       </div>
       <div style="background-color: ${data.backgroundBottomColor};padding: 10px;color: ${data.messageFontColor};font-size: 10px;">
@@ -115,7 +125,6 @@ const sc = (data) => {
     `
     }),
   })
-
 }
 
 
@@ -157,7 +166,14 @@ $radius : 1.2%;
 
 
 .dragging-class {
-  background-color: aqua;
+  background-color: #212325;
+  border-radius: 2%;
+  box-shadow: 3px 5px 5px #656B79;
+}
+
+.vdr-container.active {
+  border-color: unset;
+  border: unset;
 }
 
 .main-container {
@@ -165,7 +181,6 @@ $radius : 1.2%;
   width: 100%;
   height: calc(100vh - 60px);
   top: 60px;
-  // background-color: black;
 }
 
 .setting-btn {

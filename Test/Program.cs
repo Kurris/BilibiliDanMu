@@ -13,21 +13,22 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-int roomId = 5558;
+int roomId = 6750632;
 
-await DanMuCore.ConnectAsync(roomId, async result =>
-{
-    if (result.Type == MessageType.ENTRY_EFFECT)
-    {
-        await Console.Out.WriteLineAsync($"{result.Type}:{JsonConvert.SerializeObject(result.Info)}");
-    }
-});
+//await DanMuCore.ConnectAsync(roomId, async result =>
+//{
+//    await Console.Out.WriteLineAsync($"{result.Type}:{JsonConvert.SerializeObject(result.Info)}");
+//});
 
 
 //"突出一个三十分钟前没这个人".Speak();
 
 
-//var roomidoomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
+var roomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
+await RequestUtils.GetStreamerInfoAsync(roomInfo.Uid);
+
+
+
 //var gifts = await RequestUtils.GetGiftListAsync(roomId);
 //var giftInfos = GiftUtils.GiftInfos;
 

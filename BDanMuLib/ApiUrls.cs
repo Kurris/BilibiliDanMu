@@ -35,5 +35,16 @@ namespace BDanMuLib
         /// 表情包地址
         /// </summary>
         public const string EmoteUrl = "https://api.bilibili.com/x/emote/setting/panel?business=reply";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public const string BroadCastStreamUrl = "https://api.live.bilibili.com/room/v1/Room/playUrl";
+
+
+        /// <summary>
+        /// 主播信息地址
+        /// </summary>
+        public const string StreamerInfoUrl = "https://api.live.bilibili.com/live_user/v1/Master/info";
     }
 }

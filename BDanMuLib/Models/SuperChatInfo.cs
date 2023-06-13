@@ -24,7 +24,12 @@ namespace BDanMuLib.Models
         public string MessageFontColor { get; set; }
 
 
+        /// <summary>
+        /// CNY
+        /// </summary>
         public int Price { get; set; }
+        public string PriceString => Price + " CNY";
+
         public string Message { get; set; }
         public int Num { get; set; }
 

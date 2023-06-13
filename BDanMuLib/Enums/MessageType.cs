@@ -96,9 +96,14 @@ namespace BDanmuLib.Enums
         LIVE_INTERACTIVE_GAME,
 
         /// <summary>
-        /// 热度排名
+        /// 当前直播间限时热门榜排名改变
         /// </summary>
         HOT_RANK_CHANGED,
+
+        /// <summary>
+        /// 当前直播间限时热门榜排名改变V2
+        /// </summary>
+        HOT_RANK_CHANGED_V2,
 
 
         /// <summary>
@@ -106,12 +111,12 @@ namespace BDanmuLib.Enums
         /// </summary>
         HOT_ROOM_NOTIFY,
 
+        /// <summary>
+        /// 当前活动任务信息
+        /// </summary>
         WIDGET_BANNER,
 
-        /// <summary>
-        /// 全站实时排名
-        /// </summary>
-        HOT_RANK_CHANGED_V2,
+      
 
         /// <summary>
         /// 榜单前三更新(貌似不会触发了)
@@ -138,12 +143,28 @@ namespace BDanmuLib.Enums
 
         DANMU_AGGREGATION,
         LIKE_INFO_V3_CLICK,
-        POPULARITY_RED_POCKET_WINNER_LIST,
-        POPULARITY_RED_POCKET_START,
+
+
+
         COMMON_NOTICE_DANMAKU,
 
         /// <summary>
-        /// 上舰之类
+        /// 发送红包
+        /// </summary>
+        POPULARITY_RED_POCKET_NEW,
+
+        /// <summary>
+        /// 开始抽取红包
+        /// </summary>
+        POPULARITY_RED_POCKET_START,
+
+        /// <summary>
+        /// 红包中奖列表
+        /// </summary>
+        POPULARITY_RED_POCKET_WINNER_LIST,
+
+        /// <summary>
+        /// 购买大航海
         /// </summary>
         GUARD_BUY,
 
@@ -152,7 +173,9 @@ namespace BDanmuLib.Enums
         /// </summary>
         SUPER_CHAT_MESSAGE,
 
-
+        /// <summary>
+        /// 用户大航海信息
+        /// </summary>
         USER_TOAST_MSG,
 
         /// <summary>
@@ -172,6 +195,9 @@ namespace BDanmuLib.Enums
 
         GUARD_HONOR_THOUSAND,
 
+        /// <summary>
+        /// 指定观众禁言
+        /// </summary>
         ROOM_BLOCK_MSG,
 
         WIDGET_GIFT_STAR_PROCESS,
@@ -179,5 +205,34 @@ namespace BDanmuLib.Enums
         TRADING_SCORE,
 
         VOICE_CHAT_UPDATE,
+
+
+        /// <summary>
+        /// 直播间警告
+        /// </summary>
+        WARNING,
+
+        ROOM_CHANGE,
+
+
+        /// <summary>
+        /// 开启等级发言
+        /// </summary>
+        ROOM_SILENT_ON,
+
+        /// <summary>
+        /// 关闭等级禁言
+        /// </summary>
+        ROOM_SILENT_OFF,
+
+            /// <summary>
+            /// 房管们
+            /// </summary>
+            ROOM_ADMINS,
+
+        /// <summary>
+        /// 礼物心愿单进度
+        /// </summary>
+        WIDGET_WISH_LIST,
     }
 }

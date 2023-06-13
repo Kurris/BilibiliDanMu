@@ -10,7 +10,7 @@ namespace BDanMuLib.Utils
 {
     public class GiftUtils
     {
-        private static readonly Lazy<List<GiftInfo>> _giftInfos = new(() =>
+        private static readonly Lazy<Dictionary<int, GiftInfo>> _dicGiftInfos = new(() =>
         {
             var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "gift.json"), Encoding.UTF8);
             var jObj = JObject.Parse(text);
@@ -52,17 +52,11 @@ namespace BDanMuLib.Utils
                 }
             });
 
-
-
-            return giftList.OrderBy(x => x.Id).ToList();
+            return giftList.ToDictionary(x => x.Id, x => x);
         });
 
-        public static List<GiftInfo> GiftInfos => _giftInfos.Value;
 
-        private static readonly Lazy<Dictionary<int, GiftInfo>> _dicGiftInfos = new Lazy<Dictionary<int, GiftInfo>>(() =>
-        {
-            return GiftInfos.ToDictionary(x => x.Id, x => x);
-        });
+
 
         public static string GetGifUrl(int id)
         {

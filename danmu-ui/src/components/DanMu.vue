@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { onBeforeMount, reactive, ref, watch } from 'vue'
 import { HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr'
-import Queue from '../utils/queue.js'
+import Queue from '../utils/queue.ts'
 import EntryEffect from './EntryEffect.vue'
 
 
@@ -197,7 +197,7 @@ onBeforeMount(() => {
             }
         }
 
-    }, 300);
+    }, 100);
 
     //舰长进去
     setInterval(() => {
@@ -288,6 +288,8 @@ onBeforeMount(() => {
 </script>
 <style scoped lang="scss">
 .danmu {
+    padding: 15px;
+    ;
 
     .header {
         white-space: nowrap;
@@ -376,13 +378,13 @@ onBeforeMount(() => {
 
 
 .danmu-move {
-    transition: all 0.3s ease;
+    transition: all 0.1s ease;
 }
 
 .danmu-enter-active,
 .danmu-leave-active {
     position: absolute;
-    transition: all 0.3s ease;
+    transition: all 0.1s ease;
 }
 
 .danmu-enter-from {
