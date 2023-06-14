@@ -65,9 +65,9 @@ const createWindow = () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    // transparent: true,
+    transparent: true,
     frame: false,
-    titleBarStyle: "hidden",//customButtonsOnHover 可以自定义缩小,放大,关闭按钮
+    // titleBarStyle: "hidden",//customButtonsOnHover 可以自定义缩小,放大,关闭按钮
     titleBarOverlay: {
       color: '#ffffff',
       // symbolColor 符号颜色

@@ -13,20 +13,30 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-int roomId = 6750632;
+CancellationTokenSource Source = new CancellationTokenSource();
 
-//await DanMuCore.ConnectAsync(roomId, async result =>
+new[] { 732, 6750632, 23423267, 8604981, 3331090, 888, 25836285, 5558, 1209 }.AsEnumerable().AsParallel().ForAll(async x =>
+{
+    await new BilibiliBarrage().ConnectAsync(x, async result =>
+    {
+        await Console.Out.WriteLineAsync($"{result.Type}:{JsonConvert.SerializeObject(result.Info)}");
+    }, Source.Token);
+    await Console.Out.WriteLineAsync("done:" + x);
+});
+
+//await Console.Out.WriteLineAsync("准备停止");
+//await Task.Run(async () =>
 //{
-//    await Console.Out.WriteLineAsync($"{result.Type}:{JsonConvert.SerializeObject(result.Info)}");
+//    await Task.Delay(20000);
+//    Source.Cancel();
 //});
-
 
 //"突出一个三十分钟前没这个人".Speak();
 
 
-await RequestUtils.GetBroadCastStreamUrlAsync(roomId);
-var roomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
-await RequestUtils.GetStreamerInfoAsync(roomInfo.Uid);
+//await RequestUtils.GetBroadCastStreamUrlAsync(roomId);
+//var roomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
+//await RequestUtils.GetStreamerInfoAsync(roomInfo.Uid);
 
 
 

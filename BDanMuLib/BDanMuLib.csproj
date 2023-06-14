@@ -10,12 +10,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="emote.json" />
     <None Remove="Microsoft.Extensions.Logging" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="emote.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="gift.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

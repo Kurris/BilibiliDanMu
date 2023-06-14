@@ -22,13 +22,6 @@ namespace BDanMuLib.Utils
 
         }
 
-        private static readonly Lazy<Dictionary<string, string>> _emotes = new(() =>
-        {
-            var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "emote.json"), Encoding.UTF8);
-            return JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
-        });
-
-
         /// <summary>
         /// 处理弹幕中的表情一般为[dog]格式
         /// </summary>

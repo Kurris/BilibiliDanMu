@@ -9,19 +9,21 @@ html,body {
 
 
 .el-notification__group {
-    margin: {
-      left: 0 !important;
-      right: 0 !important;
-    }
+  margin: {
+    left: 0 !important;
+    right: 0 !important;
   }
-  
-  .el-notification {
-    width: unset !important;
-    padding: 0 !important;
-    border: unset;
-  }
+}
 
- .electron-draggable{
+.el-notification {
+  width: unset !important;
+  padding: 0 !important;
+  border: unset;
+}
+
+
+
+.electron-draggable{
   -webkit-app-region: drag;
   user-select: none;
  }
@@ -29,5 +31,20 @@ html,body {
  .electron-noDraggable{
   -webkit-app-region: no-drag;
  }
+
+
+ .preview-bg{
+  background-image: repeating-conic-gradient(#eaf8ee 0 25%, transparent 0 50%);
+  background-size: 16px 16px;
+ }
+
+
+
+
+ .vdr-dragging {
+  background-color: #212325;
+  border-radius: 2%;
+  box-shadow: 3px 5px 5px #656B79;
+}
 
 

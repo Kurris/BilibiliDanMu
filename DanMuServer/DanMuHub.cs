@@ -26,5 +26,10 @@ namespace DanMuServer
             RoomCache.Put(Context.ConnectionId, roomId);
             await Console.Out.WriteLineAsync($"{Context.ConnectionId} start");
         }
+
+        public async Task Test()
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("test", 123);
+        }
     }
 }

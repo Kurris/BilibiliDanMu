@@ -33,7 +33,7 @@ namespace DanMuServer
 
                           await Task.Factory.StartNew(async () =>
                           {
-                              await DanMuCore.ConnectAsync(roomId, async result =>
+                              await new BilibiliBarrage().ConnectAsync(roomId, async result =>
                               {
                                   await _hubContext.Clients.Client(connectionId).SendAsync(result.Type.ToString(), result.Info, cancellationToken);
                                   if (result.Type == MessageType.SUPER_CHAT_MESSAGE)
@@ -55,9 +55,9 @@ namespace DanMuServer
               }, TaskCreationOptions.LongRunning);
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public Task StopAsync(CancellationToken cancellationToken)
         {
-            await DanMuCore.DisconnectAsync();
+            return Task.CompletedTask;
         }
     }
 }

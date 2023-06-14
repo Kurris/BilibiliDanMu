@@ -7,9 +7,9 @@ namespace BDanMuLib.Utils
     public class AvatarUtils
     {
 
-        private static Dictionary<string, string> _cache = new Dictionary<string, string>();
-
-        public AvatarUtils()
+        private readonly static Dictionary<string, string> _cache = new Dictionary<string, string>();
+        
+        private AvatarUtils()
         {
         }
 

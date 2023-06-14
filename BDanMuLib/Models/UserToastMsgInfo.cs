@@ -16,6 +16,7 @@ namespace BDanMuLib.Models
         public GuardType GuardType{ get; set; }
 
         public int EffectId { get; set; }
+
         public int TargetGuardCount { get; set; }
     }
 }

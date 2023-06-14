@@ -13,11 +13,12 @@ namespace BDanMuLib.Extensions
         internal static async Task<bool> ReadBAsync(this Stream stream, byte[] buffer, int offset, int count, CancellationToken cancellation = default)
         {
             if (offset + count > buffer.Length)
-                throw new ArgumentException();
+                return false;
 
             var read = 0;
-            while (read < count)
+            while (read < count && !cancellation.IsCancellationRequested)
             {
+                if (stream == null) return false;
                 var available = await stream.ReadAsync(buffer.AsMemory(offset, count - read), cancellation);
 
                 read += available;
