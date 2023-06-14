@@ -15,18 +15,19 @@ using BDanMuLib.Utils;
 using System.Collections.Generic;
 using System.Threading;
 using System.Runtime.CompilerServices;
+using BDanMuLib.Interfaces;
 
 namespace BDanMuLib
 {
     /// <summary>
-    /// 弹幕库核心
+    /// B站弹幕库核心
     /// </summary>
-    public class DanMuCore
+    public class BilibiliBarrage : IBarrageProvider
     {
         /// <summary>
         /// 网络流
         /// </summary>
-        private static Stream _stream;
+        private Stream _stream;
 
 
         /// <summary>
@@ -36,7 +37,7 @@ namespace BDanMuLib
         /// <param name="onReceive">消息处理方法</param>
         /// <returns></returns>
         /// <exception cref="SocketException"></exception>
-        public static async Task ConnectAsync(int roomId, Action<Result> onReceive, CancellationToken cancellation = default)
+        public async Task ConnectAsync(int roomId, Action<Result> onReceive, CancellationToken cancellation = default)
         {
             if (_stream != null) await DisconnectAsync();
             cancellation.Register(async () =>
@@ -65,24 +66,19 @@ namespace BDanMuLib
 
             try
             {
-                await ReceiveRawMessageLoopAsync(cancellation).ForEachAwaitAsync(async (x, _) =>
+                await ReceiveRawMessageLoopAsync(cancellation).ForEachAwaitWithCancellationAsync(async (x, _) =>
                 {
                     var result = await HandleRawMessageAsync(x);
+
                     if (result.Type != MessageType.NONE)
                     {
                         onReceive.Invoke(result);
                     }
-
                 }, cancellation);
             }
             catch (TaskCanceledException)
             {
                 await Console.Out.WriteLineAsync($"Task Canceled");
-            }
-            catch (Exception ex)
-            {
-                //await Console.Out.WriteLineAsync(ex.Message);
-                throw ex;
             }
         }
 
@@ -92,7 +88,7 @@ namespace BDanMuLib
         /// </summary>
         /// <returns></returns>
         /// <exception cref="NotSupportedException"></exception>
-        private static async IAsyncEnumerable<MessageTypeWithRawDetail> ReceiveRawMessageLoopAsync([EnumeratorCancellation] CancellationToken cancellation = default)
+        private async IAsyncEnumerable<MessageTypeWithRawDetail> ReceiveRawMessageLoopAsync([EnumeratorCancellation] CancellationToken cancellation = default)
         {
             var stableBuffer = new byte[16];
             var length = 16;
@@ -182,7 +178,7 @@ namespace BDanMuLib
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        private static async Task<Result> HandleRawMessageAsync(MessageTypeWithRawDetail info)
+        private async Task<Result> HandleRawMessageAsync(MessageTypeWithRawDetail info)
         {
             if (info.Type == MessageType.HOT)
             {
@@ -208,7 +204,7 @@ namespace BDanMuLib
         /// <summary>
         /// 断开连接
         /// </summary>
-        public static async ValueTask DisconnectAsync()
+        public async ValueTask DisconnectAsync()
         {
             try
             {
@@ -224,5 +220,6 @@ namespace BDanMuLib
 
             }
         }
+
     }
 }

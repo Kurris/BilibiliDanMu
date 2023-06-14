@@ -66,6 +66,8 @@
     "@element-plus/icons-vue": "^2.1.0",
     "@microsoft/signalr": "^7.0.7",
     "@vueuse/core": "^10.1.2",
+    "codemirror": "^5.65.13",
+    "codemirror-editor-vue3": "^2.3.0",
     "element-plus": "^2.3.6",
     "node-sass": "^9.0.0",
     "pinia": "^2.0.36",
@@ -78,6 +80,7 @@
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",
     "@tsconfig/node18": "^2.0.1",
+    "@types/codemirror": "^5.60.8",
     "@types/node": "^18.16.8",
     "@vitejs/plugin-vue": "^4.2.3",
     "@vitejs/plugin-vue-jsx": "^3.0.1",

@@ -29,10 +29,12 @@
 </template>
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { useSignalR } from '../stores/signalRStore';
+const signalR = useSignalR()
 
 const form = reactive({
     roomId: 6750632,
-    danmuCount: 10,
+    danmuCount: 15,
     region: '',
     date1: '',
     date2: '',
@@ -45,21 +47,21 @@ const form = reactive({
     showWindow: true,
 })
 
-watch(() => JSON.stringify(form), (newValue) => {
-    // console.log(newValue);
+watch(() => JSON.stringify(form), () => {
     emits('setRaise', form.danmuCount, form.entryEffectDirection, form.showAvatar, form.showMedal, form.showWindow)
 })
 
 
 const emits = defineEmits<{
-    (e: 'connectRoom', roomId: number): number,
     (e: 'setRaise', danmuCount: number, entryEffectDirection: string, showAvatar: boolean, showMedal: boolean, showWindow: boolean): void
 }>()
 
 
 
 const connectRoom = () => {
-    emits('connectRoom', form.roomId)
+    signalR.connectBLiveRoom(Number(form.roomId)).catch(err => {
+        console.log(err)
+    })
 }
 
 </script>

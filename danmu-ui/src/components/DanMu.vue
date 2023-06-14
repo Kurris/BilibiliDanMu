@@ -10,18 +10,18 @@
                             <path
                                 d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16Zm0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15Z" />
                         </svg>
-                        <div> : {{ state.hot.hot }}</div>
+                        <div> : {{ signalR.data.hot.hot }}</div>
                     </div>
-                    <div style="margin-left: 20px;"> 观看人数: {{ state.watched.num }}</div>
-                    <div class="interactWord" v-if="state.interactWord != null">{{
-                        state.interactWord.userName }}
+                    <div style="margin-left: 20px;"> 观看人数: {{ signalR.data.watched.num }}</div>
+                    <div class="interactWord" v-if="signalR.data.interactWord != null">{{
+                        signalR.data.interactWord.userName }}
                     </div>
                 </div>
             </div>
 
             <div class="rows">
                 <transition-group appear tag="ul" name="danmu">
-                    <template v-for="item in state.comments.filter(x => x.mid != '')" :key="item.key">
+                    <template v-for="item in signalR.data.comments.filter(x => x.mid != '')" :key="item.key">
                         <div :class="{ 'message': true }">
                             <div class="avatar-medal-name ">
 
@@ -53,7 +53,7 @@
 
         <div class="entryEffect">
             <transition-group appear tag="ul" name="entry">
-                <template v-for="item in state.entryEffects" :key="item.key">
+                <template v-for="item in signalR.data.entryEffects" :key="item.key">
                     <EntryEffect :face="item.face" :backgroundUrl="item.baseImageUrl" :msg="item.message" />
                 </template>
             </transition-group>
@@ -61,26 +61,16 @@
 
 
     </div>
-
-    <div class="gift">
-        <template v-for="item in state.gifts" :key="item.key">
-            <el-image style="width: 100px; height: 100px" :src="item.gifUrl" fit='fill' />
-            <div>
-                {{ item.from }} 投喂 {{ item.giftName }} x{{ item.num }}
-            </div>
-        </template>
-    </div>
 </template>
 <script setup lang="ts">
 import { onBeforeMount, reactive, ref, watch } from 'vue'
-import { HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr'
-import Queue from '../utils/queue.ts'
 import EntryEffect from './EntryEffect.vue'
+import { useSignalR } from '../stores/signalRStore';
 
 
+const signalR = useSignalR()
 
 const props = defineProps<{
-    roomId?: number,
     danmuCount: number,
     entryEffectDirection: string,
     showAvatar: boolean,
@@ -101,56 +91,8 @@ watch(() => props.entryEffectDirection, (newVal) => {
 })
 
 
-const connection = new HubConnectionBuilder()
-    .withUrl("http://localhost:5000/danmu")
-    .configureLogging(LogLevel.Warning)
-    .withAutomaticReconnect()
-    .build();
-
 
 const count = ref(7);
-
-
-const state = reactive({
-    hot: {
-        hot: 0
-    },
-    watched: {
-        num: 0
-    },
-    interactWord: {
-        userName: ''
-    },
-    comments: [{
-        mid: '',
-        faceUrl: '',
-        comment: '',
-        isAdmin: false,
-        userName: '',
-        audRank: 0,
-        hasMedal: false,
-        medalName: '',
-        medalLevel: 0,
-        top3: 0,
-        time: new Date(),
-        guard: {
-            level: 0,
-            name: '',
-            frameUrl: '',
-            fontColor: '',
-            fansMedalIconUrl: '',
-            starFrameUrl: ''
-        },
-        key: '',
-    }],
-    gifts: [
-    ],
-    tempData: [],
-    queue: new Queue(),
-    entryEffects: [],
-    entryEffectQueue: new Queue(),
-    sc: null
-});
 
 
 const emits = defineEmits<{
@@ -158,42 +100,20 @@ const emits = defineEmits<{
 }>()
 
 
-const connectRoom = () => {
-    if (props.roomId != null) {
-        if (connection.state == HubConnectionState.Connected) {
-            state.comments.splice(0, state.comments.length)
-            state.queue.clear()
-            state.entryEffects.splice(0, state.entryEffects.length)
-            state.entryEffectQueue.clear()
-
-            //signalR start
-            connection.invoke("Start", Number(props.roomId)).catch(err => {
-                console.log(err)
-            })
-            return true;
-        }
-    }
-}
-
-
-defineExpose({
-    connectRoom
-})
-
 onBeforeMount(() => {
 
     //弹幕设置
     setInterval(() => {
-        var item = state.queue.dequeue();
+        var item = signalR.data.queue.dequeue();
         if (item == null) {
             return
         }
 
-        state.comments.push(item)
-        if (state.comments.length > props.danmuCount) {
-            const i = state.comments.length - props.danmuCount
+        signalR.data.comments.push(item)
+        if (signalR.data.comments.length > props.danmuCount) {
+            const i = signalR.data.comments.length - props.danmuCount
             for (let index = 0; index < i; index++) {
-                state.comments.shift()
+                signalR.data.comments.shift()
             }
         }
 
@@ -201,22 +121,22 @@ onBeforeMount(() => {
 
     //舰长进去
     setInterval(() => {
-        var item = state.entryEffectQueue.dequeue();
+        var item = signalR.data.entryEffectQueue.dequeue();
         if (item == null) {
             return
         }
 
-        state.entryEffects.push(item)
+        signalR.data.entryEffects.push(item)
         count.value = 7
-        if (state.entryEffects.length > 3) {
-            state.entryEffects.shift()
+        if (signalR.data.entryEffects.length > 3) {
+            signalR.data.entryEffects.shift()
         }
     }, 300);
 
 
     setInterval(() => {
-        if (state.entryEffectQueue.isEmpty && state.entryEffects.length > 0 && count.value <= 0) {
-            state.entryEffects.shift()
+        if (signalR.data.entryEffectQueue.isEmpty && signalR.data.entryEffects.length > 0 && count.value <= 0) {
+            signalR.data.entryEffects.shift()
         }
 
         if (count.value != 0) {
@@ -227,57 +147,8 @@ onBeforeMount(() => {
 
     //处理进入房间信息
     setInterval(() => {
-        state.interactWord = null
+        signalR.data.interactWord = null
     }, 3000);
-
-    //弹幕消息
-    connection.on("DANMU_MSG", p => {
-        state.queue.enqueue(p)
-    })
-
-    connection.on("INTERACT_WORD", p => {
-        state.interactWord = p
-    })
-
-    connection.on("WATCHED_CHANGE", p => {
-        state.watched = p
-    })
-
-    connection.on("HOT", p => {
-        state.hot = p
-    })
-
-    connection.on("SUPER_CHAT_MESSAGE", p => {
-        state.sc = p
-        emits('onSc', p)
-    })
-
-    connection.on("ENTRY_EFFECT", p => {
-        state.entryEffectQueue.enqueue(p)
-    })
-
-    connection.on("SEND_GIFT", p => {
-        state.gifts.shift()
-        state.gifts.push(p)
-    })
-
-    connection.on("READ_SC", p => {
-        let u = new SpeechSynthesisUtterance(p)
-        u.lang = 'zh-CN'
-        u.rate = 0.8
-        window.speechSynthesis.speak(u)
-    })
-
-    //重连或者首次
-    connection.onreconnected(id => {
-        console.log(id);
-
-    })
-    //无法连接
-    connection.onclose(err => {
-        console.log(err);
-    })
-    connection.start();
 
 })
 
@@ -380,7 +251,7 @@ onBeforeMount(() => {
 .danmu-enter-active,
 .danmu-leave-active {
     position: absolute;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
 }
 
 .danmu-enter-from {
@@ -421,25 +292,5 @@ li {
 
 ul {
     padding: 0 0 0 0;
-}
-
-
-.gift {
-    position: fixed;
-    left: 50%;
-    transform: translate(-50%);
-    top: 50px;
-    color: #ae93ea;
-    background-color: transparent;
-    text-align: center;
-
-    letter-spacing: 0.2rem;
-    font-size: 1rem;
-
-    background-image: -webkit-linear-gradient(left, #147B96, #E6D205 25%, #147B96 50%, #E6D205 75%, #147B96);
-    -webkit-text-fill-color: transparent;
-    font-weight: bolder;
-    -webkit-background-clip: text;
-    -webkit-background-size: 200% 100%;
 }
 </style>
