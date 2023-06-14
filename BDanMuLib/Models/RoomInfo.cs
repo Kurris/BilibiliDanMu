@@ -25,11 +25,11 @@ namespace BDanMuLib.Models
         public string ParentAreaName { get; set; }
 
         public string KeyFrameUrl { get; set; }
-        
+
         public string UserCoverUrl { get; set; }
         public string BackgroundUrl { get; set; }
 
-        public DateTime LiveTime { get; set; }
+        public DateTime? LiveTime { get; set; }
 
         /// <summary>
         /// 0：未开播 1：直播中 2：轮播中

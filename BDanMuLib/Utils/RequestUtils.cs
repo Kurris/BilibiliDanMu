@@ -92,7 +92,7 @@ namespace BDanMuLib.Utils
                 AreaId = data["area_id"].Value<int>(),
                 AreaName = data["area_name"].Value<string>(),
                 LiveStatus = data["live_status"].Value<int>(),
-                LiveTime = data["live_time"].Value<DateTime>(),
+                LiveTime = data["live_status"].Value<int>() != 1 ? null : data["live_time"].Value<DateTime>(),
                 BackgroundUrl = data["background"].Value<string>(),
                 KeyFrameUrl = data["keyframe"].Value<string>(),
                 UserCoverUrl = data["user_cover"].Value<string>(),
@@ -178,7 +178,7 @@ namespace BDanMuLib.Utils
 
 
 
-        public static async Task GetBroadCastStreamUrlAsync(int roomId)
+        public static async Task<string> GetBroadCastStreamUrlAsync(int roomId)
         {
             var roomInfo = await GetRoomInfoAsync(roomId);
 
@@ -190,17 +190,22 @@ namespace BDanMuLib.Utils
                                    //["qn"] = 80：流畅 150：高清 400：蓝光 10000：原画 20000：4K 30000：杜比
             });
 
-            var response = await _client.GetStringAsync(ApiUrls.BroadCastStreamUrl + "?" + await content.ReadAsStringAsync());
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Referer", "https://www.bilibili.com");
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
+            client.DefaultRequestHeaders.Add("Origin", "https://www.bilibili.com");
+            var response = await client.GetStringAsync(ApiUrls.BroadCastStreamUrl + "?" + await content.ReadAsStringAsync());
             var jObj = JObject.Parse(response);
             var urlInfos = jObj["data"]["durl"];
+            var url = urlInfos[0]["url"].Value<string>();
 
-            urlInfos.ToList().ForEach(x =>
-            {
-                var url = x["url"].Value<string>();
-            });
+            //response = await _client.GetStringAsync("https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo?room_id=6750632&protocol=0,1&format=0,1,2&codec=0,1&qn=10000");
+            //jObj = JObject.Parse(response);
+
+            return url;
         }
 
-        public static async Task GetStreamerInfoAsync(long mid)
+        public static async Task<StreamerInfo> GetStreamerInfoAsync(long mid)
         {
             using var content = new FormUrlEncodedContent(new Dictionary<string, string>()
             {
@@ -215,12 +220,27 @@ namespace BDanMuLib.Utils
 
             var userName = info["uname"].Value<string>();
             var face = info["face"].Value<string>();
+            //-1：保密,0：女 ,1：男
+            var gender = info["gender"].Value<int>();
 
             var level = data["exp"]["master_level"]["level"].Value<int>();
             var followerNum = data["follower_num"].Value<int>();
 
+            var pendant = data["pendant"].Value<string>();
 
-            var news = data["room_news"]["content"].Value<string>();
+            var board = data["room_news"]["content"].Value<string>();
+
+            return new StreamerInfo()
+            {
+                Uid = mid,
+                UserName = userName,
+                Face = face,
+                Gender = gender,
+                Level = level,
+                FollowerNum = followerNum,
+                Pendant = pendant,
+                BoardMessage = board
+            };
         }
     }
 }

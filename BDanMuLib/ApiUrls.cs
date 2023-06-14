@@ -37,7 +37,7 @@ namespace BDanMuLib
         public const string EmoteUrl = "https://api.bilibili.com/x/emote/setting/panel?business=reply";
 
         /// <summary>
-        /// 
+        /// 直播流地址
         /// </summary>
         public const string BroadCastStreamUrl = "https://api.live.bilibili.com/room/v1/Room/playUrl";
 

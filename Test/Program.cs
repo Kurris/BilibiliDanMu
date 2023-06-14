@@ -24,6 +24,7 @@ int roomId = 6750632;
 //"突出一个三十分钟前没这个人".Speak();
 
 
+await RequestUtils.GetBroadCastStreamUrlAsync(roomId);
 var roomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
 await RequestUtils.GetStreamerInfoAsync(roomInfo.Uid);
 

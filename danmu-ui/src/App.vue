@@ -30,6 +30,8 @@
     <el-drawer v-model="isDrawer" title="设置面板" direction="rtl" :show-close="false">
       <DmSetting @connect-room="connectRoom" @set-raise="setRaise" :is-drawer="isDrawer" />
     </el-drawer>
+
+
   </div>
 </template>
 <script setup lang="ts">
@@ -39,7 +41,7 @@ import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
 import { ElNotification } from 'element-plus'
 
-
+import { useWebNotification } from '@vueuse/core'
 
 const currentRoomId = ref<number>();
 const isDrawer = ref(false)
@@ -50,6 +52,18 @@ const currentShowAvatar = ref(true)
 const currentShowMedal = ref(true)
 const currentShowWindow = ref(true)
 
+
+const {
+  show,
+} = useWebNotification({
+  title: 'Hello, VueUse world!',
+  dir: 'auto',
+  lang: 'en',
+  renotify: true,
+  tag: 'test',
+})
+
+show()
 
 const connectRoom = (roomId: number) => {
   currentRoomId.value = roomId

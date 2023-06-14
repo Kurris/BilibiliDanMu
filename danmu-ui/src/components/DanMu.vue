@@ -103,7 +103,7 @@ watch(() => props.entryEffectDirection, (newVal) => {
 
 const connection = new HubConnectionBuilder()
     .withUrl("http://localhost:5000/danmu")
-    .configureLogging(LogLevel.Debug)
+    .configureLogging(LogLevel.Warning)
     .withAutomaticReconnect()
     .build();
 
@@ -197,7 +197,7 @@ onBeforeMount(() => {
             }
         }
 
-    }, 100);
+    }, 300);
 
     //舰长进去
     setInterval(() => {
@@ -278,10 +278,6 @@ onBeforeMount(() => {
         console.log(err);
     })
     connection.start();
-
-    // connection.start().then(() => {
-    //     connectRoom()
-    // })
 
 })
 
@@ -378,13 +374,13 @@ onBeforeMount(() => {
 
 
 .danmu-move {
-    transition: all 0.1s ease;
+    transition: all 0.3s ease;
 }
 
 .danmu-enter-active,
 .danmu-leave-active {
     position: absolute;
-    transition: all 0.1s ease;
+    transition: all 0.3s ease;
 }
 
 .danmu-enter-from {

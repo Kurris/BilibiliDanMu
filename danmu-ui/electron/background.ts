@@ -71,7 +71,7 @@ const createWindow = () => {
     titleBarOverlay: {
       color: '#ffffff',
       // symbolColor 符号颜色
-      height: 5
+      // height: 5
     }, // 需要设置titleBarStyle才生效, mac设置:true , windows使用该对象即可
     resizable: true,
     height: 850,
