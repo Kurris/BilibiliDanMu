@@ -9,11 +9,14 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove="emote.json" />
     <None Remove="Microsoft.Extensions.Logging" />
+    <None Remove="Microsoft.Extensions.Hosting.Abstractions" />
+    <None Remove="Microsoft.AspNetCore.Hosting.Abstractions" />
   </ItemGroup>
   <ItemGroup>
     <None Update="gift.json">

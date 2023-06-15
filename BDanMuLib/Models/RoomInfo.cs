@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using BDanMuLib.Enums;
 
 namespace BDanMuLib.Models
 {
@@ -34,6 +35,6 @@ namespace BDanMuLib.Models
         /// <summary>
         /// 0：未开播 1：直播中 2：轮播中
         /// </summary>
-        public int LiveStatus { get; set; }
+        public LiveStatusType LiveStatus { get; set; }
     }
 }

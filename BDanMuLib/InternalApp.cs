@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 
-namespace DanMuServer
+namespace BDanMuLib
 {
     public class InternalApp
     {

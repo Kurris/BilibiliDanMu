@@ -44,7 +44,7 @@ namespace DanMuServer.Controllers
                 }
                 catch (TaskCanceledException)
                 {
-                    _logger.LogInformation("{connectionId}:{roomId} Hub send event canceled.", connectionId, roomId);
+                    _logger.LogInformation("{connectionId} Hub send to {roomId} event was canceled.", connectionId, roomId);
                 }
             });
         }

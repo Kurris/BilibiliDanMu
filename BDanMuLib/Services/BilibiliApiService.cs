@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using BDanMuLib.Enums;
 using BDanMuLib.Models;
 using Newtonsoft.Json.Linq;
 
@@ -89,7 +90,7 @@ namespace BDanMuLib.Services
                 ParentAreaName = data["parent_area_name"].Value<string>(),
                 AreaId = data["area_id"].Value<int>(),
                 AreaName = data["area_name"].Value<string>(),
-                LiveStatus = data["live_status"].Value<int>(),
+                LiveStatus = (LiveStatusType)data["live_status"].Value<int>(),
                 LiveTime = data["live_status"].Value<int>() != 1 ? null : data["live_time"].Value<DateTime>(),
                 BackgroundUrl = data["background"].Value<string>(),
                 KeyFrameUrl = data["keyframe"].Value<string>(),

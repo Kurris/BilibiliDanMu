@@ -16,9 +16,6 @@ namespace DanMuServer
             services.AddLiveBarrage();
             services.AddSignalR();
 
-            //处理api响应时,循环序列化问题
-            //返回json为驼峰命名
-            //时间格式
             services.AddControllers().AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
@@ -37,8 +34,7 @@ namespace DanMuServer
 
         public void Configure(IApplicationBuilder app)
         {
-            //根服务提供器,应用程序唯一
-            InternalApp.ApplicationServices = app.ApplicationServices;
+            app.UseInternalServiceProvider();
 
             app.UseCors("cors");
             app.UseRouting();
@@ -47,7 +43,6 @@ namespace DanMuServer
             {
                 endpoints.MapHub<BarrageHub>("/barrage", options =>
                 {
-                    //强制使用ws,不兼容long polling和sse
                     options.Transports = HttpTransportType.WebSockets;
                 });
 

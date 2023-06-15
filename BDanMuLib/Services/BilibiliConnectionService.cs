@@ -16,6 +16,7 @@ using System.Threading;
 using System.Runtime.CompilerServices;
 using BDanMuLib.Interfaces;
 using Microsoft.Extensions.Logging;
+using BDanMuLib.Enums;
 
 namespace BDanMuLib.Services
 {
@@ -27,6 +28,7 @@ namespace BDanMuLib.Services
 
         private Stream _stream;
         private readonly BufferReadState _state = new();
+        private int? _roomId;
 
         private readonly BilibiliApiService _bilibiliApiService;
         private readonly RawtHandleService _rawtHandleService;
@@ -51,12 +53,19 @@ namespace BDanMuLib.Services
         /// <exception cref="SocketException"></exception>
         public async Task<bool> ConnectAsync(int roomId, Action<Result> onReceive, CancellationToken cancellation = default)
         {
-            if (_stream != null) await DisconnectAsync();
+            if (_stream != null || _roomId.HasValue)
+            {
+                throw new Exception("ConnectAsync method only can be called one time in instance.");
+            }
+
+            _roomId = roomId;
+
 
             //房间,直播ip和port信息
             var roomInfo = await _bilibiliApiService.GetRoomInfoAsync(roomId);
-            if (roomInfo.LiveStatus != 1)
+            if (roomInfo.LiveStatus != LiveStatusType.直播中)
             {
+                _logger.LogInformation("RoomId:{RoomId} 's live status {Status} , connect operation finished", _roomId, roomInfo.LiveStatus.ToString());
                 return false;
             }
             var broadCastInfo = await _bilibiliApiService.GetBroadCastInfoAsync(roomInfo.RoomId);
@@ -79,7 +88,6 @@ namespace BDanMuLib.Services
 
                 _logger.LogInformation("Connect room:{roomId} successfully", roomId);
 
-
                 await ReceiveRawMessageLoopAsync(cancellation).ForEachAwaitWithCancellationAsync(async (x, _) =>
                 {
                     var result = await HandleRawMessageAsync(x);
@@ -88,6 +96,7 @@ namespace BDanMuLib.Services
                     {
                         onReceive.Invoke(result);
                     }
+
                 }, cancellation);
 
             }
@@ -113,6 +122,7 @@ namespace BDanMuLib.Services
         {
             var stableBuffer = new byte[16];
             var length = 16;
+
             while (!cancellation.IsCancellationRequested)
             {
                 await _stream.ReadBAsync(stableBuffer, 0, length, _state, cancellation);
@@ -120,7 +130,7 @@ namespace BDanMuLib.Services
                 ProtocolStruts protocol = ProtocolStruts.FromBuffer(stableBuffer);
                 if (protocol.PacketLength < 16)
                 {
-                    throw new NotSupportedException("协议失败: (L:" + protocol.PacketLength + ")");
+                    continue;//throw new NotSupportedException("协议失败: (L:" + protocol.PacketLength + ")");
                 }
 
                 var payloadLength = protocol.PacketLength - 16;
@@ -177,6 +187,7 @@ namespace BDanMuLib.Services
                             Raw = json
                         };
                     }
+
                 }
                 else
                 {
@@ -248,7 +259,7 @@ namespace BDanMuLib.Services
 
         public async ValueTask DisposeAsync()
         {
-            _logger.LogInformation("Raise Dispose");
+            _logger.LogInformation("{RoomId} receive raise Dispose", _roomId);
             await DisconnectAsync();
         }
     }

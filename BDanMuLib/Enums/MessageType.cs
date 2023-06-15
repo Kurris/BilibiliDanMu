@@ -116,7 +116,7 @@ namespace BDanmuLib.Enums
         /// </summary>
         WIDGET_BANNER,
 
-      
+
 
         /// <summary>
         /// 榜单前三更新(貌似不会触发了)
@@ -225,14 +225,17 @@ namespace BDanmuLib.Enums
         /// </summary>
         ROOM_SILENT_OFF,
 
-            /// <summary>
-            /// 房管们
-            /// </summary>
-            ROOM_ADMINS,
+        /// <summary>
+        /// 房管们
+        /// </summary>
+        ROOM_ADMINS,
 
         /// <summary>
         /// 礼物心愿单进度
         /// </summary>
         WIDGET_WISH_LIST,
+
+        VOICE_JOIN_ROOM_COUNT_INFO,
+        VOICE_JOIN_LIS
     }
 }

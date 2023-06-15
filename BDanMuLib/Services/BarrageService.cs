@@ -3,21 +3,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using BDanMuLib.Interfaces;
 using BDanMuLib.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BDanMuLib.Services
 {
     internal class BarrageService : IBarrageService
     {
-        private readonly IBarrageConnectionProvider _barrageProvider;
         private readonly ILogger<BarrageService> _logger;
         private readonly IBarrageCancellationService _barrageCancellationService;
 
-        public BarrageService(IBarrageConnectionProvider barrageProvider,
-            ILogger<BarrageService> logger,
+        public BarrageService(ILogger<BarrageService> logger,
             IBarrageCancellationService barrageCancellationService)
         {
-            _barrageProvider = barrageProvider;
             _logger = logger;
             _barrageCancellationService = barrageCancellationService;
         }
@@ -25,9 +23,9 @@ namespace BDanMuLib.Services
 
         public async Task ReceiveBarrages(string connectionId, int roomId, Func<CancellationToken, Result, Task> OnAction)
         {
+            _logger.LogInformation("{ConnectionId} request to receive room:{RoomId} barrages.", connectionId, roomId);
             var cancellationTokenSource = _barrageCancellationService.Get(connectionId);
-
-            _logger.LogInformation("Get current connectionId's cancellationToken . {ConnectionId}:{RoomId}", connectionId, roomId);
+            _logger.LogInformation("{ConnectionId} get {RoomId}'s cancellationToken.", connectionId, roomId);
 
             //长任务执行
             await Task.Factory.StartNew(async () =>
@@ -35,7 +33,10 @@ namespace BDanMuLib.Services
                 var currentConnectionId = connectionId;
                 var currentRoomId = roomId;
 
-                await _barrageProvider.ConnectAsync(roomId, async result =>
+                //从根容器获取scope
+                using var asyncScope = InternalApp.ApplicationServices.CreateAsyncScope();
+                await using var barrageProvider = asyncScope.ServiceProvider.GetService<IBarrageConnectionProvider>();
+                await barrageProvider.ConnectAsync(roomId, async result =>
                 {
                     await OnAction(cancellationTokenSource.Token, result);
 
@@ -45,7 +46,7 @@ namespace BDanMuLib.Services
 
             }, TaskCreationOptions.LongRunning);
 
-            _logger.LogInformation("{ConnectionId}:{RoomId} Long task receive barrages begin!", connectionId, roomId);
+            _logger.LogInformation("{ConnectionId} a Long task start to receive barrages begin!", connectionId);
         }
     }
 }

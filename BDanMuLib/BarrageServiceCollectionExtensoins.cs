@@ -1,5 +1,8 @@
-﻿using BDanMuLib.Interfaces;
+﻿using System;
+using BDanMuLib;
+using BDanMuLib.Interfaces;
 using BDanMuLib.Services;
+using Microsoft.AspNetCore.Builder;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -28,6 +31,13 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient<IBarrageConnectionProvider, BilibiliConnectionService>();
 
             return services;
+        }
+
+
+        public static IApplicationBuilder UseInternalServiceProvider(this IApplicationBuilder app)
+        {
+            InternalApp.ApplicationServices = app.ApplicationServices;
+            return app;
         }
     }
 }

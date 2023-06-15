@@ -4,7 +4,7 @@ using BDanMuLib.Interfaces;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Microsoft.Extensions.Configuration;
-
+using BDanMuLib;
 
 var serviceProvider = new ServiceCollection()
     .AddLogging((builder) =>
@@ -20,59 +20,48 @@ var serviceProvider = new ServiceCollection()
     .AddLiveBarrageCore()
     .BuildServiceProvider();
 
-
 var logger = serviceProvider.GetService<ILogger<Program>>()!;
 
 
 var roomIds = new[] { 732, 6750632, 23423267, 8604981, 3331090, 888, 25836285, 5558, 1209, 531, 1220, 178033, 404, 22472556 };
-var stops = new List<int>();
-Enumerable.Range(1, 10).AsParallel().ForAll(async x =>
+
+var currentRoomIds = roomIds.ToList();
+var cancelSources = currentRoomIds.ToDictionary(x => x, x => new CancellationTokenSource());
+
+var excludes = new List<int>(currentRoomIds.Count);
+
+cancelSources.Distinct().AsParallel().ForAll(async entry =>
 {
-    var currentRoomIds = roomIds.ToList();
-    var cancelSources = currentRoomIds.ToDictionary(x => x, x => new CancellationTokenSource());
+    var roomId = entry.Key;
+    var cancelSource = entry.Value;
 
-    var excludes = new List<int>(currentRoomIds.Count);
-
-    cancelSources.Distinct().AsParallel().ForAll(async entry =>
+    await using var provider = serviceProvider.GetService<IBarrageConnectionProvider>()!;
+    var connectState = await provider.ConnectAsync(roomId, result =>
     {
-        var roomId = entry.Key;
-        var cancelSource = entry.Value;
+        logger.LogInformation("{Type}:{Info}", result.Type, JsonConvert.SerializeObject(result.Info));
 
+    }, cancelSource.Token);
 
-        await using var provider = serviceProvider.GetService<IBarrageConnectionProvider>()!;
-        var connectState = await provider.ConnectAsync(roomId, result =>
-        {
-            logger.LogInformation("{Type}:{Info}", result.Type, JsonConvert.SerializeObject(result.Info));
-
-        }, cancelSource.Token);
-
-        if (connectState)
-        {
-            excludes.Add(roomId);
-        }
-
-    });
-
-    cancelSources.Where(x => !excludes.Contains(x.Key)).ToList().ForEach(async entry =>
+    if (connectState)
     {
-        var millisecond = (currentRoomIds.IndexOf(entry.Key) + 1) * new Random().Next(1, currentRoomIds.Count + 1) * 1000;
-        await Task.Delay(millisecond);
-        //entry.Value.CancelAfter(millisecond);
-        entry.Value.Cancel();
-    });
-
-    while (!cancelSources.Values.All(x => x.IsCancellationRequested))
-    {
-        await Task.Delay(1000);
+        excludes.Add(roomId);
     }
 
-    stops.Add(x);
 });
 
-while (stops.Count != 10)
+cancelSources.Where(x => !excludes.Contains(x.Key)).ToList().ForEach(async entry =>
+{
+    var millisecond = (currentRoomIds.IndexOf(entry.Key) + 1) * new Random().Next(1, currentRoomIds.Count + 1) * 1000;
+    await Task.Delay(millisecond);
+    //entry.Value.CancelAfter(millisecond);
+    entry.Value.Cancel();
+});
+
+while (cancelSources.Where(x => !excludes.Contains(x.Key)).All(x => !x.Value.IsCancellationRequested))
 {
     await Task.Delay(1000);
 }
+
 
 logger.LogInformation("All done now, press any key to exit the program !");
 Console.ReadKey();
