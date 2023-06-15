@@ -23,8 +23,14 @@ namespace BDanMuLib.Services
 
         public async Task ReceiveBarrages(string connectionId, int roomId, Func<CancellationToken, Result, Task> OnAction)
         {
+            if (_barrageCancellationService.ExistsCancelToken(connectionId))
+            {
+                return;
+            }
+
             _logger.LogInformation("{ConnectionId} request to receive room:{RoomId} barrages.", connectionId, roomId);
             var cancellationTokenSource = _barrageCancellationService.Get(connectionId);
+
             _logger.LogInformation("{ConnectionId} get {RoomId}'s cancellationToken.", connectionId, roomId);
 
             //长任务执行

@@ -11,9 +11,9 @@ namespace BDanMuLib.Services
 
         public bool Cancel(string connectionId)
         {
-            if (_sources.ContainsKey(connectionId))
+            if (_sources.TryGetValue(connectionId, out var cancellationToken) && cancellationToken != null)
             {
-                _sources[connectionId].Cancel();
+                cancellationToken.Cancel();
                 _sources.Remove(connectionId, out _);
                 return true;
             }
@@ -24,22 +24,29 @@ namespace BDanMuLib.Services
         {
             if (_sources.ContainsKey(connectionId))
             {
-                _sources[connectionId].Cancel();
                 _sources.Remove(connectionId, out _);
             }
 
-            _sources.TryAdd(connectionId, new CancellationTokenSource());
+            _sources.TryAdd(connectionId, null);
         }
 
         public CancellationTokenSource Get(string connectionId)
         {
-            if (!_sources.ContainsKey(connectionId))
-            {
-                _sources.TryAdd(connectionId, new CancellationTokenSource());
-            }
+            //获取时才做初始化
+            _sources[connectionId] = new CancellationTokenSource();
             return _sources[connectionId];
         }
 
         public int ConnectionCount() => _sources.Count;
+
+        public bool ExistsCancelToken(string connectionId)
+        {
+            //同步锁 or 负载后使用分布式锁
+            if (_sources.TryGetValue(connectionId, out var cancellationToken))
+            {
+                return cancellationToken != null;
+            }
+            return false;
+        }
     }
 }

@@ -10,6 +10,8 @@ namespace BDanMuLib.Interfaces
 
         CancellationTokenSource Get(string connectionId);
 
+        bool ExistsCancelToken(string connectionId);
+
         int ConnectionCount();
     }
 }
