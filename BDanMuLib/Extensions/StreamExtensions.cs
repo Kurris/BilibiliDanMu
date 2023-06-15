@@ -4,13 +4,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BDanMuLib.Converters;
+using BDanMuLib.Services;
 using Newtonsoft.Json;
 
 namespace BDanMuLib.Extensions
 {
     internal static class StreamExtensions
     {
-        internal static async Task<bool> ReadBAsync(this Stream stream, byte[] buffer, int offset, int count, CancellationToken cancellation = default)
+        internal static async Task<bool> ReadBAsync(this Stream stream, byte[] buffer, int offset, int count, BufferReadState state, CancellationToken cancellation = default)
         {
             if (offset + count > buffer.Length)
                 return false;
@@ -18,8 +19,9 @@ namespace BDanMuLib.Extensions
             var read = 0;
             while (read < count && !cancellation.IsCancellationRequested)
             {
-                if (stream == null) return false;
+                state.IsReading = true;
                 var available = await stream.ReadAsync(buffer.AsMemory(offset, count - read), cancellation);
+                state.IsReading = false;
 
                 read += available;
                 offset += available;

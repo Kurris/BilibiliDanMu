@@ -6,25 +6,23 @@ using System.Threading.Tasks;
 using BDanMuLib.Models;
 using Newtonsoft.Json.Linq;
 
-namespace BDanMuLib.Utils
+namespace BDanMuLib.Services
 {
-    public class RequestUtils
+    public class BilibiliApiService
     {
 
-        private readonly static HttpClient _client;
-        static RequestUtils()
+        private readonly HttpClient _httpClient;
+
+
+        public BilibiliApiService(IHttpClientFactory httpClientFactory)
         {
-            _client = new HttpClient();
+            _httpClient = httpClientFactory.CreateClient();
         }
 
-        private RequestUtils()
-        {
 
-        }
-
-        public static async Task<BroadCastInfo> GetBroadCastInfoAsync(int roomId)
+        public async Task<BroadCastInfo> GetBroadCastInfoAsync(int roomId)
         {
-            var requestContent = await _client.GetStringAsync(ApiUrls.BroadCastUrl + roomId);
+            var requestContent = await _httpClient.GetStringAsync(ApiUrls.BroadCastUrl + roomId);
             var dataJToken = JObject.Parse(requestContent)["data"];
 
             return new BroadCastInfo()
@@ -35,11 +33,11 @@ namespace BDanMuLib.Utils
             };
         }
 
-        public static async Task<string> GetUserAvatarFromSpaceHtmlAsync(string mid)
+        public async Task<string> GetUserAvatarFromSpaceHtmlAsync(string mid)
         {
             try
             {
-                string response = await _client.GetStringAsync($"https://space.bilibili.com/{mid}");
+                string response = await _httpClient.GetStringAsync($"https://space.bilibili.com/{mid}");
                 int i = response.IndexOf("href=\"//i0.hdslb.com");
                 if (i == -1)
                 {
@@ -73,9 +71,9 @@ namespace BDanMuLib.Utils
         }
 
 
-        public static async Task<RoomInfo> GetRoomInfoAsync(int roomId)
+        public async Task<RoomInfo> GetRoomInfoAsync(int roomId)
         {
-            var response = await _client.GetStringAsync(ApiUrls.RoomInfoUrl + roomId);
+            var response = await _httpClient.GetStringAsync(ApiUrls.RoomInfoUrl + roomId);
             var jObj = JObject.Parse(response);
             var data = jObj["data"];
 
@@ -105,7 +103,7 @@ namespace BDanMuLib.Utils
         /// </summary>
         /// <param name="roomId"></param>
         /// <returns></returns>
-        public static async Task<List<GiftInfo>> GetGiftListAsync(int roomId)
+        public async Task<List<GiftInfo>> GetGiftListAsync(int roomId)
         {
             var roomInfo = await GetRoomInfoAsync(roomId);
 
@@ -126,7 +124,7 @@ namespace BDanMuLib.Utils
             var p = await content.ReadAsStringAsync();
             string url = string.Concat(ApiUrls.GiftListUrl, "?", p);
 
-            var response = await _client.GetStringAsync(url);
+            var response = await _httpClient.GetStringAsync(url);
             var jObj = JObject.Parse(response);
 
             var data = jObj["data"];
@@ -149,7 +147,7 @@ namespace BDanMuLib.Utils
 
 
 
-            response = await _client.GetStringAsync("https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/roomGiftConfig?platform=pc&global_version=" + timestamp);
+            response = await _httpClient.GetStringAsync("https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/roomGiftConfig?platform=pc&global_version=" + timestamp);
 
             jObj = JObject.Parse(response);
 
@@ -178,7 +176,7 @@ namespace BDanMuLib.Utils
 
 
 
-        public static async Task<string> GetBroadCastStreamUrlAsync(int roomId)
+        public async Task<string> GetBroadCastStreamUrlAsync(int roomId)
         {
             var roomInfo = await GetRoomInfoAsync(roomId);
 
@@ -205,14 +203,14 @@ namespace BDanMuLib.Utils
             return url;
         }
 
-        public static async Task<StreamerInfo> GetStreamerInfoAsync(long mid)
+        public async Task<StreamerInfo> GetStreamerInfoAsync(long mid)
         {
             using var content = new FormUrlEncodedContent(new Dictionary<string, string>()
             {
                 ["uid"] = mid.ToString(),
             });
 
-            var response = await _client.GetStringAsync(ApiUrls.StreamerInfoUrl + "?" + await content.ReadAsStringAsync());
+            var response = await _httpClient.GetStringAsync(ApiUrls.StreamerInfoUrl + "?" + await content.ReadAsStringAsync());
             var jObj = JObject.Parse(response);
             var data = jObj["data"];
 

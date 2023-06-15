@@ -5,7 +5,7 @@ using BDanMuLib.Models;
 
 namespace BDanMuLib.Interfaces
 {
-    public interface IBarrageProvider
+    public interface IBarrageConnectionProvider : IAsyncDisposable
     {
         /// <summary>
         /// 连接直播弹幕服务器
@@ -13,7 +13,7 @@ namespace BDanMuLib.Interfaces
         /// <param name="roomId">房间号(可以为短号)</param>
         /// <param name="onReceive">对结果处理</param>
         /// <returns></returns>
-        Task ConnectAsync(int roomId, Action<Result> OnResult, CancellationToken cancellation = default);
+        Task<bool> ConnectAsync(int roomId, Action<Result> OnResult, CancellationToken cancellation = default);
 
         /// <summary>
         /// 断开连接

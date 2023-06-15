@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 
 namespace DanMuServer
 {
@@ -12,9 +13,14 @@ namespace DanMuServer
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(builder =>
+                {
+                    builder.AddSerilog();
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                });
+                })
+           .UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
     }
 }

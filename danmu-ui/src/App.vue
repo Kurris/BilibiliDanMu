@@ -2,10 +2,6 @@
   <div id="danmu-app">
     <div class="title electron-draggable">
     </div>
-
-    <!-- <h1>遇到要使文本在一行内显示，超出则加省略号的问题解决办法，如果描述超过100像素，则会隐藏，添加省略号</h1> -->
-
-
     <div class="main-container" v-show="currentShowWindow">
       <v-d-r :min-width="200" :w="380" :h="550" :x="200" :y="200" @dragging="resize" @resize="resize" :resizable="false"
         :parent-limitation="false" :draggable="true" classNameDragging="vdr-dragging">
@@ -21,20 +17,23 @@
 
     <el-drawer v-model="isDrawer" title="设置面板" direction="rtl" :show-close="false">
       <DmSetting @set-raise="setRaise" :is-drawer="isDrawer" />
+      <el-button @click="btnConnection">连接</el-button>
     </el-drawer>
 
-    <PreviewStyle :height="550" :width="380">
+    <!-- <PreviewStyle :height="550" :width="380">
       <DanMu :room-id="currentRoomId" ref="danmu" :danmu-count="currentDanmuCount"
         :entry-effect-direction="currentEntryEffectDirection" :show-avatar="currentShowAvatar"
         :show-medal="currentShowMedal" @on-sc="sc" />
-    </PreviewStyle>
+    </PreviewStyle> -->
+
+
 
     <!-- <v-d-r :min-width="200" :w="300" :h="150" :resizable="false" :parent-limitation="false" :draggable="true"
       classNameDragging="vdr-dragging">
       <GiftCover />
     </v-d-r> -->
 
-    <CodeEditor />
+    <!-- <CodeEditor /> -->
   </div>
 </template>
 <script setup lang="ts">
@@ -44,6 +43,7 @@ import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
 import PreviewStyle from './components/PreviewStyle.vue';
 
+import { useFetch } from '@vueuse/core'
 import { ElNotification } from 'element-plus'
 
 // import { useWebNotification } from '@vueuse/core'
@@ -61,6 +61,9 @@ const currentEntryEffectDirection = ref('left')
 const currentShowAvatar = ref(true)
 const currentShowMedal = ref(true)
 const currentShowWindow = ref(true)
+
+
+
 
 
 // const {
@@ -146,39 +149,48 @@ const sc = (data) => {
   })
 }
 
+const btnConnection = () => {
+  const { data } = useFetch("http://localhost:5000/api/barrage/receive").post(JSON.stringify({
+    connectionId: signalR.connectionId(),
+    roomId: 6750632
+  }), 'application/json').json()
+}
+
 
 onBeforeMount(() => {
-  signalR.$onAction(
-    ({
-      name, // name of the action
-      args, // array of parameters passed to the action
-      after, // hook after the action returns or resolves
-      onError, // hook if the action throws or rejects
-    }) => {
-      // a shared variable for this specific action call
-      const startTime = Date.now()
-      // this will trigger before an action on `store` is executed
-      console.log(`Start "${name}" with params [${args.join(', ')}].`)
+  // signalR.$onAction(
+  //   ({
+  //     name, // name of the action
+  //     args, // array of parameters passed to the action
+  //     after, // hook after the action returns or resolves
+  //     onError, // hook if the action throws or rejects
+  //   }) => {
+  //     // a shared variable for this specific action call
+  //     const startTime = Date.now()
+  //     // this will trigger before an action on `store` is executed
+  //     console.log(`Start "${name}" with params [${args.join(', ')}].`)
 
-      // this will trigger if the action succeeds and after it has fully run.
-      // it waits for any returned promised
-      after((result) => {
-        console.log(
-          `Finished "${name}" after ${Date.now() - startTime
-          }ms.\nResult: ${result}.`
-        )
-      })
+  //     // this will trigger if the action succeeds and after it has fully run.
+  //     // it waits for any returned promised
+  //     after((result) => {
+  //       console.log(
+  //         `Finished "${name}" after ${Date.now() - startTime
+  //         }ms.\nResult: ${result}.`
+  //       )
+  //     })
 
-      // this will trigger if the action throws or returns a promise that rejects
-      onError((error) => {
-        console.warn(
-          `Failed "${name}" after ${Date.now() - startTime}ms.\nError: ${error}.`
-        )
-      })
-    }
-  )
+  //     // this will trigger if the action throws or returns a promise that rejects
+  //     onError((error) => {
+  //       console.warn(
+  //         `Failed "${name}" after ${Date.now() - startTime}ms.\nError: ${error}.`
+  //       )
+  //     })
+  //   }
+  // )
 
-  signalR.start();
+  signalR.start().then(() => {
+
+  });
 })
 
 </script>

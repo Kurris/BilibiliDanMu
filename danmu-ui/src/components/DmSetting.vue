@@ -59,9 +59,9 @@ const emits = defineEmits<{
 
 
 const connectRoom = () => {
-    signalR.connectBLiveRoom(Number(form.roomId)).catch(err => {
-        console.log(err)
-    })
+    // signalR.connectBLiveRoom(Number(form.roomId)).catch(err => {
+    //     console.log(err)
+    // })
 }
 
 </script>

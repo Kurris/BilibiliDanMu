@@ -11,23 +11,35 @@ using BDanmuLib.Enums;
 using BDanMuLib.Models;
 using Newtonsoft.Json.Linq;
 using BDanMuLib.Extensions;
-using BDanMuLib.Utils;
 using System.Collections.Generic;
 using System.Threading;
 using System.Runtime.CompilerServices;
 using BDanMuLib.Interfaces;
+using Microsoft.Extensions.Logging;
 
-namespace BDanMuLib
+namespace BDanMuLib.Services
 {
     /// <summary>
     /// B站弹幕库核心
     /// </summary>
-    public class BilibiliBarrage : IBarrageProvider
+    internal class BilibiliConnectionService : IBarrageConnectionProvider
     {
-        /// <summary>
-        /// 网络流
-        /// </summary>
+
         private Stream _stream;
+        private readonly BufferReadState _state = new();
+
+        private readonly BilibiliApiService _bilibiliApiService;
+        private readonly RawtHandleService _rawtHandleService;
+        private readonly ILogger<BilibiliConnectionService> _logger;
+
+
+
+        public BilibiliConnectionService(ILogger<BilibiliConnectionService> logger, BilibiliApiService bilibiliApiService, RawtHandleService rawtHandleService)
+        {
+            _bilibiliApiService = bilibiliApiService;
+            _rawtHandleService = rawtHandleService;
+            _logger = logger;
+        }
 
 
         /// <summary>
@@ -37,35 +49,37 @@ namespace BDanMuLib
         /// <param name="onReceive">消息处理方法</param>
         /// <returns></returns>
         /// <exception cref="SocketException"></exception>
-        public async Task ConnectAsync(int roomId, Action<Result> onReceive, CancellationToken cancellation = default)
+        public async Task<bool> ConnectAsync(int roomId, Action<Result> onReceive, CancellationToken cancellation = default)
         {
             if (_stream != null) await DisconnectAsync();
-            cancellation.Register(async () =>
-            {
-                await DisconnectAsync();
-            });
 
             //房间,直播ip和port信息
-            var roomInfo = await RequestUtils.GetRoomInfoAsync(roomId);
-            var broadCastInfo = await RequestUtils.GetBroadCastInfoAsync(roomInfo.RoomId);
-            var ipAddresses = await Dns.GetHostAddressesAsync(broadCastInfo.Host, cancellation);
-
-            var tcpClient = new TcpClient();
-            await tcpClient.ConnectAsync(broadCastInfo.Host, broadCastInfo.Port, cancellation);
-            if (!tcpClient.Connected)
+            var roomInfo = await _bilibiliApiService.GetRoomInfoAsync(roomId);
+            if (roomInfo.LiveStatus != 1)
             {
-                throw new SocketException((int)SocketError.ConnectionRefused);
+                return false;
             }
-
-            _stream = Stream.Synchronized(tcpClient.GetStream());
-
-            await _stream.SendJoinRoomAsync(roomInfo.RoomId, broadCastInfo.Token, cancellation);
-            _ = _stream.SendHeartBeatLoopAsync(cancellation);
-
-            await Console.Out.WriteLineAsync($"Connect room:{roomId} successfully");
+            var broadCastInfo = await _bilibiliApiService.GetBroadCastInfoAsync(roomInfo.RoomId);
 
             try
             {
+                var ipAddresses = await Dns.GetHostAddressesAsync(broadCastInfo.Host, cancellation);
+
+                var tcpClient = new TcpClient();
+                await tcpClient.ConnectAsync(broadCastInfo.Host, broadCastInfo.Port, cancellation);
+                if (!tcpClient.Connected)
+                {
+                    throw new SocketException((int)SocketError.ConnectionRefused);
+                }
+
+                _stream = Stream.Synchronized(tcpClient.GetStream());
+
+                await _stream.SendJoinRoomAsync(roomInfo.RoomId, broadCastInfo.Token, cancellation);
+                _ = _stream.SendHeartBeatLoopAsync(cancellation);
+
+                _logger.LogInformation("Connect room:{roomId} successfully", roomId);
+
+
                 await ReceiveRawMessageLoopAsync(cancellation).ForEachAwaitWithCancellationAsync(async (x, _) =>
                 {
                     var result = await HandleRawMessageAsync(x);
@@ -75,11 +89,18 @@ namespace BDanMuLib
                         onReceive.Invoke(result);
                     }
                 }, cancellation);
+
             }
             catch (TaskCanceledException)
             {
-                await Console.Out.WriteLineAsync($"Task Canceled");
+                _logger.LogInformation("Room:{RoomId} connection canceled by manually.", roomId);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.GetBaseException().Message);
+            }
+
+            return true;
         }
 
 
@@ -94,7 +115,7 @@ namespace BDanMuLib
             var length = 16;
             while (!cancellation.IsCancellationRequested)
             {
-                await _stream.ReadBAsync(stableBuffer, 0, length, cancellation);
+                await _stream.ReadBAsync(stableBuffer, 0, length, _state, cancellation);
 
                 ProtocolStruts protocol = ProtocolStruts.FromBuffer(stableBuffer);
                 if (protocol.PacketLength < 16)
@@ -111,7 +132,7 @@ namespace BDanMuLib
 
                 var buffer = new byte[payloadLength];
 
-                await _stream.ReadBAsync(buffer, 0, payloadLength, cancellation);
+                await _stream.ReadBAsync(buffer, 0, payloadLength, _state, cancellation);
 
                 if (protocol.Version == 2 && protocol.OperateType == OperateType.DetailCommand)
                 {
@@ -122,7 +143,7 @@ namespace BDanMuLib
 
                     while (!cancellation.IsCancellationRequested)
                     {
-                        if (!await deflate.ReadBAsync(headerBuffer, 0, length, cancellation))
+                        if (!await deflate.ReadBAsync(headerBuffer, 0, length, _state, cancellation))
                         {
                             break;
                         }
@@ -130,7 +151,7 @@ namespace BDanMuLib
                         payloadLength = protocolInfo.PacketLength - length;
 
                         var danMuKuBuffer = new byte[payloadLength];
-                        if (!await deflate.ReadBAsync(danMuKuBuffer, 0, payloadLength, cancellation))
+                        if (!await deflate.ReadBAsync(danMuKuBuffer, 0, payloadLength, _state, cancellation))
                         {
                             break;
                         }
@@ -146,7 +167,7 @@ namespace BDanMuLib
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(ex);
+                            _logger.LogError(ex, ex.GetBaseException().Message);
                             continue;
                         }
 
@@ -189,14 +210,14 @@ namespace BDanMuLib
 
             return info.Type switch
             {
-                MessageType.DANMU_MSG => new Result(info.Type, await jObj.FromDanMuMsgAsync()),
-                MessageType.SEND_GIFT => new Result(info.Type, jObj.FromSendGift()),
-                MessageType.ENTRY_EFFECT => new Result(info.Type, jObj.FromEntryEffect()),
-                MessageType.SUPER_CHAT_MESSAGE => new Result(info.Type, jObj.FromSuperChat()),
-                MessageType.INTERACT_WORD => new Result(info.Type, jObj.FromInteractWord()),
-                MessageType.WATCHED_CHANGE => new Result(info.Type, jObj.FromWatchedChanged()),
-                MessageType.GUARD_BUY => new Result(info.Type, jObj.FromWatchedChanged()),
-                MessageType.USER_TOAST_MSG => new Result(info.Type, jObj.FromUserToastMsg()),
+                MessageType.DANMU_MSG => await _rawtHandleService.FromDanMuMsgAsync(jObj),
+                MessageType.SEND_GIFT => _rawtHandleService.FromSendGift(jObj),
+                MessageType.ENTRY_EFFECT => _rawtHandleService.FromEntryEffect(jObj),
+                MessageType.SUPER_CHAT_MESSAGE => _rawtHandleService.FromSuperChat(jObj),
+                MessageType.INTERACT_WORD => _rawtHandleService.FromInteractWord(jObj),
+                MessageType.WATCHED_CHANGE => _rawtHandleService.FromWatchedChanged(jObj),
+                MessageType.GUARD_BUY => _rawtHandleService.FromGuardBuy(jObj),
+                MessageType.USER_TOAST_MSG => _rawtHandleService.FromUserToastMsg(jObj),
                 _ => Result.Default
             };
         }
@@ -208,9 +229,13 @@ namespace BDanMuLib
         {
             try
             {
+                while (_state.IsReading)
+                {
+                    await Task.Delay(10);
+                }
+
                 if (_stream != null)
                 {
-                    _stream.Close();
                     await _stream.DisposeAsync();
                     _stream = null;
                 }
@@ -221,5 +246,10 @@ namespace BDanMuLib
             }
         }
 
+        public async ValueTask DisposeAsync()
+        {
+            _logger.LogInformation("Raise Dispose");
+            await DisconnectAsync();
+        }
     }
 }
