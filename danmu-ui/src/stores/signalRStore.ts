@@ -55,6 +55,13 @@ export const useSignalR = defineStore('signalr', () => {
     });
 
 
+    const clearData = () => {
+        data.comments.splice(0, data.comments.length)
+        data.queue.clear()
+        data.entryEffects.splice(0, data.entryEffects.length)
+        data.entryEffectQueue.clear()
+    }
+
     //弹幕消息
     connection.on("DANMU_MSG", p => {
         data.queue.enqueue(p)
@@ -103,8 +110,8 @@ export const useSignalR = defineStore('signalr', () => {
     })
 
     //无法连接
-    connection.onclose(err => {
-        console.log(err);
+    connection.onclose(() => {
+        clearData()
     })
 
 
@@ -124,10 +131,7 @@ export const useSignalR = defineStore('signalr', () => {
 
     //     if (connected()) {
 
-    //         data.comments.splice(0, data.comments.length)
-    //         data.queue.clear()
-    //         data.entryEffects.splice(0, data.entryEffects.length)
-    //         data.entryEffectQueue.clear()
+    //        
 
     //         return connection.invoke("Start", roomId)
     //     }

@@ -3,7 +3,7 @@
     <div class="title electron-draggable">
     </div>
     <div class="main-container" v-show="currentShowWindow">
-      <v-d-r :min-width="200" :w="380" :h="550" :x="200" :y="200" @dragging="resize" @resize="resize" :resizable="false"
+      <v-d-r :min-width="200" :w="380" :h="550" :x="152" :y="118" @dragging="resize" @resize="resize" :resizable="false"
         :parent-limitation="false" :draggable="true" classNameDragging="vdr-dragging">
         <el-icon class="setting-btn" @click="isDrawer = !isDrawer">
           <Setting />
@@ -92,6 +92,9 @@ const resize = (newRect) => {
   position.height = newRect.height;
   position.top = newRect.top;
   position.left = newRect.left;
+
+  console.log(newRect);
+
 }
 
 const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: boolean, showMedal: boolean, showWindow: boolean) => {
@@ -152,7 +155,7 @@ const sc = (data) => {
 const btnConnection = () => {
   const { data } = useFetch("http://localhost:5000/api/barrage/receive").post(JSON.stringify({
     connectionId: signalR.connectionId(),
-    roomId: 6750632
+    roomId: 7777
   }), 'application/json').json()
 }
 

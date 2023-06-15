@@ -63,7 +63,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { onBeforeMount, reactive, ref, watch } from 'vue'
+import { onBeforeMount, ref, watch } from 'vue'
 import EntryEffect from './EntryEffect.vue'
 import { useSignalR } from '../stores/signalRStore';
 
@@ -94,10 +94,6 @@ watch(() => props.entryEffectDirection, (newVal) => {
 
 const count = ref(7);
 
-
-const emits = defineEmits<{
-    (e: 'onSc', msg: any): void
-}>()
 
 
 onBeforeMount(() => {
@@ -243,47 +239,47 @@ onBeforeMount(() => {
 }
 
 
-// .danmu-move {
-//     transition: all 0.3s ease;
-// }
+.danmu-move {
+    transition: all 0.3s ease;
+}
 
-// .danmu-enter-active,
-// .danmu-leave-active {
-//     position: absolute;
-//     transition: all 0.5s ease;
-// }
+.danmu-enter-active,
+.danmu-leave-active {
+    position: absolute;
+    transition: all 0.3s ease;
+}
 
-// .danmu-enter-from {
-//     opacity: 0;
-//     transform: translateX(-30px);
-// }
+.danmu-enter-from {
+    opacity: 0;
+    transform: translateX(-30px);
+}
 
-// .danmu-leave-to {
-//     opacity: 0;
-//     transform: translateX(-30px);
-// }
+.danmu-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+}
 
 
 
-// .entry-move {
-//     transition: all 0.3s ease;
-// }
+.entry-move {
+    transition: all 0.3s ease;
+}
 
-// .entry-enter-active,
-// .entry-leave-active {
-//     position: absolute;
-//     transition: all 0.3s ease;
-// }
+.entry-enter-active,
+.entry-leave-active {
+    position: absolute;
+    transition: all 0.3s ease;
+}
 
-// .entry-enter-from {
-//     opacity: 0;
-//     transform: v-bind(direction);
-// }
+.entry-enter-from {
+    opacity: 0;
+    transform: v-bind(direction);
+}
 
-// .entry-leave-to {
-//     opacity: 0;
-//     transform: v-bind(direction);
-// }
+.entry-leave-to {
+    opacity: 0;
+    transform: v-bind(direction);
+}
 
 li {
     list-style: none;
