@@ -1,34 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
+﻿using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace BDanMuLib.Utils
+namespace BDanMuLib.Services
 {
-    /// <summary>
-    /// Emote工具类
-    /// </summary>
-    /// <remarks>
-    /// 估计用不上
-    /// </remarks>
-    public class EmoteUtils
+    internal class EmoteService
     {
-
-        private EmoteUtils()
-        {
-
-        }
-
         /// <summary>
         /// 处理弹幕中的表情一般为[dog]格式
         /// </summary>
         /// <param name="comment"></param>
         /// <param name="extra"></param>
         /// <returns></returns>
-        public static string HandleCommentWithEmote(string comment, JObject extra)
+        public string HandleCommentWithEmote(string comment, JObject extra)
         {
             var emots = extra["emots"];
             if (emots.HasValues)
@@ -45,17 +28,6 @@ namespace BDanMuLib.Utils
                 });
             }
 
-            //foreach (var item in _emotes)
-            //{
-            //    string emote = "[" + item.Key + "]";
-            //    if (comment.Contains(emote))
-            //    {
-            //        comment = comment.Replace(emote, "<img referrer=\"no-referrer\" height=\"20\" width=\"20\" src=\"" + item.Value + "\"/>");
-
-            //        return comment;
-            //    }
-            //}
-
             return comment;
         }
 
@@ -65,7 +37,7 @@ namespace BDanMuLib.Utils
         /// <param name="uniqueComment"></param>
         /// <param name="extra"></param>
         /// <returns></returns>
-        public static string HandleCommentEmoteUnique(JToken uniqueComment, JObject extra)
+        public string HandleCommentEmoteUnique(JToken uniqueComment, JObject extra)
         {
             var emoteUnique = uniqueComment["emoticon_unique"].Value<string>();
             var width = uniqueComment["width"].Value<int>();

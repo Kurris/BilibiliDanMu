@@ -156,7 +156,6 @@ onBeforeMount(() => {
 <style scoped lang="scss">
 .danmu {
     padding: 15px;
-    ;
 
     .header {
         white-space: nowrap;
@@ -244,47 +243,47 @@ onBeforeMount(() => {
 }
 
 
-.danmu-move {
-    transition: all 0.3s ease;
-}
+// .danmu-move {
+//     transition: all 0.3s ease;
+// }
 
-.danmu-enter-active,
-.danmu-leave-active {
-    position: absolute;
-    transition: all 0.5s ease;
-}
+// .danmu-enter-active,
+// .danmu-leave-active {
+//     position: absolute;
+//     transition: all 0.5s ease;
+// }
 
-.danmu-enter-from {
-    opacity: 0;
-    transform: translateX(-30px);
-}
+// .danmu-enter-from {
+//     opacity: 0;
+//     transform: translateX(-30px);
+// }
 
-.danmu-leave-to {
-    opacity: 0;
-    transform: translateX(-30px);
-}
+// .danmu-leave-to {
+//     opacity: 0;
+//     transform: translateX(-30px);
+// }
 
 
 
-.entry-move {
-    transition: all 0.3s ease;
-}
+// .entry-move {
+//     transition: all 0.3s ease;
+// }
 
-.entry-enter-active,
-.entry-leave-active {
-    position: absolute;
-    transition: all 0.3s ease;
-}
+// .entry-enter-active,
+// .entry-leave-active {
+//     position: absolute;
+//     transition: all 0.3s ease;
+// }
 
-.entry-enter-from {
-    opacity: 0;
-    transform: v-bind(direction);
-}
+// .entry-enter-from {
+//     opacity: 0;
+//     transform: v-bind(direction);
+// }
 
-.entry-leave-to {
-    opacity: 0;
-    transform: v-bind(direction);
-}
+// .entry-leave-to {
+//     opacity: 0;
+//     transform: v-bind(direction);
+// }
 
 li {
     list-style: none;

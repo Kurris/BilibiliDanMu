@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia'
-import { HubConnectionBuilder, HubConnectionState, LogLevel, } from '@microsoft/signalr'
+import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel, } from '@microsoft/signalr'
 import { AppSetting } from '@/utils/appSetting';
 import Queue from '@/utils/queue';
-import { reactive } from 'vue';
+import { reactive, nextTick, ref } from 'vue';
 
 export const useSignalR = defineStore('signalr', () => {
 
     const connection = new HubConnectionBuilder()
-        .withUrl(AppSetting.VITE_SIGNALR_URL)
+        .withUrl(AppSetting.VITE_SIGNALR_URL, {
+            transport: HttpTransportType.WebSockets
+        })
         .configureLogging(LogLevel.Debug)
         .withAutomaticReconnect()
         .build();
@@ -74,8 +76,18 @@ export const useSignalR = defineStore('signalr', () => {
         data.sc = p
     })
 
-    connection.on("ENTRY_EFFECT", p => {
+    connection.on("ENTRY_EFFECT", async p => {
         data.entryEffectQueue.enqueue(p)
+
+        await nextTick(async () => {
+            const task = new Promise(() => {
+                const u = new SpeechSynthesisUtterance(p.speakText)
+                u.lang = 'zh-CN'
+                u.rate = 0.8
+                window.speechSynthesis.speak(u)
+            })
+            await task;
+        })
     })
 
     connection.on("SEND_GIFT", p => {
@@ -83,48 +95,43 @@ export const useSignalR = defineStore('signalr', () => {
         data.gifts.push(p)
     })
 
-    connection.on("READ_SC", p => {
-        const u = new SpeechSynthesisUtterance(p)
-        u.lang = 'zh-CN'
-        u.rate = 0.8
-        window.speechSynthesis.speak(u)
-    })
+
 
     //重连或者首次
     connection.onreconnected(id => {
-        console.log(id);
 
     })
+
     //无法连接
     connection.onclose(err => {
         console.log(err);
     })
 
 
-
-
+    const connectionId = () => connection.connectionId
     const connected = () => connection.state == HubConnectionState.Connected;
     const disconnected = () => connection.state == HubConnectionState.Disconnected;
 
     const start = () => connection.start()
 
-    /**
-     * 
-     * @param roomId 房间id(支持短号)
-     * @returns 
-     */
-    const connectBLiveRoom = (roomId: number) => {
 
-        if (connected()) {
+    // /**
+    //  * 
+    //  * @param roomId 房间id(支持短号)
+    //  * @returns 
+    //  */
+    // const connectBLiveRoom = (roomId: number) => {
 
-            data.comments.splice(0, data.comments.length)
-            data.queue.clear()
-            data.entryEffects.splice(0, data.entryEffects.length)
-            data.entryEffectQueue.clear()
+    //     if (connected()) {
 
-            return connection.invoke("Start", roomId)
-        }
-    }
+    //         data.comments.splice(0, data.comments.length)
+    //         data.queue.clear()
+    //         data.entryEffects.splice(0, data.entryEffects.length)
+    //         data.entryEffectQueue.clear()
 
-    return { start, connectBLiveRoom, connected, disconnected, data }
+    //         return connection.invoke("Start", roomId)
+    //     }
+    // }
+
+    return { connectionId, start, connected, disconnected, data }
 })

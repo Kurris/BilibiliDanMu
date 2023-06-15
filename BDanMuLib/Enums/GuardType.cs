@@ -34,6 +34,7 @@ namespace BDanMuLib.Emuns
         {
             this.FontColor = fontColor;
             this.FrameUrl = frameUrl;
+            this.FansMedalIconUrl = fansMedalIconUrl;
         }
 
         public int Level => Id;

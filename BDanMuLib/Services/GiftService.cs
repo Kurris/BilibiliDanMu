@@ -6,11 +6,17 @@ using System.Text;
 using BDanMuLib.Models;
 using Newtonsoft.Json.Linq;
 
-namespace BDanMuLib.Utils
+namespace BDanMuLib.Services
 {
-    public class GiftUtils
+    /// <summary>
+    /// singletion
+    /// </summary>
+    internal class GiftService
     {
-        private static readonly Lazy<Dictionary<int, GiftInfo>> _dicGiftInfos = new(() =>
+        /// <summary>
+        /// 
+        /// </summary>
+        private readonly Lazy<Dictionary<int, GiftInfo>> _dicGiftInfos = new(() =>
         {
             var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "gift.json"), Encoding.UTF8);
             var jObj = JObject.Parse(text);
@@ -56,11 +62,9 @@ namespace BDanMuLib.Utils
         });
 
 
-
-
-        public static string GetGifUrl(int id)
+        public string GetGifUrl(int giftId)
         {
-            var exists = _dicGiftInfos.Value.TryGetValue(id, out var info);
+            var exists = _dicGiftInfos.Value.TryGetValue(giftId, out var info);
             return exists ? info.Gif : string.Empty;
         }
     }

@@ -1,18 +1,30 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BDanmuLib.Enums;
 using BDanMuLib.Emuns;
 using BDanMuLib.Enums;
+using BDanMuLib.Extensions;
 using BDanMuLib.Models;
 using BDanMuLib.Utils;
 using Newtonsoft.Json.Linq;
 
-namespace BDanMuLib.Extensions
+namespace BDanMuLib.Services
 {
-    public static class JObjectExtensions
+    internal class RawtHandleService
     {
+        private readonly EmoteService _emoteService;
+        private readonly AvatarService _avatarService;
+        private readonly GiftService _giftService;
 
-        public static async Task<BarrageInfo> FromDanMuMsgAsync(this JObject jObj)
+        public RawtHandleService(EmoteService emoteService, AvatarService avatarService, GiftService giftService)
+        {
+            _emoteService = emoteService;
+            _avatarService = avatarService;
+            _giftService = giftService;
+        }
+
+        public async Task<Result> FromDanMuMsgAsync(JObject jObj)
         {
             var info = jObj["info"];
 
@@ -27,28 +39,24 @@ namespace BDanMuLib.Extensions
             var uniqueComment = info[0][13];
             var extra = JObject.Parse(info[0][15]["extra"].Value<string>());
 
-            if (!string.IsNullOrEmpty(color) && !new[] { "#00D1F1", "#E17AFF" }.Contains(color))
-            {
-                Console.WriteLine(userName + " : " + color);
-            }
-
             //debug
             if (userName.Equals("kurris", StringComparison.OrdinalIgnoreCase))
             {
+
             }
 
             //表情处理
             comment = uniqueComment.HasValues
-                ? comment = EmoteUtils.HandleCommentEmoteUnique(uniqueComment, extra)
-                : comment = EmoteUtils.HandleCommentWithEmote(comment, extra);
+                ? _emoteService.HandleCommentEmoteUnique(uniqueComment, extra)
+                : _emoteService.HandleCommentWithEmote(comment, extra);
 
             var medal = info[3];
             var hasMedal = medal.Any();
 
-            return new BarrageInfo()
+            return new Result(MessageType.DANMU_MSG, new BarrageInfo()
             {
                 Mid = mid,
-                FaceUrl = await AvatarUtils.Get(mid),
+                FaceUrl = await _avatarService.GetByBilibiliUserId(mid),
                 Comment = comment,
                 IsAdmin = isAdmin,
                 Time = time,
@@ -59,64 +67,11 @@ namespace BDanMuLib.Extensions
                 MedalLevel = hasMedal ? medal[0].Value<int>() : 0,
                 Top3 = top3,
                 Guard = GuardType.CheckGuardByColor(color),
-            };
+            });
         }
 
-        public static SuperChatInfo FromSuperChat(this JObject jObj)
+        public Result FromSuperChat(JObject jObj)
         {
-            #region debug
-            //            jObj = JObject.Parse(@"{
-            //    ""cmd"": ""SUPER_CHAT_MESSAGE"",
-            //    ""data"": {
-            //        ""background_bottom_color"": ""#2A60B2"",
-            //        ""background_color"": ""#EDF5FF"",
-            //        ""background_color_end"": ""#405D85"",
-            //        ""background_color_start"": ""#3171D2"",
-            //        ""background_icon"": """",
-            //        ""background_image"": ""https://i0.hdslb.com/bfs/live/a712efa5c6ebc67bafbe8352d3e74b820a00c13e.png"",
-            //        ""background_price_color"": ""#7497CD"",
-            //        ""color_point"": 0.7,
-            //        ""dmscore"": 112,
-            //        ""end_time"": 1654978081,
-            //        ""gift"": {
-            //            ""gift_id"": 12000,
-            //            ""gift_name"": ""醒目留言"",
-            //            ""num"": 1
-            //        },
-            //        ""id"": 4258549,
-            //        ""is_ranked"": 1,
-            //        ""is_send_audit"": 0,
-            //        ""medal_info"": null,
-            //        ""message"": ""hana等会真的唱 向天再借五百年吗"",
-            //        ""message_font_color"": ""#A3F6FF"",
-            //        ""message_trans"": """",
-            //        ""price"": 30,
-            //        ""rate"": 1000,
-            //        ""start_time"": 1654978021,
-            //        ""time"": 60,
-            //        ""token"": ""3A85D663"",
-            //        ""trans_mark"": 0,
-            //        ""ts"": 1654978021,
-            //        ""uid"": 109319072,
-            //        ""user_info"": {
-            //            ""face"": ""http://i2.hdslb.com/bfs/face/de172ea5b6f3d09769fe3b0e5e6e57c02350d49d.jpg"",
-            //            ""face_frame"": """",
-            //            ""guard_level"": 0,
-            //            ""is_main_vip"": 1,
-            //            ""is_svip"": 0,
-            //            ""is_vip"": 0,
-            //            ""level_color"": ""#969696"",
-            //            ""manager"": 0,
-            //            ""name_color"": ""#666666"",
-            //            ""title"": ""0"",
-            //            ""uname"": ""AyeUniCute"",
-            //            ""user_level"": 0
-            //        }
-            //    },
-            //    ""roomid"": 9015372
-            //}");
-
-            #endregion
 
             var info = jObj["data"];
             var medalInfo = info["medal_info"];
@@ -148,33 +103,28 @@ namespace BDanMuLib.Extensions
             };
 
 
-            //var speakText = string.Concat(superChatInfo.UserName, "发送了", superChatInfo.Num, "条", superChatInfo.GiftName, ",", superChatInfo.Message);
-            //sc channel speak
-            //windows only
-            //_ = ChannelUtils.PublishAsync();
-
-            return superChatInfo;
+            return new Result(MessageType.SUPER_CHAT_MESSAGE, superChatInfo);
         }
 
-        public static WatchedInfo FromWatchedChanged(this JObject jObj)
+        public Result FromWatchedChanged(JObject jObj)
         {
             var watchedNum = jObj["data"]["num"].Value<int>();
-            return new WatchedInfo(watchedNum);
+            return new Result(MessageType.WATCHED_CHANGE, new WatchedInfo(watchedNum));
         }
 
 
-        public static InteractWordInfo FromInteractWord(this JObject jObj)
+        public Result FromInteractWord(JObject jObj)
         {
             var data = jObj["data"];
             var userName = data["uname"].Value<string>();
 
-            return new InteractWordInfo()
+            return new Result(MessageType.INTERACT_WORD, new InteractWordInfo()
             {
                 UserName = $"{userName} 进入直播间"
-            };
+            });
         }
 
-        public static EntryEffectInfo FromEntryEffect(this JObject jObj)
+        public Result FromEntryEffect(JObject jObj)
         {
             var data = jObj["data"];
             var copyWriting = data["copy_writing"].Value<string>();
@@ -183,15 +133,15 @@ namespace BDanMuLib.Extensions
             copyWriting = copyWriting.Replace("%>", "</span>");
 
 
-            return new EntryEffectInfo()
+            return new Result(MessageType.ENTRY_EFFECT, new EntryEffectInfo()
             {
                 Face = data["face"].Value<string>(),
                 Message = copyWriting,
                 BaseImageUrl = data["web_basemap_url"].Value<string>(),
-            };
+            });
         }
 
-        public static SendGiftInfo FromSendGift(this JObject jObj)
+        public Result FromSendGift(JObject jObj)
         {
 
             var data = jObj["data"];
@@ -205,9 +155,9 @@ namespace BDanMuLib.Extensions
 
 
             var coinType = CoinType.CheckCoinType(data["coin_type"].Value<string>());
-            var gifUrl = GiftUtils.GetGifUrl(giftId);
+            var gifUrl = _giftService.GetGifUrl(giftId);
 
-            return new SendGiftInfo()
+            return new Result(MessageType.SEND_GIFT, new SendGiftInfo()
             {
                 Uid = uid,
                 From = userName,
@@ -216,16 +166,15 @@ namespace BDanMuLib.Extensions
                 Num = num,
                 GifUrl = gifUrl,
                 CoinType = coinType
-            };
+            });
         }
 
-        public static GuardBuyInfo FromGuardBuy(this JObject jObj)
+        public Result FromGuardBuy(JObject jObj)
         {
 
             var data = jObj["data"];
 
-
-            return new GuardBuyInfo()
+            return new Result(MessageType.GUARD_BUY, new GuardBuyInfo()
             {
                 Uid = data["uid"].Value<long>(),
                 UserName = data["username"].Value<string>(),
@@ -234,10 +183,10 @@ namespace BDanMuLib.Extensions
                 Num = data["num"].Value<int>(),
                 GiftId = data["gift_id"].Value<int>(),
                 GuardType = GuardType.CheckGuardByLevel(data[key: "guard_level"].Value<int>())
-            };
+            });
         }
 
-        public static UserToastMsgInfo FromUserToastMsg(this JObject jObj)
+        public Result FromUserToastMsg(JObject jObj)
         {
             //price为实际金瓜子标价，即rmb*1000
 
@@ -255,7 +204,7 @@ namespace BDanMuLib.Extensions
             var price = data["price"].Value<int>();
             var priceString = (price / 1000) * num + " CNY";
 
-            return new UserToastMsgInfo
+            return new Result(MessageType.USER_TOAST_MSG, new UserToastMsgInfo
             {
                 Uid = uid,
                 UserName = userName,
@@ -268,7 +217,7 @@ namespace BDanMuLib.Extensions
                 PriceString = priceString,
                 Price = price,
                 Message = msg,
-            };
+            });
         }
     }
 }
