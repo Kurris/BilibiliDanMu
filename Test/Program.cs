@@ -57,7 +57,7 @@ cancelSources.Where(x => !excludes.Contains(x.Key)).ToList().ForEach(async entry
     entry.Value.Cancel();
 });
 
-while (cancelSources.Where(x => !excludes.Contains(x.Key)).All(x => !x.Value.IsCancellationRequested))
+while (!cancelSources.Where(x => !excludes.Contains(x.Key)).All(x => x.Value.IsCancellationRequested))
 {
     await Task.Delay(1000);
 }

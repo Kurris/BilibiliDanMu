@@ -55,7 +55,8 @@ namespace BDanMuLib.Services
         {
             if (_stream != null || _roomId.HasValue)
             {
-                throw new Exception("ConnectAsync method only can be called one time in instance.");
+                _logger.LogError("ConnectAsync method only can be called one time in instance.");
+                return false;
             }
 
             _roomId = roomId;
@@ -66,7 +67,7 @@ namespace BDanMuLib.Services
             if (roomInfo.LiveStatus != LiveStatusType.直播中)
             {
                 _logger.LogInformation("RoomId:{RoomId} 's live status {Status} , connect operation finished", _roomId, roomInfo.LiveStatus.ToString());
-                return false;
+                return true;
             }
             var broadCastInfo = await _bilibiliApiService.GetBroadCastInfoAsync(roomInfo.RoomId);
 
