@@ -14,10 +14,10 @@ namespace BDanMuLib.Services
             if (_sources.TryGetValue(connectionId, out var cancellationToken) && cancellationToken != null)
             {
                 cancellationToken.Cancel();
-                _sources.Remove(connectionId, out _);
-                return true;
+                
             }
-            return false;
+            _sources.Remove(connectionId, out _);
+            return true;
         }
 
         public void SetConnectionIdWithCancellationToken(string connectionId)

@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BDanMuLib", "BDanMuLib\BDanMuLib.csproj", "{5D784522-7058-4CBD-BE1E-09D52E8F6338}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveCore", "BDanMuLib\LiveCore.csproj", "{5D784522-7058-4CBD-BE1E-09D52E8F6338}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DanMuServer", "DanMuServer\DanMuServer.csproj", "{16B9FD70-6621-4737-B7AD-0AE8514D2CCB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveServer", "DanMuServer\LiveServer.csproj", "{16B9FD70-6621-4737-B7AD-0AE8514D2CCB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{E99963BA-2476-430A-A908-3CF9AB958289}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{E99963BA-2476-430A-A908-3CF9AB958289}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsApiTest", "WindowsApiTest\WindowsApiTest.csproj", "{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,14 @@ Global
 		{E99963BA-2476-430A-A908-3CF9AB958289}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E99963BA-2476-430A-A908-3CF9AB958289}.Release|x64.ActiveCfg = Release|Any CPU
 		{E99963BA-2476-430A-A908-3CF9AB958289}.Release|x64.Build.0 = Release|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Debug|x64.Build.0 = Debug|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Release|x64.ActiveCfg = Release|Any CPU
+		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,7 +4,6 @@ using BDanMuLib.Interfaces;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Microsoft.Extensions.Configuration;
-using BDanMuLib;
 
 var serviceProvider = new ServiceCollection()
     .AddLogging((builder) =>

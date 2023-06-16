@@ -30,7 +30,10 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { useSignalR } from '../stores/signalRStore';
-const signalR = useSignalR()
+import { useFetch } from '@vueuse/core'
+import { AppSetting } from '../utils/appSetting';
+const signalR = useSignalR();
+
 
 const form = reactive({
     roomId: 6750632,
@@ -59,9 +62,10 @@ const emits = defineEmits<{
 
 
 const connectRoom = () => {
-    // signalR.connectBLiveRoom(Number(form.roomId)).catch(err => {
-    //     console.log(err)
-    // })
+    useFetch(AppSetting.VITE_API_URL + "/api/barrage/receive").post(JSON.stringify({
+        connectionId: signalR.connectionId(),
+        roomId: form.roomId
+    }), 'application/json').json()
 }
 
 </script>

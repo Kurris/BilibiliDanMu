@@ -60,6 +60,9 @@ export const useSignalR = defineStore('signalr', () => {
         data.queue.clear()
         data.entryEffects.splice(0, data.entryEffects.length)
         data.entryEffectQueue.clear()
+
+        data.hot.hot = 0;
+        data.interactWord.userName = ''
     }
 
     //弹幕消息
@@ -103,6 +106,9 @@ export const useSignalR = defineStore('signalr', () => {
     })
 
 
+    connection.onreconnecting(() => {
+        clearData()
+    })
 
     //重连或者首次
     connection.onreconnected(id => {
@@ -115,27 +121,12 @@ export const useSignalR = defineStore('signalr', () => {
     })
 
 
+
     const connectionId = () => connection.connectionId
     const connected = () => connection.state == HubConnectionState.Connected;
     const disconnected = () => connection.state == HubConnectionState.Disconnected;
 
     const start = () => connection.start()
-
-
-    // /**
-    //  * 
-    //  * @param roomId 房间id(支持短号)
-    //  * @returns 
-    //  */
-    // const connectBLiveRoom = (roomId: number) => {
-
-    //     if (connected()) {
-
-    //        
-
-    //         return connection.invoke("Start", roomId)
-    //     }
-    // }
 
     return { connectionId, start, connected, disconnected, data }
 })

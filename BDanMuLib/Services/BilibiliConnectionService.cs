@@ -66,7 +66,7 @@ namespace BDanMuLib.Services
             var roomInfo = await _bilibiliApiService.GetRoomInfoAsync(roomId);
             if (roomInfo.LiveStatus != LiveStatusType.直播中)
             {
-                _logger.LogInformation("RoomId:{RoomId} 's live status {Status} , connect operation finished", _roomId, roomInfo.LiveStatus.ToString());
+                _logger.LogInformation("{RoomId} 's live status {Status} , connect operation finished and return true.", _roomId, roomInfo.LiveStatus.ToString());
                 return true;
             }
             var broadCastInfo = await _bilibiliApiService.GetBroadCastInfoAsync(roomInfo.RoomId);
@@ -103,11 +103,11 @@ namespace BDanMuLib.Services
             }
             catch (TaskCanceledException)
             {
-                _logger.LogInformation("Room:{RoomId} connection canceled by manually.", roomId);
+                _logger.LogInformation("{RoomId} connection canceled by manually.", roomId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.GetBaseException().Message);
+                _logger.LogError(ex, "unexpect exception throw : {Info}", ex.GetBaseException().Message);
             }
 
             return true;
@@ -178,7 +178,7 @@ namespace BDanMuLib.Services
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, ex.GetBaseException().Message);
+                            _logger.LogWarning(ex, "Not support current message type :{Type}", ex.GetBaseException().Message);
                             continue;
                         }
 
@@ -262,6 +262,11 @@ namespace BDanMuLib.Services
         {
             _logger.LogInformation("{RoomId} receive raise Dispose", _roomId);
             await DisconnectAsync();
+        }
+
+        public void Dispose()
+        {
+            DisposeAsync().GetAwaiter().GetResult();
         }
     }
 }
