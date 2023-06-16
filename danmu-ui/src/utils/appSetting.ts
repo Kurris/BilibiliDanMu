@@ -1,5 +1,6 @@
 const config = {
-    VITE_SIGNALR_URL: import.meta.env.VITE_SIGNALR_URL as string
+    VITE_SIGNALR_URL: import.meta.env.VITE_SIGNALR_URL as string,
+    VITE_API_URL: import.meta.env.VITE_API_URL as string,
 }
 
 //dev输出配置

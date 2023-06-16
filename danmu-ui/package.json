@@ -10,7 +10,7 @@
   "main": "dist-electron/background.js",
   "description": "live stream tool",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "rimraf dist && vite build && electron-builder",
     "preview": "vite preview",
     "build-only": "vite build",

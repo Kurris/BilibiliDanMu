@@ -1,23 +1,13 @@
-// eslint-disable-next-line no-undef
 const { ipcRenderer, contextBridge } = require('electron')
 
-contextBridge.exposeInMainWorld('api', {
+ipcRenderer.on('ignoreMouse', (event, bg) => {
+  let body = document.getElementsByTagName('body')[0]
+  console.log(body)
+  body.style.backgroundColor = bg
+})
+
+contextBridge.exposeInMainWorld('electron', {
   ignoreMouse: () => {
     ipcRenderer.send('ignoreMouse')
-  },
-  setMini: () => {
-    ipcRenderer.send('setMini')
-  },
-  setMax: () => {
-    ipcRenderer.send('setMax')
-  },
-  setToTray: () => {
-    ipcRenderer.send('setToTray')
-  },
-  dragTitle: (position) => {
-    ipcRenderer.send('dragTitle', position)
-  },
-  restoreSize: () => {
-    ipcRenderer.send('restoreSize')
   }
 })

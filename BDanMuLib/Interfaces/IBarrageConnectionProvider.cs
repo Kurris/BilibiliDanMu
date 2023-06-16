@@ -5,7 +5,7 @@ using BDanMuLib.Models;
 
 namespace BDanMuLib.Interfaces
 {
-    public interface IBarrageConnectionProvider : IAsyncDisposable
+    public interface IBarrageConnectionProvider : IAsyncDisposable , IDisposable
     {
         /// <summary>
         /// 连接直播弹幕服务器

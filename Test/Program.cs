@@ -4,7 +4,6 @@ using BDanMuLib.Interfaces;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Microsoft.Extensions.Configuration;
-using BDanMuLib;
 
 var serviceProvider = new ServiceCollection()
     .AddLogging((builder) =>
@@ -57,7 +56,7 @@ cancelSources.Where(x => !excludes.Contains(x.Key)).ToList().ForEach(async entry
     entry.Value.Cancel();
 });
 
-while (cancelSources.Where(x => !excludes.Contains(x.Key)).All(x => !x.Value.IsCancellationRequested))
+while (!cancelSources.Where(x => !excludes.Contains(x.Key)).All(x => x.Value.IsCancellationRequested))
 {
     await Task.Delay(1000);
 }

@@ -1,15 +1,24 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut, type Rectangle } from "electron";
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut, desktopCapturer } from "electron";
 import path from "path";
 import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
 
-let danmu: ChildProcessWithoutNullStreams;
-let rectangle: Rectangle;
-let cover: boolean = false;
+
+// 变量 ---------------------------------------------------------------------------------------------
 let mainWindow: BrowserWindow;
-let loading: BrowserWindow;
+let loadingWindow: BrowserWindow;
+let overlayWindow: BrowserWindow;
+
+let danmu: ChildProcessWithoutNullStreams;
+let cover: boolean = false;
 let tray: Tray;
 let shortCutIgnoreMouse: boolean = false;
+const gotTheLock = app.requestSingleInstanceLock()
 
+// ---------------------------------------------------------------------------------------------
+
+
+
+// 程序开始前 ---------------------------------------------------------------------------------------------
 
 // 苹果电脑杀掉当前端口进程
 if (process.platform == 'darwin') {
@@ -18,12 +27,22 @@ if (process.platform == 'darwin') {
   }
 }
 
-const gotTheLock = app.requestSingleInstanceLock()
+
+
+
+
+
+// ---------------------------------------------------------------------------------------------------------
+
+
+
 if (!gotTheLock) {
   app.quit()
 } else {
+
+  //尝试多开
   app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // 用户正在尝试运行第二个实例，我们需要让焦点指向我们的窗口
+    //用户正在尝试运行第二个实例，我们需要让焦点指向我们的窗口
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()
       mainWindow.focus()
@@ -33,50 +52,81 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
 
     if (process.platform == 'darwin') {
+      // mac特定api
       app.dock.setIcon(path.join(__dirname, '../electron/app-100.png'))
     }
+
   }).then(() => {
-    // runExec()
+
+    // runLiveServer()
     creatLoading();
+
+    // mac系统
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) creatLoading();
     });
-  })
 
+  }).then(() => {
+
+    globalShortcut.register("CommandOrControl+Shift+i", () => {
+      if (cover) {
+        shortCutIgnoreMouse = !shortCutIgnoreMouse;
+        mainWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
+
+        const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
+        mainWindow.webContents.send('ignoreMouse', bgColor)
+      }
+    });
+
+
+    desktopCapturer.getSources({ types: ['window'] }).then(async sources => {
+      for (const source of sources) {
+        console.log(source);
+
+      }
+    })
+  })
 }
 
 
+
 const creatLoading = () => {
-  loading = new BrowserWindow({
-    show: false,
-    frame: false, // 无边框（窗口、工具栏等），只包含网页内容
+  loadingWindow = new BrowserWindow({
+    show: false, //加载完本地html再展示
+    frame: false,
     width: 550,
     height: 350,
     resizable: false,
-    transparent: true, // 窗口是否支持透明，如果想做高级效果最好为true
+    transparent: true,
   });
 
-  loading.once("show", createWindow);
-  loading.loadFile(path.join(__dirname, '../pacman-loading/index.html'));
-  loading.show()
+  // 由loadingWindow打开mainWindow
+  loadingWindow.once("show", createWindow);
+  // 先加载文件再展示
+  loadingWindow.loadFile(path.join(__dirname, '../pacman-loading/index.html')).then(() => {
+    loadingWindow.show()
+  }).catch(() => {
+    app.quit()
+  });
 }
 
 const createWindow = () => {
 
   mainWindow = new BrowserWindow({
-    show: false,
+    show: false, //由loadingWindow展示窗体
     transparent: true,
+    fullscreen: true,
     frame: false,
-    // titleBarStyle: "hidden",//customButtonsOnHover 可以自定义缩小,放大,关闭按钮
+    titleBarStyle: "hidden",//customButtonsOnHover 可以用html自定义缩小,放大,关闭按钮(可以,但是没必要,会缺少平台特定功能)
     titleBarOverlay: {
       color: '#ffffff',
       // symbolColor 符号颜色
       // height: 5
-    }, // 需要设置titleBarStyle才生效, mac设置:true , windows使用该对象即可
+    }, // 需要设置titleBarStyle才生效, mac上设置:true , windows使用该对象不为undefined即可
     resizable: true,
     height: 850,
     width: 1380,
-    title: '直播辅助工具',
+    title: 'Live chat',
     webPreferences: {
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
@@ -86,24 +136,23 @@ const createWindow = () => {
 
 
   mainWindow.once('ready-to-show', () => {
-    loading.hide()
-    loading.close()
+    //一定要先隐藏,不然会有视觉问题
+    loadingWindow.hide()
+    loadingWindow.close()
     mainWindow.show()
   })
 
   // mainWindow.webContents.openDevTools({ mode: 'undocked' })
   // win.webContents.openDevTools({ mode: 'right' });
 
-  globalShortcut.register("CommandOrControl+Shift+i", () => {
-    mainWindow.setIgnoreMouseEvents(!shortCutIgnoreMouse);
-  });
-
-  // 如果打包了，渲染index.html
-  if (app.isPackaged) {
-    mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
-  } else {
-    mainWindow.loadURL('http://localhost:3000');
-  }
+  setTimeout(() => {
+    // 如果打包了，渲染index.html
+    if (app.isPackaged) {
+      mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+    } else {
+      mainWindow.loadURL('http://localhost:3000');
+    }
+  }, 3000)
 
 
   tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '../electron/app-24.png')))
@@ -124,6 +173,7 @@ const createWindow = () => {
         mainWindow.setAlwaysOnTop(!cover, 'pop-up-menu')
 
         cover = !cover
+        shortCutIgnoreMouse = !shortCutIgnoreMouse
       }
     },
     {
@@ -140,45 +190,40 @@ const createWindow = () => {
     mainWindow?.setSkipTaskbar(false)
     mainWindow.show()
   })
+}
 
 
-};
+const createCover = () => {
+  coverWindow = new BrowserWindow({
+    show: false,
+    transparent: true,
+    fullscreen: true,
+    frame: false,
+    resizable: false,
+    webPreferences: {
+      contextIsolation: true, // 是否开启隔离上下文
+      nodeIntegration: true, // 渲染进程使用Node API
+      preload: path.join(__dirname, "../electron/preload.js"), // 需要引用js文件
+    },
+  });
 
-ipcMain.on("setMini", (event) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  win?.minimize()
-})
+  globalShortcut.register("CommandOrControl+Shift+i", () => {
+    if (cover) {
+      shortCutIgnoreMouse = !shortCutIgnoreMouse;
+      overlayWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
 
-ipcMain.on("restoreSize", (event) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (win?.isMaximized()) {
-    win?.setContentBounds(rectangle, true)
-  }
-})
+      const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
+      overlayWindow.webContents.send('ignoreMouse', bgColor)
+    }
+  });
 
-
-ipcMain.on("setMax", (event) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (win?.isMaximized()) {
-    win?.setContentBounds(rectangle, true)
+  // 如果打包了，渲染index.html
+  if (app.isPackaged) {
+    overlayWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
   } else {
-    rectangle = win!.getContentBounds()
-    win?.maximize()
+    overlayWindow.loadURL('http://localhost:3000');
   }
-})
-
-ipcMain.on("setToTray", (event) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  win?.minimize()
-  win?.setSkipTaskbar(true)
-})
-
-
-ipcMain.on("dragTitle", (event, position) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  win?.setPosition(position.x, position.y)
-})
-
+}
 
 // 关闭窗口
 app.on("window-all-closed", () => {
@@ -191,11 +236,15 @@ app.on("window-all-closed", () => {
 });
 
 
-const runExec = () => {
+
+
+// ---
+
+const runLiveServer = () => {
 
   const targetPath = app.isPackaged ? path.join(process.cwd(), '/resources/danmu-exe/') : path.join(__dirname, '../danmu-exe/')
 
-  danmu = spawn('dotnet', ['DanMuServer.dll', '--urls', 'http://*:5000'], {
+  danmu = spawn('dotnet', ['LiveServer.dll', '--urls', 'http://*:5000'], {
     cwd: targetPath
   });
 
