@@ -2,7 +2,10 @@ import { defineStore } from 'pinia'
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel, } from '@microsoft/signalr'
 import { AppSetting } from '@/utils/appSetting';
 import Queue from '@/utils/queue';
-import { reactive, nextTick, ref } from 'vue';
+import { reactive, h } from 'vue';
+//暂时不管
+import { ElNotification } from 'element-plus'
+
 
 export const useSignalR = defineStore('signalr', () => {
 
@@ -50,8 +53,7 @@ export const useSignalR = defineStore('signalr', () => {
         tempData: [],
         queue: new Queue(),
         entryEffects: [],
-        entryEffectQueue: new Queue(),
-        sc: null
+        entryEffectQueue: new Queue()
     });
 
 
@@ -62,6 +64,7 @@ export const useSignalR = defineStore('signalr', () => {
         data.entryEffectQueue.clear()
 
         data.hot.hot = 0;
+        data.watched.num = 0;
         data.interactWord.userName = ''
     }
 
@@ -82,22 +85,16 @@ export const useSignalR = defineStore('signalr', () => {
         data.hot = p
     })
 
-    connection.on("SUPER_CHAT_MESSAGE", p => {
-        data.sc = p
+    connection.on("SUPER_CHAT_MESSAGE", (p: any) => {
+        scNotification(p)
+        const u = new SpeechSynthesisUtterance(p.speakText)
+        u.lang = 'zh-CN'
+        u.rate = 0.8
+        window.speechSynthesis.speak(u)
     })
 
-    connection.on("ENTRY_EFFECT", async p => {
+    connection.on("ENTRY_EFFECT", p => {
         data.entryEffectQueue.enqueue(p)
-
-        await nextTick(async () => {
-            const task = new Promise(() => {
-                const u = new SpeechSynthesisUtterance(p.speakText)
-                u.lang = 'zh-CN'
-                u.rate = 0.8
-                window.speechSynthesis.speak(u)
-            })
-            await task;
-        })
     })
 
     connection.on("SEND_GIFT", p => {
@@ -112,7 +109,7 @@ export const useSignalR = defineStore('signalr', () => {
 
     //重连或者首次
     connection.onreconnected(id => {
-
+        console.log(id);
     })
 
     //无法连接
@@ -121,12 +118,51 @@ export const useSignalR = defineStore('signalr', () => {
     })
 
 
+    const scNotification = (data: any) => {
+
+        ElNotification({
+            dangerouslyUseHTMLString: true,
+            duration: 1000 * 20,
+            showClose: true,
+            message: h({
+                template: ` 
+          <div style='width:300px;background-color: ${data.backgroundColor};font-size: 10px;'>
+      
+            <div style="height:40px;">
+              <div style="padding-left:10px;padding-top:2px">
+                <img referrer="no-referrer" src="${data.userFace}" width="35" height="35" style="position:absolute;border-radius:50%;"/>
+                <img v-if="'${data.userFaceFrame}'!=''" referrer="no-referrer" src="${data.userFaceFrame}" width="35" height="35" style="position:absolute;"/>
+              </div>
+            
+              <div style="margin-left:60px;display: flex;align-items: center;padding-top:8px;">
+                <div v-if="${data.hasMedal}"  style="display: flex;justify-content: center;align-items: center;background-color:orange;border-radius: 12%;">
+                    <div style="color:${data.medalColor};">${data.medalName}</div>
+                    <div style="color:white;margin-left:5px;margin-right:5px;">${data.medalLevel}</div>
+                </div>
+                <div style="color='${data.userNameColor}';margin-left:10px">${data.userName}</div>
+              </div>
+      
+              <img src="${data.backgroundImage}" width="100" height="40" style="position:absolute;top:0;;right:-8px;"/>
+              <div style="color:${data.backgroundPriceColor};position:absolute;top:8px;right:25px;">
+                  ${data.priceString}
+              </div>
+            </div>
+            <div style="background-color: ${data.backgroundBottomColor};padding: 10px;color: ${data.messageFontColor};font-size: 10px;">
+                ${data.message}
+            </div>
+          </div>
+          `
+            })
+        })
+    }
 
     const connectionId = () => connection.connectionId
     const connected = () => connection.state == HubConnectionState.Connected;
     const disconnected = () => connection.state == HubConnectionState.Disconnected;
-
     const start = () => connection.start()
+
+
+
 
     return { connectionId, start, connected, disconnected, data }
 })

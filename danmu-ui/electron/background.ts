@@ -8,6 +8,7 @@ let mainWindow: BrowserWindow;
 let loadingWindow: BrowserWindow;
 let overlayWindow: BrowserWindow;
 
+const windowsIsTrueMacIsFalse = process.platform == 'win32'
 let danmu: ChildProcessWithoutNullStreams;
 let cover: boolean = false;
 let tray: Tray;
@@ -115,7 +116,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     show: false, //由loadingWindow展示窗体
     transparent: true,
-    fullscreen: true,
+    fullscreen: windowsIsTrueMacIsFalse,
     frame: false,
     titleBarStyle: "hidden",//customButtonsOnHover 可以用html自定义缩小,放大,关闭按钮(可以,但是没必要,会缺少平台特定功能)
     titleBarOverlay: {

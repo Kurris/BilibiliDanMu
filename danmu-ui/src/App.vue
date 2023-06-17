@@ -3,7 +3,7 @@
     <div class="title electron-draggable">
     </div>
     <div class="main-container" v-show="currentShowWindow">
-      <v-d-r :min-width="200" :w="380" :h="650" :x="152" :y="118" @dragging="resize" @resizing="resize" :resizable="true"
+      <v-d-r :min-width="200" :w="380" :h="650" :x="152" :y="118" @dragging="resize" @resizing="resize" :resizable="false"
         :parent-limitation="false" :draggable="true" classNameDragging="vdr-dragging">
         <el-icon class="setting-btn" @click="isDrawer = !isDrawer">
           <Setting />
@@ -11,7 +11,7 @@
 
         <DanMu :room-id="currentRoomId" ref="danmu" :danmu-count="currentDanmuCount"
           :entry-effect-direction="currentEntryEffectDirection" :show-avatar="currentShowAvatar"
-          :show-medal="currentShowMedal" @on-sc="sc" />
+          :show-medal="currentShowMedal" />
       </v-d-r>
     </div>
 
@@ -42,13 +42,13 @@ import DmSetting from './components/DmSetting.vue'
 import DanMu from './components/DanMu.vue';
 import PreviewStyle from './components/PreviewStyle.vue';
 
-import { ElNotification } from 'element-plus'
+
 
 // import { useWebNotification } from '@vueuse/core'
 import { useSignalR } from './stores/signalRStore';
 import GiftCover from './components/GiftCover.vue';
 import CodeEditor from './components/CodeEditor.vue';
-
+import { ElNotification } from 'element-plus'
 
 const currentRoomId = ref<number>();
 const isDrawer = ref(false)
@@ -58,7 +58,6 @@ const currentEntryEffectDirection = ref('left')
 const currentShowAvatar = ref(true)
 const currentShowMedal = ref(true)
 const currentShowWindow = ref(true)
-
 
 const signalR = useSignalR()
 
@@ -84,13 +83,13 @@ const position = reactive({
 })
 
 
-const resize = (newRect) => {
+const resize = (newRect: any) => {
   position.x = newRect.x;
   position.y = newRect.y;
   position.w = newRect.w;
   position.h = newRect.h;
 
-  console.log(newRect);
+  // console.log(newRect);
 
 }
 
@@ -109,45 +108,6 @@ const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: 
 // }`)
 // document.getElementById('user-customer').innerHTML = testCustomCss.value;
 
-
-const sc = (data) => {
-
-
-  ElNotification({
-    dangerouslyUseHTMLString: true,
-    duration: 1000 * 60,
-    showClose: true,
-    message: h({
-      template: ` 
-    <div style='width:300px;background-color: ${data.backgroundColor};font-size: 10px;'>
-
-      <div style="height:40px;">
-        <div style="padding-left:10px;padding-top:2px">
-          <img referrer="no-referrer" src="${data.userFace}" width="35" height="35" style="position:absolute;border-radius:50%;"/>
-          <img v-if="'${data.userFaceFrame}'!=''" referrer="no-referrer" src="${data.userFaceFrame}" width="35" height="35" style="position:absolute;"/>
-        </div>
-      
-        <div style="margin-left:60px;display: flex;align-items: center;padding-top:8px;">
-          <div v-if="${data.hasMedal}"  style="display: flex;justify-content: center;align-items: center;background-color:orange;border-radius: 12%;">
-              <div style="color:${data.medalColor};">${data.medalName}</div>
-              <div style="color:white;margin-left:5px;margin-right:5px;">${data.medalLevel}</div>
-          </div>
-          <div style="color='${data.userNameColor}';margin-left:10px">${data.userName}</div>
-        </div>
-
-        <img src="${data.backgroundImage}" width="100" height="40" style="position:absolute;top:0;;right:-8px;"/>
-        <div style="color:${data.backgroundPriceColor};position:absolute;top:8px;right:25px;">
-            ${data.priceString}
-        </div>
-      </div>
-      <div style="background-color: ${data.backgroundBottomColor};padding: 10px;color: ${data.messageFontColor};font-size: 10px;">
-          ${data.message}
-      </div>
-    </div>
-    `
-    })
-  })
-}
 
 
 onBeforeMount(() => {

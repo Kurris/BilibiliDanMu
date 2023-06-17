@@ -21,6 +21,7 @@
     "electron-main/**/*.ts",
     "electron-preload/**/*.ts",
     "electron/background.ts",
-    "src/utils/queue.js"
+    "src/utils/queue.js",
+    "auto-imports.d.ts"
   ]
 }
