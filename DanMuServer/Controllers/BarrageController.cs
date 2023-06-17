@@ -1,52 +1,48 @@
 ﻿using System.Threading.Tasks;
-using BDanMuLib.Interfaces;
-using DanMuServer.Hubs;
-using DanMuServer.Models;
-using Microsoft.AspNetCore.Http;
+using LiveCore.Enums;
+using LiveCore.Interfaces;
+using LiveCore.Services;
+using LiveServer.Hubs;
+using LiveServer.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
-namespace DanMuServer.Controllers
+namespace LiveServer.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class BarrageController : ControllerBase
 {
+    private readonly IBarrageService _barrageService;
+    private readonly ILogger<BarrageController> _logger;
 
-    [Route("api/[controller]")]
-    [ApiController]
-    public class BarrageController : ControllerBase
+    public BarrageController(ILogger<BarrageController> logger,
+        IBarrageService barrageService)
     {
-        private readonly IBarrageService _barrageService;
-        private readonly ILogger<BarrageController> _logger;
-        private readonly IHubContext<BarrageHub> _barrageHubContext;
-        private readonly IBarrageCancellationService _barrageCancellationService;
+        _barrageService = barrageService;
+        _logger = logger;
+    }
 
-        public BarrageController(ILogger<BarrageController> logger,
-            IHubContext<BarrageHub> barrageHubContext,
-            IBarrageCancellationService barrageCancellationService,
-            IBarrageService barrageService)
+    [HttpPost("receive")]
+    public async Task ReceiveBarrages(ReceiveInputDto input)
+    {
+        var connectionId = input.ConnectionId;
+        var roomId = input.RoomId;
+
+        await _barrageService.ReceiveBarrages(connectionId, roomId, async (sp, cancelToken, result) =>
         {
-            _barrageService = barrageService;
-            _logger = logger;
-            _barrageHubContext = barrageHubContext;
-            _barrageCancellationService = barrageCancellationService;
-        }
-
-        [HttpPost("receive")]
-        public async Task ReceiveBarrages(ReceiveInputDto input)
-        {
-            var connectionId = input.ConnectionId;
-            var roomId = input.RoomId;
-
-            await _barrageService.ReceiveBarrages(connectionId, roomId, async (cancelToken, result) =>
+            try
             {
-                try
-                {
-                    await _barrageHubContext.Clients.Client(connectionId).SendAsync(result.Type.ToString(), result.Info, cancelToken);
-                }
-                catch (TaskCanceledException)
-                {
-                    _logger.LogInformation("{connectionId} Hub send to {roomId} event was canceled.", connectionId, roomId);
-                }
-            });
-        }
+                var hub = sp.GetService<IHubContext<BarrageHub>>()!;
+                await hub.Clients.Client(connectionId).SendAsync(result.Type.ToString(), result.Info, cancelToken);
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.LogInformation("{connectionId} Hub send to {roomId} event was canceled.", connectionId, roomId);
+            }
+        });
     }
 }

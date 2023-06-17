@@ -1,12 +1,12 @@
-﻿using System;
-using BDanMuLib;
-using BDanMuLib.Interfaces;
-using BDanMuLib.Services;
+﻿using LiveCore;
+using LiveCore.Interfaces;
+using LiveCore.Services;
 using Microsoft.AspNetCore.Builder;
 
+// ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class BarrageServiceCollectionExtensoins
+    public static class BarrageServiceCollectionExtensions
     {
         public static IServiceCollection AddLiveBarrage(this IServiceCollection services)
         {
@@ -26,7 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     .AddSingleton<EmoteService>()
                     .AddSingleton<AvatarService>()
                     .AddSingleton<GiftService>()
-                    .AddSingleton<RawtHandleService>();
+                    .AddSingleton<RawHandleService>();
 
             services.AddTransient<IBarrageConnectionProvider, BilibiliConnectionService>();
 

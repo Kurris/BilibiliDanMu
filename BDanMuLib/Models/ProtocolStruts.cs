@@ -1,8 +1,8 @@
 ﻿using System;
 using BDanMuLib.Converters;
-using BDanmuLib.Enums;
+using LiveCore.Enums;
 
-namespace BDanMuLib.Models
+namespace LiveCore.Models
 {
     /// <summary>
     /// 弹幕协议

@@ -1,5 +1,4 @@
-﻿using System;
-namespace BDanMuLib.Models
+﻿namespace LiveCore.Models
 {
     public class StreamerInfo
     {

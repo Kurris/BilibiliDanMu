@@ -1,23 +1,23 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using BDanmuLib.Enums;
-using BDanMuLib.Emuns;
-using BDanMuLib.Enums;
-using BDanMuLib.Extensions;
-using BDanMuLib.Models;
-using BDanMuLib.Utils;
+using LiveCore.Enums;
+using LiveCore.Extensions;
+using LiveCore.Models;
 using Newtonsoft.Json.Linq;
 
-namespace BDanMuLib.Services
+// ReSharper disable PossibleNullReferenceException
+// ReSharper disable AssignNullToNotNullAttribute
+// ReSharper disable once PossibleNullReferenceException
+namespace LiveCore.Services
 {
-    internal class RawtHandleService
+    public class RawHandleService
     {
         private readonly EmoteService _emoteService;
         private readonly AvatarService _avatarService;
         private readonly GiftService _giftService;
 
-        public RawtHandleService(EmoteService emoteService, AvatarService avatarService, GiftService giftService)
+        public RawHandleService(EmoteService emoteService, AvatarService avatarService, GiftService giftService)
         {
             _emoteService = emoteService;
             _avatarService = avatarService;
@@ -27,6 +27,7 @@ namespace BDanMuLib.Services
         public async Task<Result> FromDanMuMsgAsync(JObject jObj)
         {
             var info = jObj["info"];
+
 
             var mid = info[2][0].Value<string>();
             var isAdmin = info[2][2].Value<bool>();
@@ -72,7 +73,6 @@ namespace BDanMuLib.Services
 
         public Result FromSuperChat(JObject jObj)
         {
-
             var info = jObj["data"];
             var medalInfo = info["medal_info"];
 
@@ -109,7 +109,10 @@ namespace BDanMuLib.Services
         public Result FromWatchedChanged(JObject jObj)
         {
             var watchedNum = jObj["data"]["num"].Value<int>();
-            return new Result(MessageType.WATCHED_CHANGE, new WatchedInfo(watchedNum));
+            return new Result(MessageType.WATCHED_CHANGE, new WatchedInfo()
+            {
+                 Num = watchedNum
+            });
         }
 
 
@@ -147,7 +150,7 @@ namespace BDanMuLib.Services
             var data = jObj["data"];
             var uid = data["uid"].Value<long>();
             var userName = data["uname"].Value<string>();
-            var action = data["action"].Value<string>();
+            //var action = data["action"].Value<string>();
             var giftId = data["giftId"].Value<int>();
             var giftName = data["giftName"].Value<string>();
             var price = data["price"].Value<int>();

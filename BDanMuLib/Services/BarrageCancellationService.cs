@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using BDanMuLib.Interfaces;
+using LiveCore.Interfaces;
 
-namespace BDanMuLib.Services
+namespace LiveCore.Services
 {
     public class BarrageCancellationService : IBarrageCancellationService
     {
@@ -14,7 +14,7 @@ namespace BDanMuLib.Services
             if (_sources.TryGetValue(connectionId, out var cancellationToken) && cancellationToken != null)
             {
                 cancellationToken.Cancel();
-                
+
             }
             _sources.Remove(connectionId, out _);
             return true;

@@ -1,13 +1,11 @@
-﻿
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BDanMuLib.Models;
+using LiveCore.Models;
 
-namespace BDanMuLib.Interfaces
+namespace LiveCore.Interfaces;
+
+public interface IBarrageService
 {
-    public interface IBarrageService
-    {
-        Task ReceiveBarrages(string connectionId, int roomId, Func<CancellationToken, Result, Task> OnAction);
-    }
+    Task ReceiveBarrages(string connectionId, int roomId, Func<IServiceProvider, CancellationToken, Result, Task> onAction);
 }

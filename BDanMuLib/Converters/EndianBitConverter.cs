@@ -2,6 +2,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using LiveCore.Converters;
 
 namespace BDanMuLib.Converters
 {

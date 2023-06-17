@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BDanMuLib
+﻿namespace LiveCore
 {
-    internal class ApiUrls
+    internal static class ApiUrls
     {
         /// <summary>
         /// 用户信息(容易被ban ip)

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BDanMuLib.Interfaces;
-using BDanMuLib.Models;
+using LiveCore.Interfaces;
+using LiveCore.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace BDanMuLib.Services
+namespace LiveCore.Services
 {
     internal class BarrageService : IBarrageService
     {
@@ -21,7 +21,7 @@ namespace BDanMuLib.Services
         }
 
 
-        public async Task ReceiveBarrages(string connectionId, int roomId, Func<CancellationToken, Result, Task> OnAction)
+        public async Task ReceiveBarrages(string connectionId, int roomId, Func<IServiceProvider, CancellationToken, Result, Task> onAction)
         {
             if (_barrageCancellationService.ExistsCancelToken(connectionId))
             {
@@ -36,20 +36,21 @@ namespace BDanMuLib.Services
             //长任务执行
             await Task.Factory.StartNew(async () =>
             {
-                var currentConnectionId = connectionId;
-                var currentRoomId = roomId;
-
-                //从根容器获取scope
-                using var asyncScope = InternalApp.ApplicationServices.CreateAsyncScope();
-                await using var barrageProvider = asyncScope.ServiceProvider.GetService<IBarrageConnectionProvider>();
-                await barrageProvider.ConnectAsync(roomId, async result =>
+                //从根容器获取scope,一定要释放，否则内存泄露
+                await  using (var asyncScope = InternalApp.ApplicationServices.CreateAsyncScope())
                 {
-                    await OnAction(cancellationTokenSource.Token, result);
+                    await using (var barrageProvider = asyncScope.ServiceProvider.GetService<IBarrageConnectionProvider>()!)
+                    {
+                        // ReSharper disable once AsyncVoidLambda
+                        await barrageProvider.ConnectAsync(roomId, async result =>
+                        {
+                            await onAction(asyncScope.ServiceProvider, cancellationTokenSource.Token, result);
 
-                }, cancellationTokenSource.Token);
+                        }, cancellationTokenSource.Token);
+                    }
+                }
 
                 _logger.LogInformation("{ConnectionId}:{RoomId} receive barrages end!", connectionId, roomId);
-
             }, TaskCreationOptions.LongRunning);
 
             _logger.LogInformation("{ConnectionId} a Long task start to receive barrages begin!", connectionId);

@@ -1,9 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿namespace LiveServer.Services.Interfaces;
 
-namespace DanMuServer.Services.Interface
+public interface IBarrageHub
 {
-    public interface IBarrageHub
-    {
 
-    }
 }

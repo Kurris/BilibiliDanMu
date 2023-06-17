@@ -1,32 +1,30 @@
-﻿using BDanMuLib.Interfaces;
+﻿using LiveCore.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace DanMuServer.Controllers
+namespace LiveServer.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class HubConnectionInfoController : ControllerBase
 {
+    private readonly ILogger<HubConnectionInfoController> _logger;
+    private readonly IBarrageCancellationService _barrageCancellationService;
 
-    [Route("api/[controller]")]
-    [ApiController]
-    public class HubConnectionInfoController : ControllerBase
+    public HubConnectionInfoController(ILogger<HubConnectionInfoController> logger,
+        IBarrageCancellationService barrageCancellationService)
     {
-        private readonly ILogger<HubConnectionInfoController> _logger;
-        private readonly IBarrageCancellationService _barrageCancellationService;
+        _logger = logger;
+        _barrageCancellationService = barrageCancellationService;
+    }
 
-        public HubConnectionInfoController(ILogger<HubConnectionInfoController> logger,
-            IBarrageCancellationService barrageCancellationService)
+
+    [HttpGet("count")]
+    public ApiResult<int> GetConnectionCount()
+    {
+        return new ApiResult<int>()
         {
-            _logger = logger;
-            _barrageCancellationService = barrageCancellationService;
-        }
-
-
-        [HttpGet("count")]
-        public ApiResult<int> GetConnectionCount()
-        {
-            return new ApiResult<int>()
-            {
-                Data = _barrageCancellationService.ConnectionCount()
-            };
-        }
+            Data = _barrageCancellationService.ConnectionCount()
+        };
     }
 }

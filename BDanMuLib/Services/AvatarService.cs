@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BDanMuLib.Services
+namespace LiveCore.Services
 {
-    internal class AvatarService
+    public class AvatarService
     {
         private readonly ConcurrentDictionary<string, string> _cache = new();
         private readonly BilibiliApiService _bilibiliApiService;

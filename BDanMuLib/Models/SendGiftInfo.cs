@@ -1,7 +1,6 @@
-﻿using System;
-using BDanMuLib.Enums;
+﻿using LiveCore.Enums;
 
-namespace BDanMuLib.Models
+namespace LiveCore.Models
 {
     public class SendGiftInfo : BaseInfo
     {

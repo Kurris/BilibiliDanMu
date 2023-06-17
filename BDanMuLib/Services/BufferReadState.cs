@@ -1,7 +1,7 @@
-﻿namespace BDanMuLib.Services
+﻿namespace LiveCore.Services
 {
     /// <summary>
-    /// just let stream safty dispose
+    /// just let stream safety dispose
     /// </summary>
     internal class BufferReadState
     {

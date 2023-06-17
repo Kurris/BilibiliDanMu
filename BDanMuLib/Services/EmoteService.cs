@@ -1,9 +1,10 @@
-﻿using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace BDanMuLib.Services
+namespace LiveCore.Services
 {
-    internal class EmoteService
+    public class EmoteService
     {
         /// <summary>
         /// 处理弹幕中的表情一般为[dog]格式
@@ -11,7 +12,7 @@ namespace BDanMuLib.Services
         /// <param name="comment"></param>
         /// <param name="extra"></param>
         /// <returns></returns>
-        public string HandleCommentWithEmote(string comment, JObject extra)
+        public string HandleCommentWithEmote(string comment,[NotNull] JObject extra)
         {
             var emots = extra["emots"];
             if (emots.HasValues)

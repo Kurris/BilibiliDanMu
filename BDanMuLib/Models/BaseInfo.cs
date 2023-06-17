@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace BDanMuLib.Models
+namespace LiveCore.Models;
+
+public abstract class BaseInfo
 {
-    public abstract class BaseInfo
-    {
-        public string Key { get; } = Guid.NewGuid().ToString().Replace("-", string.Empty);
-    }
+    public string Key { get; } = Guid.NewGuid().ToString().Replace("-", string.Empty);
 }

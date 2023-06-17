@@ -1,6 +1,8 @@
 ﻿// Copyright (C) Microsoft Corporation. All rights reserved.
 
-namespace BDanMuLib.Converters
+using BDanMuLib.Converters;
+
+namespace LiveCore.Converters
 {
     /// <summary>
     /// A little-endian BitConverter that converts base data types to an array of bytes, and an array of bytes to base data types. All conversions are in
@@ -9,23 +11,22 @@ namespace BDanMuLib.Converters
     internal class LittleEndianBitConverter : EndianBitConverter
     {
         // Instance available from EndianBitConverter.LittleEndian
-        internal LittleEndianBitConverter() { }
 
-        public override bool IsLittleEndian { get; } = true;
+        public override bool IsLittleEndian => true;
 
         public override byte[] GetBytes(short value)
         {
-            return new byte[] { (byte)value, (byte)(value >> 8) };
+            return new[] { (byte)value, (byte)(value >> 8) };
         }
 
         public override byte[] GetBytes(int value)
         {
-            return new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) };
+            return new[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) };
         }
 
         public override byte[] GetBytes(long value)
         {
-            return new byte[] {
+            return new[] {
                 (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
                 (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56)
             };
@@ -33,7 +34,7 @@ namespace BDanMuLib.Converters
 
         public override short ToInt16(byte[] value, int startIndex)
         {
-            this.CheckArguments(value, startIndex, sizeof(short));
+            CheckArguments(value, startIndex, sizeof(short));
 
             return (short)((value[startIndex]) | (value[startIndex + 1] << 8));
         }

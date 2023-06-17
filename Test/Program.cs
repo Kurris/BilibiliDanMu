@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
-using BDanMuLib.Interfaces;
+using LiveCore.Interfaces;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Microsoft.Extensions.Configuration;

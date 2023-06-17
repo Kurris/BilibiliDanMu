@@ -4,10 +4,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BDanMuLib.Converters;
-using BDanMuLib.Services;
+using LiveCore.Services;
 using Newtonsoft.Json;
 
-namespace BDanMuLib.Extensions
+namespace LiveCore.Extensions
 {
     internal static class StreamExtensions
     {

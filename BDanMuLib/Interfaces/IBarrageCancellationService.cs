@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace BDanMuLib.Interfaces
+namespace LiveCore.Interfaces
 {
     public interface IBarrageCancellationService
     {

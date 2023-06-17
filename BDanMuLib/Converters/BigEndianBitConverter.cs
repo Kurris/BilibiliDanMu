@@ -1,6 +1,8 @@
 ﻿// Copyright (C) Microsoft Corporation. All rights reserved.
 
-namespace BDanMuLib.Converters
+using BDanMuLib.Converters;
+
+namespace LiveCore.Converters
 {
     /// <summary>
     /// A big-endian BitConverter that converts base data types to an array of bytes, and an array of bytes to base data types. All conversions are in

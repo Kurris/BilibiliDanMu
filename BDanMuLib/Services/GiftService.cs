@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using BDanMuLib.Models;
+using LiveCore.Models;
 using Newtonsoft.Json.Linq;
 
-namespace BDanMuLib.Services
+namespace LiveCore.Services
 {
     /// <summary>
     /// singletion
     /// </summary>
-    internal class GiftService
+    public class GiftService
     {
         //private readonly Lazy<Dictionary<int, GiftInfo>> _dicGiftInfos = new(() =>
         //{
@@ -65,8 +65,8 @@ namespace BDanMuLib.Services
             var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "gift.json"), Encoding.UTF8);
             var jObj = JObject.Parse(text);
 
-            var globalGift = jObj["global_gift"];
-            var list = globalGift["list"];
+            var globalGift = jObj["global_gift"]!;
+            var list = globalGift["list"]!;
 
 
             var giftList = new List<GiftInfo>(list.Count());
@@ -85,11 +85,11 @@ namespace BDanMuLib.Services
 
 
 
-            list = jObj["list"];
+            list = jObj["list"]!;
 
             list.ToList().ForEach(j =>
             {
-                if (!giftList.Any(x => x.Id == j["id"].Value<int>()))
+                if (giftList.All(x => x.Id != j["id"]!.Value<int>()))
                 {
                     giftList.Add(new GiftInfo()
                     {

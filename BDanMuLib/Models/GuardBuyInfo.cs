@@ -1,7 +1,6 @@
-﻿
-using BDanMuLib.Emuns;
+﻿using LiveCore.Enums;
 
-namespace BDanMuLib.Models
+namespace LiveCore.Models
 {
     public class GuardBuyInfo : BaseInfo
     {
