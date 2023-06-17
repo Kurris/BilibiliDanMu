@@ -9,5 +9,8 @@ ipcRenderer.on('ignoreMouse', (event, bg) => {
 contextBridge.exposeInMainWorld('electron', {
   ignoreMouse: () => {
     ipcRenderer.send('ignoreMouse')
+  },
+  sendMessageToBackend: (...args) => {
+    ipcRenderer.send('backend-server', args)
   }
 })

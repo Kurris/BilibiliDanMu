@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveServer", "DanMuServer\L
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{E99963BA-2476-430A-A908-3CF9AB958289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsApiTest", "WindowsApiTest\WindowsApiTest.csproj", "{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WindowsApiTest", "WindowsApiTest\WindowsApiTest.csproj", "{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBackgroundService", "GameModeDetect\LiveBackgroundService.csproj", "{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,14 @@ Global
 		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Release|x64.ActiveCfg = Release|Any CPU
 		{1E7EADD5-8DE5-4D4D-A9D7-FE98672B2654}.Release|x64.Build.0 = Release|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Debug|x64.Build.0 = Debug|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Release|x64.ActiveCfg = Release|Any CPU
+		{74FFD521-83FA-49DB-8602-E2B4E9F99E2A}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -12,7 +12,7 @@ export default defineConfig({
   base: "./",
   plugins: [vue(), vueJsx(),
   electron({
-    entry: "electron/background.ts", // 主进程文件
+    entry: "electron/background.ts", // 主进程文件,
   })],
   resolve: {
     alias: {

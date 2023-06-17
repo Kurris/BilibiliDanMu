@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut, desktopCapturer } from "electron";
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut } from "electron";
 import path from "path";
 import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
+import backendConnector from './backendConnector'
 
 
 // 变量 ---------------------------------------------------------------------------------------------
@@ -9,15 +10,61 @@ let loadingWindow: BrowserWindow;
 let overlayWindow: BrowserWindow;
 
 const windowsIsTrueMacIsFalse = process.platform == 'win32'
+const gotTheLock = app.requestSingleInstanceLock()
 let danmu: ChildProcessWithoutNullStreams;
 let cover: boolean = false;
 let tray: Tray;
 let shortCutIgnoreMouse: boolean = false;
-const gotTheLock = app.requestSingleInstanceLock()
+
+
+const gameInfo = {
+  handle: 0,
+  title: '',
+  fileName: "",
+  executablePath: '',
+  image: '',
+}
+
+const ganmeDetectConnector: backendConnector = new backendConnector(6000)
+
+ganmeDetectConnector.sendMessage("DetectGameRunning", {}, true)
+ganmeDetectConnector.getClient().on('data', buffer => {
+  if (buffer && buffer.byteLength > 0) {
+    const data = buffer.toString()
+
+    const values = data.split('|')
+    if (values[0] === "true") {
+
+      const handle = Number(values[1])
+
+      if (gameInfo.handle != handle) {
+        gameInfo.handle = handle
+        gameInfo.title = values[2]
+        gameInfo.fileName = values[3]
+        gameInfo.executablePath = values[4]
+        gameInfo.image = values[5]
+
+        console.log(gameInfo);
+
+      }
+    }
+  }
+})
+
 
 // ---------------------------------------------------------------------------------------------
 
 
+ipcMain.on('snedBackendServerMessage', (e, ...args) => {
+
+  const command: string = args[0]
+  const obj: object = args[1]
+  const needDisconnect: boolean = args[2]
+
+  ganmeDetectConnector.sendMessage(command, obj, needDisconnect).then(x => {
+    console.log("receive:" + x);
+  })
+})
 
 // 程序开始前 ---------------------------------------------------------------------------------------------
 
@@ -78,17 +125,8 @@ if (!gotTheLock) {
         mainWindow.webContents.send('ignoreMouse', bgColor)
       }
     });
-
-
-    desktopCapturer.getSources({ types: ['window'] }).then(async sources => {
-      for (const source of sources) {
-        console.log(source);
-
-      }
-    })
   })
 }
-
 
 
 const creatLoading = () => {
@@ -195,7 +233,7 @@ const createWindow = () => {
 
 
 const createCover = () => {
-  coverWindow = new BrowserWindow({
+  overlayWindow = new BrowserWindow({
     show: false,
     transparent: true,
     fullscreen: true,
@@ -236,10 +274,6 @@ app.on("window-all-closed", () => {
   app.quit();
 });
 
-
-
-
-// ---
 
 const runLiveServer = () => {
 

@@ -142,7 +142,7 @@ onBeforeMount(() => {
   // )
 
   signalR.start().then(() => {
-
+      
   });
 })
 

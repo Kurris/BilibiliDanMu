@@ -36,6 +36,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static IApplicationBuilder UseInternalServiceProvider(this IApplicationBuilder app)
         {
+            //Root IServiceProvider 
             InternalApp.ApplicationServices = app.ApplicationServices;
             return app;
         }

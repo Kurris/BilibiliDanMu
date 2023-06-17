@@ -37,17 +37,15 @@ namespace LiveCore.Services
             await Task.Factory.StartNew(async () =>
             {
                 //从根容器获取scope,一定要释放，否则内存泄露
-                await  using (var asyncScope = InternalApp.ApplicationServices.CreateAsyncScope())
+                await using (var asyncScope = InternalApp.ApplicationServices.CreateAsyncScope())
                 {
-                    await using (var barrageProvider = asyncScope.ServiceProvider.GetService<IBarrageConnectionProvider>()!)
+                    await using var barrageProvider = asyncScope.ServiceProvider.GetService<IBarrageConnectionProvider>()!;
+                    // ReSharper disable once AsyncVoidLambda
+                    await barrageProvider.ConnectAsync(roomId, async result =>
                     {
-                        // ReSharper disable once AsyncVoidLambda
-                        await barrageProvider.ConnectAsync(roomId, async result =>
-                        {
-                            await onAction(asyncScope.ServiceProvider, cancellationTokenSource.Token, result);
+                        await onAction(asyncScope.ServiceProvider, cancellationTokenSource.Token, result);
 
-                        }, cancellationTokenSource.Token);
-                    }
+                    }, cancellationTokenSource.Token);
                 }
 
                 _logger.LogInformation("{ConnectionId}:{RoomId} receive barrages end!", connectionId, roomId);
