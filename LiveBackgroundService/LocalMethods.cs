@@ -13,6 +13,7 @@ public class LocalMethods
 
     public LocalMethods()
     {
+        //https://www.nvidia.cn/geforce/geforce-experience/games/ see browser console :D hhh
         var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "support_games.json"), Encoding.UTF8);
         _games = JsonConvert.DeserializeObject<List<string>>(text)!;
     }

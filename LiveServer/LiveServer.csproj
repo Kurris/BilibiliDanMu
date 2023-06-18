@@ -13,6 +13,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\BDanMuLib\LiveCore.csproj" />
+	  <ProjectReference Include="..\LiveCore\LiveCore.csproj" />
 	</ItemGroup>
 </Project>

@@ -8,7 +8,12 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
-        await StartServerAsync(6000);
+        int port = 6000;
+
+        if (args != null && args.Length > 0)
+            port = int.Parse(args[0]);
+
+        await StartServerAsync(port);
     }
 
     public static async Task StartServerAsync(int port)

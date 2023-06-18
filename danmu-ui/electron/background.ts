@@ -16,55 +16,56 @@ let cover: boolean = false;
 let tray: Tray;
 let shortCutIgnoreMouse: boolean = false;
 
+// let ganmeDetectConnector: backendConnector;
 
-const gameInfo = {
-  handle: 0,
-  title: '',
-  fileName: "",
-  executablePath: '',
-  image: '',
-}
+// const gameInfo = {
+//   handle: 0,
+//   title: '',
+//   fileName: "",
+//   executablePath: '',
+//   image: '',
+// }
 
-const ganmeDetectConnector: backendConnector = new backendConnector(6000)
+// ganmeDetectConnector = new backendConnector(6000)
 
-ganmeDetectConnector.sendMessage("DetectGameRunning", {}, true)
-ganmeDetectConnector.getClient().on('data', buffer => {
-  if (buffer && buffer.byteLength > 0) {
-    const data = buffer.toString()
+// ganmeDetectConnector.sendMessage("DetectGameRunning", {}, true)
+// ganmeDetectConnector.getClient().on('data', buffer => {
+//   if (buffer && buffer.byteLength > 0) {
+//     const data = buffer.toString()
 
-    const values = data.split('|')
-    if (values[0] === "true") {
+//     const values = data.split('|')
+//     if (values[0] === "true") {
 
-      const handle = Number(values[1])
+//       const handle = Number(values[1])
 
-      if (gameInfo.handle != handle) {
-        gameInfo.handle = handle
-        gameInfo.title = values[2]
-        gameInfo.fileName = values[3]
-        gameInfo.executablePath = values[4]
-        gameInfo.image = values[5]
+//       if (gameInfo.handle != handle) {
+//         gameInfo.handle = handle
+//         gameInfo.title = values[2]
+//         gameInfo.fileName = values[3]
+//         gameInfo.executablePath = values[4]
+//         gameInfo.image = values[5]
 
-        console.log(gameInfo);
+//         console.log(gameInfo);
 
-      }
-    }
-  }
-})
+//       }
+//     }
+//   }
+// })
 
 
 // ---------------------------------------------------------------------------------------------
 
 
-ipcMain.on('snedBackendServerMessage', (e, ...args) => {
+// ipcMain.on('snedBackendServerMessage', (e, ...args) => {
 
-  const command: string = args[0]
-  const obj: object = args[1]
-  const needDisconnect: boolean = args[2]
+//   const command: string = args[0]
+//   const obj: object = args[1]
+//   const needDisconnect: boolean = args[2]
 
-  ganmeDetectConnector.sendMessage(command, obj, needDisconnect).then(x => {
-    console.log("receive:" + x);
-  })
-})
+//   ganmeDetectConnector.sendMessage(command, obj, needDisconnect).then(x => {
+//     console.log("receive:" + x);
+//   })
+// })
 
 // 程序开始前 ---------------------------------------------------------------------------------------------
 
@@ -154,18 +155,19 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     show: false, //由loadingWindow展示窗体
     transparent: true,
-    fullscreen: windowsIsTrueMacIsFalse,
+    // fullscreen: windowsIsTrueMacIsFalse,
     frame: false,
     titleBarStyle: "hidden",//customButtonsOnHover 可以用html自定义缩小,放大,关闭按钮(可以,但是没必要,会缺少平台特定功能)
     titleBarOverlay: {
-      color: '#ffffff',
-      // symbolColor 符号颜色
+      color: 'rgba(36,41,46,0.9)',
+      // symbolColor: "rgba(36,41,46,0.9)"
       // height: 5
     }, // 需要设置titleBarStyle才生效, mac上设置:true , windows使用该对象不为undefined即可
     resizable: true,
     height: 850,
     width: 1380,
     title: 'Live chat',
+    backgroundColor: 'rgba(0,0,0,0.9)',
     webPreferences: {
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
@@ -191,7 +193,7 @@ const createWindow = () => {
     } else {
       mainWindow.loadURL('http://localhost:3000');
     }
-  }, 3000)
+  }, 0)
 
 
   tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '../electron/app-24.png')))

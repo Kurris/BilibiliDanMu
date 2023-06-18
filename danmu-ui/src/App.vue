@@ -142,7 +142,7 @@ onBeforeMount(() => {
   // )
 
   signalR.start().then(() => {
-      
+
   });
 })
 
@@ -154,7 +154,7 @@ onBeforeMount(() => {
 $radius : 1.2%;
 
 body {
-  background-color: rgba($color: #24292e, $alpha: 0.9);
+  background-color: rgba(36, 41, 46, 0.9);
 }
 
 
