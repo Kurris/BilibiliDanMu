@@ -3,6 +3,9 @@ using LiveBackgroundService.Structs;
 
 namespace LiveBackgroundService;
 
+
+public delegate bool CallBackPtr(int hwnd, int lParam);
+
 /// <summary>
 ///  PInvoke 查阅 https://github.com/dotnet/pinvoke
 /// </summary>
@@ -147,11 +150,31 @@ internal static class WindowsNativeApi
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+    public static extern bool GetWindowRect(IntPtr hWnd, out Structs.RECT lpRect);
 
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
 
 
+    [DllImport("user32.dll")]
+    public static extern int EnumWindows(CallBackPtr callPtr, int lPar);
+
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindow(IntPtr hWnd);
+
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr GetActiveWindow();
+
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
+
+    public static IntPtr FindWindow(string title)
+    {
+        return FindWindow(null, title);
+    }
 }

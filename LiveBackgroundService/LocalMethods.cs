@@ -10,6 +10,7 @@ using static WindowsNativeApi;
 public class LocalMethods
 {
     private static List<string> _games = new();
+    private static readonly List<string> _excludeTitle = new() { "steam" };
 
     public LocalMethods()
     {
@@ -31,26 +32,44 @@ public class LocalMethods
 
         while (true)
         {
-            var foreground = GetForegroundWindow();
-            if (foreground != desktop && foreground != shell)
+            //10秒间隔
+            Thread.Sleep(1000);
+
+            try
             {
+                var foreground = GetForegroundWindow();
+                if (foreground == desktop || foreground == shell)
+                {
+                    continue;
+                }
+
                 GetWindowRect(foreground, out var foregroundRect);
+
                 if (foregroundRect.left <= desktopRect.left
                  && foregroundRect.top <= desktopRect.top
                  && foregroundRect.right >= desktopRect.right
                  && foregroundRect.bottom >= desktopRect.bottom)
                 {
-                    //get foreground windows title and check whether in Nvidia support games
                     var title = GetWindowText(foreground);
-                    if (_games.Contains(title, StringComparer.OrdinalIgnoreCase))
+
+                    if (string.IsNullOrEmpty(title) || _excludeTitle.Contains(title, StringComparer.OrdinalIgnoreCase))
                     {
-                        var (fileName, executablePath, imageBase64) = GetProgramExecutablePathAndIcon(foreground);
-                        return $"true|{foreground.ToInt32()}|{title}|{fileName}|{executablePath}|{imageBase64}";
+                        continue;
                     }
+
+                    if (!_games.Contains(title, StringComparer.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var (fileName, executablePath, imageBase64) = GetProgramExecutablePathAndIcon(foreground);
+                    return $"true|{foreground.ToInt32()}|{title}|{fileName}|{executablePath}|{imageBase64}";
                 }
             }
-            //10秒间隔
-            Thread.Sleep(1000 * 10);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 

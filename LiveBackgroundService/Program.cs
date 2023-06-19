@@ -1,9 +1,11 @@
 ﻿using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using Newtonsoft.Json.Linq;
 
 namespace LiveBackgroundService;
+
 public static class Program
 {
     public static async Task Main(string[] args)
@@ -11,9 +13,21 @@ public static class Program
         int port = 6000;
 
         if (args != null && args.Length > 0)
-            port = int.Parse(args[0]);
+        {
+            try
+            {
+                port = int.Parse(args[0]);
+            }
+            catch
+            {
+                await Console.Out.WriteLineAsync("Specific port error");
+            }
+        }
 
-        await StartServerAsync(port);
+        if (IsPortAvalaible(port))
+        {
+            await StartServerAsync(port);
+        }
     }
 
     public static async Task StartServerAsync(int port)
@@ -23,7 +37,7 @@ public static class Program
         listener.Bind(endpoint);
         listener.Listen(10);
 
-        await Console.Out.WriteLineAsync($"Socket binding {endpoint.Address}:{endpoint.Port}");
+        await Console.Out.WriteLineAsync($"Live backend binding {endpoint.Address}:{endpoint.Port}");
 
         while (true)
         {
@@ -42,8 +56,9 @@ public static class Program
         {
             try
             {
+                //暂时不考虑流长度,持续读取的问题
                 int length = await sender.ReceiveAsync(receiveBuffer, SocketFlags.None);
-                data += Encoding.ASCII.GetString(receiveBuffer, 0, length);
+                data += Encoding.UTF8.GetString(receiveBuffer, 0, length);
 
                 //终止连接
                 if (data.StartsWith("<command>|end") && data.EndsWith("<eof>")) break;
@@ -65,24 +80,38 @@ public static class Program
                     do
                     {
                         var result = type.GetMethod(methodName)!.Invoke(obj, args)!.ToString()!;
-                        await sender.SendAsync(Encoding.ASCII.GetBytes(result), SocketFlags.None);
-
-                        if (longReceive)
-                        {
-                            await Task.Delay(1000 * 10);
-                        }
+                        //await Console.Out.WriteLineAsync("result:" + result);
+                        await sender.SendAsync(Encoding.UTF8.GetBytes(result), SocketFlags.None);
 
                     } while (longReceive);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync($"断开连接");
+                await Console.Out.WriteLineAsync($"break by :{ex.Message}");
                 break;
             }
         }
 
         sender.Shutdown(SocketShutdown.Both);
         sender.Close();
+    }
+
+
+
+    private static bool IsPortAvalaible(int myPort)
+    {
+        var usedPorts = new List<int>();
+        var properties = IPGlobalProperties.GetIPGlobalProperties();
+
+        // Active tcp listners
+        var endPointsTcp = properties.GetActiveTcpListeners().Select(x => x.Port);
+        usedPorts.AddRange(endPointsTcp);
+
+        // Active udp listeners
+        var endPointsUdp = properties.GetActiveUdpListeners().Select(x => x.Port);
+        usedPorts.AddRange(endPointsUdp);
+
+        return !usedPorts.Contains(myPort);
     }
 }
