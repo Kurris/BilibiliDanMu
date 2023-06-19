@@ -12,7 +12,10 @@ var serviceProvider = new ServiceCollection()
          .AddJsonFile("appsettings.json", true, true)
          .Build();
 
-        builder.AddSerilog(new LoggerConfiguration()
+
+        builder
+        .ClearProviders()
+        .AddSerilog(new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .CreateLogger());
     })
@@ -22,7 +25,7 @@ var serviceProvider = new ServiceCollection()
 var logger = serviceProvider.GetService<ILogger<Program>>()!;
 
 
-var roomIds = new[] { 732, 6750632, 23423267, 8604981, 3331090, 888, 25836285, 5558, 1209, 531, 1220, 178033, 404, 22472556 };
+var roomIds = new[] { 13355, 544786, 732, 6750632, 23423267, 8604981, 3331090, 888, 25836285, 5558, 1209, 531, 1220, 178033, 404, 22472556 };
 
 var currentRoomIds = roomIds.ToList();
 var cancelSources = currentRoomIds.ToDictionary(x => x, x => new CancellationTokenSource());

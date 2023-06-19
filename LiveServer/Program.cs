@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace LiveServer;
@@ -14,6 +15,7 @@ public static class Program
         Host.CreateDefaultBuilder(args)
             .ConfigureLogging(builder =>
             {
+                builder.ClearProviders();
                 builder.AddSerilog();
             })
             .ConfigureWebHostDefaults(webBuilder =>
