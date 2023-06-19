@@ -27,6 +27,7 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
     private Stream _stream;
     private readonly BufferReadState _state = new();
     private int? _roomId;
+    private bool _isDisposed = false;
 
     private readonly BilibiliApiService _bilibiliApiService;
     private readonly RawHandleService _rawHandleService;
@@ -54,7 +55,7 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
     {
         if (_stream != null || _roomId.HasValue)
         {
-            _logger.LogError("ConnectAsync method only can be called one time in instance.");
+            _logger.LogWarning("ConnectAsync method only can be called once in the instance.");
             return false;
         }
 
@@ -78,13 +79,14 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
             {
                 throw new SocketException((int)SocketError.ConnectionRefused);
             }
+            _logger.LogInformation("Tcp connected bilibili live broadcast host:{Host} in port:{Port}", broadCastInfo.Host, broadCastInfo.Port);
 
             _stream = Stream.Synchronized(tcpClient.GetStream());
 
             await _stream.SendJoinRoomAsync(roomInfo.RoomId, broadCastInfo.Token, cancellation);
             _ = _stream.SendHeartBeatLoopAsync(cancellation);
 
-            _logger.LogInformation("Connect room:{roomId} successfully", roomId);
+            _logger.LogInformation("Connect room:{RoomId} successfully", roomId);
 
             await ReceiveRawMessageLoopAsync(cancellation).ForEachAwaitWithCancellationAsync(async (x, _) =>
             {
@@ -123,7 +125,7 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
 
         while (!cancellation.IsCancellationRequested)
         {
-            await _stream.ReadBAsync(stableBuffer, 0, length, _state, cancellation);
+            await _stream.ReadBAsync(stableBuffer, length, _state, cancellation);
 
             ProtocolStruts protocol = ProtocolStruts.FromBuffer(stableBuffer);
             if (protocol.PacketLength < 16)
@@ -140,7 +142,7 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
 
             var buffer = new byte[payloadLength];
 
-            await _stream.ReadBAsync(buffer, 0, payloadLength, _state, cancellation);
+            await _stream.ReadBAsync(buffer, payloadLength, _state, cancellation);
 
             if (protocol.Version == 2 && protocol.OperateType == OperateType.DetailCommand)
             {
@@ -151,7 +153,7 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
 
                 while (!cancellation.IsCancellationRequested)
                 {
-                    if (!await deflate.ReadBAsync(headerBuffer, 0, length, _state, cancellation))
+                    if (!await deflate.ReadBAsync(headerBuffer, length, _state, cancellation))
                     {
                         break;
                     }
@@ -159,12 +161,12 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
                     payloadLength = protocolInfo.PacketLength - length;
 
                     var danMuKuBuffer = new byte[payloadLength];
-                    if (!await deflate.ReadBAsync(danMuKuBuffer, 0, payloadLength, _state, cancellation))
+                    if (!await deflate.ReadBAsync(danMuKuBuffer, payloadLength, _state, cancellation))
                     {
                         break;
                     }
 
-                    var json = Encoding.UTF8.GetString(danMuKuBuffer, 0, danMuKuBuffer.Length);
+                    var json = Encoding.UTF8.GetString(danMuKuBuffer);
                     var jObj = JObject.Parse(json);
                     var cmd = jObj.Value<string>("cmd")!;
                     MessageType type;
@@ -257,9 +259,19 @@ internal class BilibiliConnectionService : IBarrageConnectionProvider
 
     public async ValueTask DisposeAsync()
     {
-        _logger.LogInformation("{RoomId} receive raise Dispose", _roomId);
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _logger.LogDebug("{RoomId} receive raise Dispose", _roomId);
         await DisconnectAsync();
+
+        _isDisposed = true;
     }
 
-    public void Dispose() => DisposeAsync().GetAwaiter().GetResult();
+    public async void Dispose()
+    {
+        await DisposeAsync();
+    }
 }

@@ -28,10 +28,10 @@ namespace LiveCore.Services
                 return;
             }
 
-            _logger.LogInformation("{ConnectionId} request to receive room:{RoomId} barrages.", connectionId, roomId);
+            _logger.LogDebug("{ConnectionId} request to receive room:{RoomId} barrages.", connectionId, roomId);
             var cancellationTokenSource = _barrageCancellationService.Get(connectionId);
 
-            _logger.LogInformation("{ConnectionId} get {RoomId}'s cancellationToken.", connectionId, roomId);
+            _logger.LogDebug("{ConnectionId} get {RoomId}'s cancellationToken.", connectionId, roomId);
 
             //长任务执行
             await Task.Factory.StartNew(async () =>
@@ -48,10 +48,10 @@ namespace LiveCore.Services
                     }, cancellationTokenSource.Token);
                 }
 
-                _logger.LogInformation("{ConnectionId}:{RoomId} receive barrages end!", connectionId, roomId);
+                _logger.LogDebug("{ConnectionId}:{RoomId} receive barrages end!", connectionId, roomId);
             }, TaskCreationOptions.LongRunning);
 
-            _logger.LogInformation("{ConnectionId} a Long task start to receive barrages begin!", connectionId);
+            _logger.LogDebug("{ConnectionId} a Long task start to receive barrages begin!", connectionId);
         }
     }
 }

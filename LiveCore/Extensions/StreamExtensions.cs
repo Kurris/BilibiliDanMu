@@ -11,8 +11,10 @@ namespace LiveCore.Extensions
 {
     internal static class StreamExtensions
     {
-        internal static async Task<bool> ReadBAsync(this Stream stream, byte[] buffer, int offset, int count, BufferReadState state, CancellationToken cancellation = default)
+        internal static async Task<bool> ReadBAsync(this Stream stream, byte[] buffer,int count, BufferReadState state, CancellationToken cancellation = default)
         {
+            int offset = 0;
+
             if (offset + count > buffer.Length)
                 return false;
 
@@ -68,7 +70,7 @@ namespace LiveCore.Extensions
             {
                 await stream.SendSocketDataAsync(16, 2, 1, 2, string.Empty, cancellationToken);
                 //心跳只需要30秒激活一次,偏移检查
-                await Task.Delay(30000, cancellationToken);
+                await Task.Delay(1000 * 30, cancellationToken);
             }
         }
 
