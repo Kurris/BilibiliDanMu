@@ -1,5 +1,5 @@
 ﻿using System.Runtime.InteropServices;
-using LiveBackgroundService.Structs;
+using LiveBackgroundService.Enums;
 
 namespace LiveBackgroundService;
 
@@ -177,4 +177,48 @@ internal static class WindowsNativeApi
     {
         return FindWindow(null, title);
     }
+
+
+
+
+    /// <summary>
+    /// Determines the visibility state of the specified window.
+    /// </summary>
+    /// <param name="hWnd">A handle to the window to be tested.</param>
+    /// <returns>
+    /// If the specified window, its parent window, its parent's parent window, and so forth, have the WS_VISIBLE style, the return value is true, otherwise it is false.
+    /// Because the return value specifies whether the window has the WS_VISIBLE style, it may be nonzero even if the window is totally obscured by other windows.
+    /// </returns>
+    /// <remarks>
+    /// The visibility state of a window is indicated by the WS_VISIBLE style bit.
+    /// When WS_VISIBLE is set, the window is displayed and subsequent drawing into it is displayed as long as the window has the WS_VISIBLE style.
+    /// Any drawing to a window with the WS_VISIBLE style will not be displayed if the window is obscured by other windows or is clipped by its parent window.
+    /// </remarks>
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindowVisible(IntPtr hWnd);
+
+
+
+
+    /// <summary>
+    /// Retrieves a handle to a window that has the specified relationship (Z-Order or owner) to the specified window.
+    /// </summary>
+    /// <param name="hWnd">A handle to a window. The window handle retrieved is relative to this window, based on the value of the wCmd parameter.</param>
+    /// <param name="wCmd">The relationship between the specified window and the window whose handle is to be retrieved.</param>
+    /// <returns>If the function succeeds, the return value is a handle to the next (or previous) window. If there is no next (or previous) window, the return value is NULL. To get extended error information, call GetLastError.</returns>
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr GetWindow(
+        IntPtr hWnd,
+        GetWindowCommands wCmd);
+
+
+    /// <summary>
+    /// Retrieves a handle to the next or previous window in the Z-Order. The next window is below the specified window; the previous window is above.
+    /// If the specified window is a topmost window, the function searches for a topmost window. If the specified window is a top-level window, the function searches for a top-level window. If the specified window is a child window, the function searches for a child window.
+    /// </summary>
+    /// <param name="hWnd">A handle to a window. The window handle retrieved is relative to this window, based on the value of the wCmd parameter.</param>
+    /// <param name="wCmd">Indicates whether the function returns a handle to the next window or the previous window.</param>
+    /// <returns>If the function succeeds, the return value is a handle to the next (or previous) window. If there is no next (or previous) window, the return value is NULL. To get extended error information, call GetLastError.</returns>
+    public static IntPtr GetNextWindow(IntPtr hWnd, GetNextWindowCommands wCmd) => GetWindow(hWnd, (GetWindowCommands)wCmd);
 }
