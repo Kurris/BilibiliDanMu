@@ -2,7 +2,7 @@
     <el-form :model="form" label-width="120px">
         <el-form-item label="房间号(支持短号)">
             <div style="display: flex;">
-                <el-input-number v-model="form.roomId" />
+                <el-input-number v-model="roomInfo.id" />
                 <el-button @click="connectRoom" type="warning" style="margin-left: 20px;">连接房间</el-button>
             </div>
         </el-form-item>
@@ -32,19 +32,14 @@ import { reactive, watch } from 'vue'
 import { useSignalR } from '../stores/signalRStore';
 import { useFetch } from '@vueuse/core'
 import { AppSetting } from '../utils/appSetting';
-const signalR = useSignalR();
+import { useRoom } from '../stores/streamerStore';
 
+const signalR = useSignalR();
+const roomInfo = useRoom()
 
 const form = reactive({
-    roomId: 6750632,
     danmuCount: 15,
-    region: '',
-    date1: '',
-    date2: '',
-    delivery: false,
-    type: [],
     entryEffectDirection: 'left',
-    desc: '',
     showAvatar: true,
     showMedal: true,
     showWindow: true,
@@ -64,7 +59,7 @@ const emits = defineEmits<{
 const connectRoom = () => {
     useFetch(AppSetting.VITE_API_URL + "/api/barrage/receive").post(JSON.stringify({
         connectionId: signalR.connectionId(),
-        roomId: form.roomId
+        roomId: roomInfo.id
     }), 'application/json').json()
 }
 

@@ -5,22 +5,9 @@ html,body {
 
     margin: 0;
     padding: 0;
+
+    user-select: none;
 }
-
-
-.el-notification__group {
-  margin: {
-    left: 0 !important;
-    right: 0 !important;
-  }
-}
-
-.el-notification {
-  width: unset !important;
-  padding: 0 !important;
-  border: unset;
-}
-
 
 
 .electron-draggable{
@@ -38,13 +25,5 @@ html,body {
   background-size: 16px 16px;
  }
 
-
-
-
- .vdr-dragging {
-  background-color: #212325;
-  border-radius: 2%;
-  box-shadow: 2px 2px 5px 5px rgba(0, 0, 0, 0.2);
-}
 
 

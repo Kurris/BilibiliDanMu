@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut } from "electron";
 import path from "path";
-import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
-import backendConnector from './backendConnector'
+import { runSocketAndBackgroundService } from './backgroundService'
 
 
 // 变量 ---------------------------------------------------------------------------------------------
@@ -11,46 +10,11 @@ let overlayWindow: BrowserWindow;
 
 const windowsIsTrueMacIsFalse = process.platform == 'win32'
 const gotTheLock = app.requestSingleInstanceLock()
-let danmu: ChildProcessWithoutNullStreams;
-let cover: boolean = false;
+
+
 let tray: Tray;
 let shortCutIgnoreMouse: boolean = false;
 
-// let ganmeDetectConnector: backendConnector;
-
-// const gameInfo = {
-//   handle: 0,
-//   title: '',
-//   fileName: "",
-//   executablePath: '',
-//   image: '',
-// }
-
-// ganmeDetectConnector = new backendConnector(6000)
-
-// ganmeDetectConnector.sendMessage("DetectGameRunning", {}, true)
-// ganmeDetectConnector.getClient().on('data', buffer => {
-//   if (buffer && buffer.byteLength > 0) {
-//     const data = buffer.toString()
-
-//     const values = data.split('|')
-//     if (values[0] === "true") {
-
-//       const handle = Number(values[1])
-
-//       if (gameInfo.handle != handle) {
-//         gameInfo.handle = handle
-//         gameInfo.title = values[2]
-//         gameInfo.fileName = values[3]
-//         gameInfo.executablePath = values[4]
-//         gameInfo.image = values[5]
-
-//         console.log(gameInfo);
-
-//       }
-//     }
-//   }
-// })
 
 
 // ---------------------------------------------------------------------------------------------
@@ -70,14 +34,11 @@ let shortCutIgnoreMouse: boolean = false;
 // 程序开始前 ---------------------------------------------------------------------------------------------
 
 // 苹果电脑杀掉当前端口进程
-if (process.platform == 'darwin') {
-  if (app.isPackaged) {
-    // exec("lsof -i:5000 | grep -v PID | awk '{print $2}' | xargs kill -9")
-  }
-}
-
-
-
+// if (!windowsIsTrueMacIsFalse) {
+//   if (app.isPackaged) {
+//     // exec("lsof -i:5000 | grep -v PID | awk '{print $2}' | xargs kill -9")
+//   }
+// }
 
 
 
@@ -89,8 +50,8 @@ if (!gotTheLock) {
   app.quit()
 } else {
 
-  //尝试多开
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
+  //尝试多开  回调参数 event, commandLine, workingDirectory
+  app.on('second-instance', () => {
     //用户正在尝试运行第二个实例，我们需要让焦点指向我们的窗口
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()
@@ -107,9 +68,7 @@ if (!gotTheLock) {
 
   }).then(() => {
 
-    // runLiveServer()
     creatLoading();
-
     // mac系统
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) creatLoading();
@@ -117,15 +76,18 @@ if (!gotTheLock) {
 
   }).then(() => {
 
-    globalShortcut.register("CommandOrControl+Shift+i", () => {
-      if (cover) {
-        shortCutIgnoreMouse = !shortCutIgnoreMouse;
-        mainWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
+    // globalShortcut.register("CommandOrControl+Shift+i", () => {
+    //   if (cover) {
+    //     shortCutIgnoreMouse = !shortCutIgnoreMouse;
+    //     mainWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
 
-        const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
-        mainWindow.webContents.send('ignoreMouse', bgColor)
-      }
-    });
+    //     const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
+    //     mainWindow.webContents.send('ignoreMouse', bgColor)
+    //   }
+    // });
+
+
+
   })
 }
 
@@ -140,11 +102,13 @@ const creatLoading = () => {
     transparent: true,
   });
 
-  // 由loadingWindow打开mainWindow
-  loadingWindow.once("show", createWindow);
+
   // 先加载文件再展示
   loadingWindow.loadFile(path.join(__dirname, '../pacman-loading/index.html')).then(() => {
+
     loadingWindow.show()
+    createWindow()
+
   }).catch(() => {
     app.quit()
   });
@@ -154,12 +118,10 @@ const createWindow = () => {
 
   mainWindow = new BrowserWindow({
     show: false, //由loadingWindow展示窗体
-    transparent: true,
-    // fullscreen: windowsIsTrueMacIsFalse,
     frame: false,
     titleBarStyle: "hidden",//customButtonsOnHover 可以用html自定义缩小,放大,关闭按钮(可以,但是没必要,会缺少平台特定功能)
     titleBarOverlay: {
-      color: 'rgba(36,41,46,0.9)',
+      color: 'rgba(2, 3, 4, 0)',
       // symbolColor: "rgba(36,41,46,0.9)"
       // height: 5
     }, // 需要设置titleBarStyle才生效, mac上设置:true , windows使用该对象不为undefined即可
@@ -167,7 +129,6 @@ const createWindow = () => {
     height: 850,
     width: 1380,
     title: 'Live chat',
-    backgroundColor: 'rgba(0,0,0,0.9)',
     webPreferences: {
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
@@ -183,17 +144,12 @@ const createWindow = () => {
     mainWindow.show()
   })
 
-  // mainWindow.webContents.openDevTools({ mode: 'undocked' })
-  // win.webContents.openDevTools({ mode: 'right' });
-
-  setTimeout(() => {
-    // 如果打包了，渲染index.html
-    if (app.isPackaged) {
-      mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
-    } else {
-      mainWindow.loadURL('http://localhost:3000');
-    }
-  }, 0)
+  // 如果打包了，渲染index.html
+  if (app.isPackaged) {
+    mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+  } else {
+    mainWindow.loadURL('http://localhost:3000');
+  }
 
 
   tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '../electron/app-24.png')))
@@ -202,45 +158,54 @@ const createWindow = () => {
     {
       label: '覆盖屏幕/窗口化', click: () => {
 
-        if (process.platform == 'darwin') {
-          //苹果电脑setFullScreen会切换到另一个子屏幕
-          mainWindow.setSimpleFullScreen(!cover)
-        } else {
-          mainWindow.setFullScreen(!cover)
-          mainWindow.setSkipTaskbar(!cover);
-        }
+        // if (process.platform == 'darwin') {
+        //   //苹果电脑setFullScreen会切换到另一个子屏幕
+        //   overlayWindow.setSimpleFullScreen(!cover)
+        // } else {
+        //   overlayWindow.setFullScreen(!cover)
+        //   overlayWindow.setSkipTaskbar(!cover);
+        // }
 
-        mainWindow.setIgnoreMouseEvents(!cover);
-        mainWindow.setAlwaysOnTop(!cover, 'pop-up-menu')
+        // overlayWindow.setIgnoreMouseEvents(!cover);
+        // overlayWindow.setAlwaysOnTop(!cover, 'pop-up-menu')
 
-        cover = !cover
-        shortCutIgnoreMouse = !shortCutIgnoreMouse
+        // cover = !cover
+        // shortCutIgnoreMouse = !shortCutIgnoreMouse
       }
     },
     {
       label: '退出', click: () => {
         mainWindow.close()
+        overlayWindow.hide()
+        overlayWindow.close()
         app.quit()
       }
     }
   ])
 
-  tray.setToolTip('直播辅助工具')
+  tray.setToolTip('live chat')
   tray.setContextMenu(contextMenu)
   tray.on('click', () => {
     mainWindow?.setSkipTaskbar(false)
     mainWindow.show()
   })
+
+  // createCover()
+
+  // mainWindow.webContents.openDevTools({ mode: 'undocked' })
+  mainWindow.webContents.openDevTools({ mode: 'right' });
 }
 
 
 const createCover = () => {
+
   overlayWindow = new BrowserWindow({
-    show: false,
+    show: true,
     transparent: true,
     fullscreen: true,
     frame: false,
     resizable: false,
+    skipTaskbar: true,
     webPreferences: {
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
@@ -248,70 +213,60 @@ const createCover = () => {
     },
   });
 
-  globalShortcut.register("CommandOrControl+Shift+i", () => {
-    if (cover) {
-      shortCutIgnoreMouse = !shortCutIgnoreMouse;
-      overlayWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
-
-      const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
-      overlayWindow.webContents.send('ignoreMouse', bgColor)
-    }
-  });
+  overlayWindow.setIgnoreMouseEvents(true)
+  overlayWindow.setAlwaysOnTop(true, 'pop-up-menu')
 
   // 如果打包了，渲染index.html
   if (app.isPackaged) {
     overlayWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
   } else {
-    overlayWindow.loadURL('http://localhost:3000');
+    overlayWindow.loadURL('http://localhost:3000/overlay');
   }
+  shortCutIgnoreMouse = !shortCutIgnoreMouse;
+
+  //     mainWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
+
+  //     const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
+  //     mainWindow.webContents.send('ignoreMouse', bgColor)
+  // overlayWindow.webContents.openDevTools({ mode: 'undocked' })
+
+  globalShortcut.register("CommandOrControl+Shift+i", () => {
+
+    shortCutIgnoreMouse = !shortCutIgnoreMouse;
+    overlayWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
+
+    const bgColor = shortCutIgnoreMouse ? 'transparent' : 'rgba(36,41,46,0.9)'
+    overlayWindow.webContents.send('ignoreMouse', bgColor)
+
+    console.log("ctrl+shift+i");
+  });
+
 }
 
 // 关闭窗口
 app.on("window-all-closed", () => {
-  if (process.platform == 'darwin') {
-    if (danmu?.pid != null) {
-      spawn('kill', [danmu!.pid.toString()])
-    }
+  if (!windowsIsTrueMacIsFalse) {
+    return
   }
   app.quit();
 });
 
 
-const runLiveServer = () => {
+ipcMain.once('runService', () => {
 
-  const targetPath = app.isPackaged ? path.join(process.cwd(), '/resources/danmu-exe/') : path.join(__dirname, '../danmu-exe/')
-
-  danmu = spawn('dotnet', ['LiveServer.dll', '--urls', 'http://*:5000'], {
-    cwd: targetPath
-  });
-
-  // 输出相关的数据
-  danmu.stdout.on('data', (data) => {
-    try {
-      console.log('server: ' + data);
-    } catch (error) {
-      console.log(error)
+  runSocketAndBackgroundService(6000, info => {
+    if (mainWindow != null) {
+      mainWindow.webContents.send(info.method, info)
     }
-  });
+  })
 
-  // 错误的输出
-  danmu.stderr.on('data', (data) => {
+})
 
-    try {
-      console.log('server: ' + data);
-    } catch (error) {
-      console.log(error)
-    }
-  });
 
-  // 子进程结束时输出
-  danmu.on('close', (data) => {
-    try {
-      console.log('server: ' + data);
-    } catch (error) {
-      console.log(error)
-    }
-  });
-}
+
+
+
+
+
 
 

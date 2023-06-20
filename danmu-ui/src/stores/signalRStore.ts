@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel, } from '@microsoft/signalr'
 import { AppSetting } from '@/utils/appSetting';
 import Queue from '@/utils/queue';
-import { reactive, h } from 'vue';
+import { reactive, h, ref } from 'vue';
 //暂时不管
 import { ElNotification } from 'element-plus'
 
@@ -16,6 +16,8 @@ export const useSignalR = defineStore('signalr', () => {
         .configureLogging(LogLevel.Debug)
         .withAutomaticReconnect()
         .build();
+
+    const state = ref(false)
 
     const data = reactive({
         hot: {
@@ -103,18 +105,23 @@ export const useSignalR = defineStore('signalr', () => {
     })
 
 
-    connection.onreconnecting(() => {
+    connection.onreconnecting((err) => {
+        console.log('onreconnecting' + err);
+        state.value = false;
         clearData()
     })
 
     //重连或者首次
     connection.onreconnected(id => {
-        console.log(id);
+        console.log('onreconnected:' + id);
+        state.value = true;
     })
 
     //无法连接
-    connection.onclose(() => {
+    connection.onclose((err) => {
+        console.log('onclose:' + err);
         clearData()
+        state.value = false;
     })
 
 
@@ -123,6 +130,7 @@ export const useSignalR = defineStore('signalr', () => {
         ElNotification({
             dangerouslyUseHTMLString: true,
             duration: 1000 * 20,
+            position: 'bottom-right',
             showClose: true,
             message: h({
                 template: ` 
@@ -156,13 +164,31 @@ export const useSignalR = defineStore('signalr', () => {
         })
     }
 
+
     const connectionId = () => connection.connectionId
-    const connected = () => connection.state == HubConnectionState.Connected;
-    const disconnected = () => connection.state == HubConnectionState.Disconnected;
-    const start = () => connection.start()
+    const connected = () => state.value
+
+    const start = () => {
+        return new Promise((resolve) => {
+            if (connection.state != HubConnectionState.Connected) {
+                return connection.start().then(() => {
+                    state.value = true;
+                }).then(() => {
+                    return resolve(null)
+                })
+            }
+            return resolve(null)
+        })
+    }
+
+    const init = () => {
+        if (connection.state == HubConnectionState.Connected) {
+            connection.stop()
+        }
+
+        clearData()
+    }
 
 
-
-
-    return { connectionId, start, connected, disconnected, data }
+    return { connectionId, start, connected, data, scNotification, clearData, init }
 })

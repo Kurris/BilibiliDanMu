@@ -28,7 +28,6 @@ const signalR = useSignalR()
     -webkit-background-clip: text;
     -webkit-background-size: 200% 100%;
 
-
     transition: all 0.3 ease;
 }
 </style>
