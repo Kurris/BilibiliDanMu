@@ -18,18 +18,22 @@ public class StreamerController : ControllerBase
 
 
     [HttpGet]
-    public async Task<ApiResult<object>> GetMasterByRoomId(int roomId)
+    public async Task<ApiResult<StreamerInfo>> GetStreamerInfoByRoomId(int roomId)
     {
         var roomInfo = await _bilibiliApiService.GetRoomInfoAsync(roomId);
-        var info = await _bilibiliApiService.GetStreamerInfoAsync(roomInfo.Uid);
-
-        return new ApiResult<object>()
+        if (roomInfo == null)
         {
-            Data = new
+            return new ApiResult<StreamerInfo>()
             {
-                room = roomInfo,
-                user = info
-            }
+                Code = 404
+            };
+        }
+        var info = await _bilibiliApiService.GetStreamerInfoAsync(roomInfo.Uid);
+        info.RoomInfo = roomInfo;
+
+        return new ApiResult<StreamerInfo>()
+        {
+            Data = info
         };
     }
 }

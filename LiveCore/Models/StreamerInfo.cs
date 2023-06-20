@@ -10,6 +10,9 @@
         public int FollowerNum { get; set; }
         public string Pendant { get; set; }
         public string BoardMessage { get; set; }
+
+
+        public RoomInfo RoomInfo { get; set; }
     }
 }
 

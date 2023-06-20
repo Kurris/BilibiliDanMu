@@ -13,9 +13,9 @@ namespace LiveCore.Services
     /// </summary>
     public class GiftService
     {
-        private readonly Dictionary<int, GiftInfo> _dicGiftInfos;
+        private static readonly Dictionary<int, GiftInfo> _dicGiftInfos;
 
-        public GiftService()
+        static GiftService()
         {
             var text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "gift.json"), Encoding.UTF8);
             var jObj = JObject.Parse(text);
@@ -57,9 +57,8 @@ namespace LiveCore.Services
                 }
             });
 
-            _dicGiftInfos = giftList.ToDictionary(x => x.Id, x => x);
+            _dicGiftInfos = giftList.ToDictionary(x => x.Id, x => x); ;
         }
-
 
         public string GetGifUrl(int giftId)
         {

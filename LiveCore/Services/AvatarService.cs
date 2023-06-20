@@ -14,7 +14,7 @@ namespace LiveCore.Services
             _bilibiliApiService = bilibiliApiService;
         }
 
-        public async Task<string> GetByBilibiliUserId(string id)
+        public async Task<string> GetByBilibiliUserById(string id)
         {
 
             if (!_cache.ContainsKey(id))

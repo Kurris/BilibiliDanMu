@@ -57,7 +57,7 @@ namespace LiveCore.Services
             return new Result(MessageType.DANMU_MSG, new BarrageInfo()
             {
                 Mid = mid,
-                FaceUrl = await _avatarService.GetByBilibiliUserId(mid),
+                FaceUrl = await _avatarService.GetByBilibiliUserById(mid),
                 Comment = comment,
                 IsAdmin = isAdmin,
                 Time = time,

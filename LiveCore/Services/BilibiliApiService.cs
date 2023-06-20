@@ -77,6 +77,11 @@ public class BilibiliApiService
     {
         var response = await _httpClient.GetStringAsync(ApiUrls.RoomInfoUrl + roomId);
         var jObj = JObject.Parse(response);
+        var code = jObj["code"].Value<int>();
+        if (code != 0)
+        {
+            return null;
+        }
         var data = jObj["data"];
 
         return new RoomInfo
