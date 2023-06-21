@@ -13,6 +13,8 @@ var music = {
   title: ''
 }
 
+var isForeground = false
+
 ipcRenderer.on('ignoreMouse', (event, bg) => {
   let body = document.getElementsByTagName('body')[0]
   body.style.backgroundColor = bg
@@ -53,5 +55,11 @@ contextBridge.exposeInMainWorld('electron', {
   },
   runService: () => {
     ipcRenderer.send('runService')
+  },
+  getIsforeground: () => {
+    return isForeground
+  },
+  overlay: (info) => {
+    ipcRenderer.send('overlay', info)
   }
 })

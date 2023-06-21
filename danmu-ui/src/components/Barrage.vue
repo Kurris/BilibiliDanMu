@@ -122,8 +122,10 @@ onBeforeMount(() => {
 
 
     setInterval(() => {
-        if (signalR.data.entryEffectQueue.isEmpty && signalR.data.entryEffects.length > 0 && count.value <= 0) {
-            signalR.data.entryEffects.shift()
+        if (signalR.data.entryEffects.length > 0 && signalR.data.entryEffectQueue.isEmpty) {
+            if (count.value <= 0) {
+                signalR.data.entryEffects.shift()
+            }
         }
 
         if (count.value != 0) {
@@ -245,13 +247,13 @@ onBeforeMount(() => {
 
 
 .entry-move {
-    transition: all 0.3s ease;
+    transition: all 1.2s ease;
 }
 
 .entry-enter-active,
 .entry-leave-active {
     position: absolute;
-    transition: all 0.3s ease;
+    transition: all 1.2s ease;
 }
 
 .entry-enter-from {

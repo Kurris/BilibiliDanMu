@@ -13,23 +13,11 @@ const gotTheLock = app.requestSingleInstanceLock()
 
 
 let tray: Tray;
-let shortCutIgnoreMouse: boolean = false;
-
-
+let isOverlayIgnoreMouse: boolean = true;
+let isManualSetCover: boolean = false;
 
 // ---------------------------------------------------------------------------------------------
 
-
-// ipcMain.on('snedBackendServerMessage', (e, ...args) => {
-
-//   const command: string = args[0]
-//   const obj: object = args[1]
-//   const needDisconnect: boolean = args[2]
-
-//   ganmeDetectConnector.sendMessage(command, obj, needDisconnect).then(x => {
-//     console.log("receive:" + x);
-//   })
-// })
 
 // 程序开始前 ---------------------------------------------------------------------------------------------
 
@@ -73,20 +61,6 @@ if (!gotTheLock) {
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) creatLoading();
     });
-
-  }).then(() => {
-
-    // globalShortcut.register("CommandOrControl+Shift+i", () => {
-    //   if (cover) {
-    //     shortCutIgnoreMouse = !shortCutIgnoreMouse;
-    //     mainWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
-
-    //     const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
-    //     mainWindow.webContents.send('ignoreMouse', bgColor)
-    //   }
-    // });
-
-
 
   })
 }
@@ -132,7 +106,7 @@ const createWindow = () => {
     webPreferences: {
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
-      preload: path.join(__dirname, "../electron/preload.js"), // 需要引用js文件
+      preload: path.join(__dirname, "../electron/main-preload.js"), // 需要引用js文件
     },
   });
 
@@ -142,6 +116,13 @@ const createWindow = () => {
     loadingWindow.hide()
     loadingWindow.close()
     mainWindow.show()
+  })
+
+  mainWindow.on('close', () => {
+    if (overlayWindow != null) {
+      overlayWindow.hide()
+      overlayWindow.close()
+    }
   })
 
   // 如果打包了，渲染index.html
@@ -156,8 +137,8 @@ const createWindow = () => {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: '覆盖屏幕/窗口化', click: () => {
-
+      label: '始终覆盖/取消', click: () => {
+        isManualSetCover = !isManualSetCover
         // if (process.platform == 'darwin') {
         //   //苹果电脑setFullScreen会切换到另一个子屏幕
         //   overlayWindow.setSimpleFullScreen(!cover)
@@ -190,14 +171,15 @@ const createWindow = () => {
     mainWindow.show()
   })
 
-  // createCover()
 
-  // mainWindow.webContents.openDevTools({ mode: 'undocked' })
-  mainWindow.webContents.openDevTools({ mode: 'right' });
+  // mainWindow.webContents.openDevTools({ mode: 'right' });
 }
 
-
 const createCover = () => {
+
+  if (overlayWindow != null) {
+    return
+  }
 
   overlayWindow = new BrowserWindow({
     show: true,
@@ -209,11 +191,11 @@ const createCover = () => {
     webPreferences: {
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
-      preload: path.join(__dirname, "../electron/preload.js"), // 需要引用js文件
+      preload: path.join(__dirname, "../electron/overlay-preload.js"), // 需要引用js文件
     },
   });
 
-  overlayWindow.setIgnoreMouseEvents(true)
+  overlayWindow.setIgnoreMouseEvents(isOverlayIgnoreMouse)
   overlayWindow.setAlwaysOnTop(true, 'pop-up-menu')
 
   // 如果打包了，渲染index.html
@@ -222,25 +204,15 @@ const createCover = () => {
   } else {
     overlayWindow.loadURL('http://localhost:3000/overlay');
   }
-  shortCutIgnoreMouse = !shortCutIgnoreMouse;
 
-  //     mainWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
-
-  //     const bgColor = shortCutIgnoreMouse ? 'unset' : 'rgba(36,41,46,0.9)'
-  //     mainWindow.webContents.send('ignoreMouse', bgColor)
   // overlayWindow.webContents.openDevTools({ mode: 'undocked' })
+  globalShortcut.register("CommandOrControl+Shift+g", () => {
 
-  globalShortcut.register("CommandOrControl+Shift+i", () => {
+    isOverlayIgnoreMouse = !isOverlayIgnoreMouse;
+    overlayWindow.setIgnoreMouseEvents(isOverlayIgnoreMouse);
+    overlayWindow.webContents.send('ignoreMouse')
 
-    shortCutIgnoreMouse = !shortCutIgnoreMouse;
-    overlayWindow.setIgnoreMouseEvents(shortCutIgnoreMouse);
-
-    const bgColor = shortCutIgnoreMouse ? 'transparent' : 'rgba(36,41,46,0.9)'
-    overlayWindow.webContents.send('ignoreMouse', bgColor)
-
-    console.log("ctrl+shift+i");
   });
-
 }
 
 // 关闭窗口
@@ -252,17 +224,37 @@ app.on("window-all-closed", () => {
 });
 
 
+// 确保只运行一次
 ipcMain.once('runService', () => {
 
   runSocketAndBackgroundService(6000, info => {
-    if (mainWindow != null) {
-      mainWindow.webContents.send(info.method, info)
+    if (info.method != "GameIsForeground") {
+      if (mainWindow != null) {
+        mainWindow.webContents.send(info.method, info)
+      }
+    } else {
+      if (overlayWindow != null) {
+
+        //手动设置覆盖,则始终为true
+        if (isManualSetCover) {
+          overlayWindow.webContents.send(info.method, {
+            isForeground: true
+          })
+        } else {
+          overlayWindow.webContents.send(info.method, info)
+        }
+      }
     }
   })
-
 })
 
 
+ipcMain.on('overlay', (e, info) => {
+  createCover()
+  if (overlayWindow != null) {
+    overlayWindow.webContents.send('receiveStreamerInfo', info)
+  }
+})
 
 
 

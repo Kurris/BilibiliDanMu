@@ -1,9 +1,8 @@
 <template>
     <div id="overlay">
-        <v-d-r class="item-bg status" :w="380" :h="100" :x="width / 2 - 380 / 2" :y="height - 120" :resizable="false"
-            :parent="true" :draggable="true">
+        <v-d-r v-show="!state.isIgnoreMouse" class="status item-bg" :w="380" :h="100" :x="10" :y="height - 120"
+            :resizable="false" :parent="true" :draggable="true">
 
-            <!-- display: flex;flex-direction: column ; -->
             <div class="room" style="padding: 10px;">
                 <div style="display: flex;">
 
@@ -23,7 +22,7 @@
                                 d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.707L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.646a.5.5 0 0 0 .708-.707L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z" />
                         </svg>
                         <div>
-                            : {{ room.id }}
+                            : {{ streamser.info.roomInfo.roomId }}
                         </div>
                     </div>
                     <div style="display: flex;margin-left: 20px;">
@@ -47,9 +46,10 @@
 
             <div class="streamer">
                 <div>
-                    <img height=" 42" width="42" :src="room.user.face" style="position:  absolute;border-radius: 50%; " />
+                    <img height=" 42" width="42" :src="streamser.info.face"
+                        style="position:  absolute;border-radius: 50%; " />
                     <img height="60" width="60" style="position: absolute;margin-top: -9px;margin-left: -9px;"
-                        :src="room.user.pendant" />
+                        :src="streamser.info.pendant" />
                 </div>
 
                 <div style="margin-left: 60px;">
@@ -59,109 +59,90 @@
                             <path
                                 d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12.435 12.435 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A19.626 19.626 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a19.587 19.587 0 0 0 1.349-.476l.019-.007.004-.002h.001" />
                         </svg>
-                        <div style="margin-left: 5px;">: {{ room.room.title }}</div>
+                        <div style="margin-left: 5px;">: {{ streamser.info.roomInfo.title }}</div>
 
                     </div>
-                    <div style="margin-top: 5px;">{{ room.user.userName }}</div>
+                    <div style="margin-top: 5px;">{{ streamser.info.userName }}</div>
                 </div>
             </div>
 
 
         </v-d-r>
 
-        <v-d-r class="item-bg" :w="300" :h="150" :x="width / 2 - 300 / 2" :y="5" :resizable="false" :parent="true"
-            :draggable="true">
+        <v-d-r v-show="state.isForeground || !state.isIgnoreMouse" :class="{ 'item-bg': !state.isIgnoreMouse }" :w="300"
+            :h="150" :x="width / 2 - 300 / 2" :y="10" :resizable="false" :parent="true" :draggable="true">
             <GiftCover />
         </v-d-r>
 
 
-        <v-d-r class="item-bg" :min-width="200" :w="380" :h="650" :x="3" :y="height / 2 - 650 / 2" @dragging="resize"
-            @resizing="resize" :resizable="false" :parent="true" :draggable="true">
-
-            <div class="status">
-                <el-icon class="setting-btn" @click="isDrawer = !isDrawer">
-                    <Setting />
-                </el-icon>
-            </div>
-
+        <v-d-r v-show="state.isForeground || !state.isIgnoreMouse" :class="{ 'item-bg': !state.isIgnoreMouse }"
+            :min-width="200" :w="380" :h="650" :x="3" :y="height / 2 - 650 / 2" :resizable="false" :parent="true"
+            :draggable="true">
 
             <Barrage :room-id="currentRoomId" ref="danmu" :danmu-count="currentDanmuCount"
                 :entry-effect-direction="currentEntryEffectDirection" :show-avatar="currentShowAvatar"
                 :show-medal="currentShowMedal" />
 
         </v-d-r>
-
-        <el-drawer v-model="isDrawer" title="设置面板" direction="rtl" :show-close="false">
-            <DmSetting @set-raise="setRaise" :is-drawer="isDrawer" />
-        </el-drawer>
-
-
-
-
-
     </div>
+    <div id="foreground-container" @click="getIsForeground" />
+    <div id="style-seteting" @click="styleSetting" />
 </template>
 <script setup lang="ts">
 
 import { ref, reactive, onBeforeMount } from 'vue';
-import DmSetting from '../components/DmSetting.vue';
 import Barrage from '../components/Barrage.vue';
-import { useWindowSize } from '@vueuse/core'
+import { useFetch, useWindowSize } from '@vueuse/core'
 
 
 import { useSignalR } from '../stores/signalRStore';
 import GiftCover from '../components/GiftCover.vue';
-import { useRoom } from '../stores/streamerStore';
+import { AppSetting } from '../utils/appSetting';
+import { useStreamer } from '../stores/streamerStore';
 
+const streamser = useStreamer()
 const currentRoomId = ref<number>();
-const isDrawer = ref(false)
 const currentDanmuCount = ref(15)
 const currentEntryEffectDirection = ref('left')
 const currentShowAvatar = ref(true)
 const currentShowMedal = ref(true)
-const currentShowWindow = ref(true)
 const signalR = useSignalR()
-const room = useRoom()
-const { width, height } = useWindowSize()
+const { height, width } = useWindowSize()
 
-
-const position = reactive({
-    x: 0,
-    y: 0,
-    w: 0,
-    h: 0
+const state = reactive({
+    isForeground: false,
+    isIgnoreMouse: true,
 })
 
+const bgColor = ref('transparent')
 
-const resize = (newRect: any) => {
-    position.x = newRect.x;
-    position.y = newRect.y;
-    position.w = newRect.w;
-    position.h = newRect.h;
-    // console.log(newRect);
+const connectRoom = () => {
+
+    useFetch(AppSetting.VITE_API_URL + "/api/barrage/receive").post(JSON.stringify({
+        connectionId: signalR.connectionId(),
+        roomId: streamser.info.roomInfo.roomId
+    }), 'application/json').json()
 }
 
-const setRaise = (danmuCount: number, entryEffectDirection: string, showAvatar: boolean, showMedal: boolean, showWindow: boolean) => {
-    currentDanmuCount.value = danmuCount
-    currentEntryEffectDirection.value = entryEffectDirection
-    currentShowAvatar.value = showAvatar;
-    currentShowMedal.value = showMedal
-    currentShowWindow.value = showWindow
+//会被electron触发
+const getIsForeground = () => {
+    state.isForeground = window.electron.getIsforeground()
+    bgColor.value = state.isIgnoreMouse ? 'transparent' : 'rgba(36,41,46,0.9)'
 }
 
-//用户自定义处理css
-// const testCustomCss = ref(`.main-container {
-//    background-color: black;
-//    left:60px;
-// }`)
-// document.getElementById('user-customer').innerHTML = testCustomCss.value;
 
 
-
-
+const styleSetting = () => {
+    state.isIgnoreMouse = !state.isIgnoreMouse
+}
 
 onBeforeMount(() => {
-    signalR.start();
+
+    streamser.info = window.electron.getStreamerInfo()
+
+    signalR.start().then(() => {
+        connectRoom()
+    })
 })
 
 
@@ -170,12 +151,15 @@ onBeforeMount(() => {
 <style lang="scss">
 $radius : 1.2%;
 
+body {}
+
 #overlay {
     position: absolute;
     height: 100%;
     width: 100%;
     background-color: transparent;
     user-select: none;
+    background-color: v-bind(bgColor);
 }
 
 
@@ -216,6 +200,11 @@ h1 {
         left: 0 !important;
         right: 0 !important;
     }
+}
+
+.vdr-container.active {
+    border-color: unset;
+    border: unset;
 }
 
 .el-notification {

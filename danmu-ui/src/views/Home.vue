@@ -6,26 +6,25 @@
 
         <div class="main-container">
 
-            <div class="connectionStatus">
+            <!-- <div class="connectionStatus">
 
                 <div v-if="signalR.connected()"
                     style="background-color: green;border-radius: 50%; height: 60px;width: 60px; " />
                 <div v-else style="background-color: red;border-radius: 50%; height: 60px;width: 60px;" />
+            </div> -->
 
-                <div id="music-container" @click="musicContainerRaiseClick">
-                    <div class="music-title">{{ mediaInfo.music?.title }}</div>
-                </div>
+            <div id="music-container" @click="musicContainerRaiseClick">
+                <div class="music-title">{{ mediaInfo.music?.title }}</div>
             </div>
 
             <div id="game-container" @click="gameContainerRaiseClick">
                 <img v-if="mediaInfo.game?.image" id="game-img" :src="mediaInfo.game.image" :title="mediaInfo.game.title" />
             </div>
+            <div id="foreground-container" @click="foregroundContainerRaiseClick" />
 
-
-            <PreviewStyle :height="500" :width="380">
+            <!-- <PreviewStyle :height="500" :width="380">
                 <Barrage :danmu-count="10" entry-effect-direction="left" :show-avatar="true" :show-medal="true" />
-            </PreviewStyle>
-
+            </PreviewStyle> -->
 
         </div>
     </div>
@@ -40,6 +39,7 @@ import Barrage from '../components/Barrage.vue';
 import PreviewStyle from '../components/PreviewStyle.vue';
 import { AppSetting } from '../utils/appSetting';
 import { useFetch } from '@vueuse/core';
+
 
 
 const signalR = useSignalR()
@@ -66,6 +66,10 @@ const musicContainerRaiseClick = () => {
     mediaInfo.music.title = window.electron.getMusicInfo().title
 }
 
+const foregroundContainerRaiseClick = () => {
+    mediaInfo.isforeground = window.electron.getIsforeground()
+}
+
 
 const connectRoom = () => {
 
@@ -82,18 +86,22 @@ const connectRoom = () => {
 
 
 onBeforeMount(() => {
-    signalR.start().then(() => {
-        connectRoom()
-    })
+    // signalR.start().then(() => {
+    //     connectRoom()
+    // })
 })
 
 onMounted(() => {
 
     try {
         window.electron.runService()
+        window.electron.overlay(JSON.parse(JSON.stringify(streamer.info)))
     } catch (error) {
-        console.log('web platform use electron.api error');
+
+        console.log(error);
     }
+
+
 
 })
 
@@ -134,10 +142,10 @@ onMounted(() => {
     border-radius: 1%;
     border: 1px solid #182736;
 
-    #game-container {
-        position: absolute;
-        bottom: 0;
-    }
+    // #game-container {
+    //     position: absolute;
+    //     bottom: 0;
+    // }
 }
 
 .bg-img {

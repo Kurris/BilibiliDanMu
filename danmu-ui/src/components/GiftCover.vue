@@ -15,7 +15,7 @@ const signalR = useSignalR()
 </script>
 <style scoped lang="scss">
 .gift {
-    color: #ae93ea;
+
     background-color: transparent;
     text-align: center;
 

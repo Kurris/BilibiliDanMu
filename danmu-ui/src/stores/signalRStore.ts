@@ -102,6 +102,9 @@ export const useSignalR = defineStore('signalr', () => {
     connection.on("SEND_GIFT", p => {
         data.gifts.shift()
         data.gifts.push(p)
+        setTimeout(() => {
+            data.gifts.shift()
+        }, 5000)
     })
 
 
@@ -130,7 +133,7 @@ export const useSignalR = defineStore('signalr', () => {
         ElNotification({
             dangerouslyUseHTMLString: true,
             duration: 1000 * 20,
-            position: 'bottom-right',
+            position: 'bottom-left',
             showClose: true,
             message: h({
                 template: ` 
