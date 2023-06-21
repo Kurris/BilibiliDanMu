@@ -226,4 +226,30 @@ public class LocalMethods
         }
         return string.Empty;
     }
+
+    public string GameIsForeground()
+    {
+        try
+        {
+            var foreground = GetForegroundWindow();
+            if (_gameHandle == foreground)
+            {
+                return JsonConvert.SerializeObject(new
+                {
+                    method = nameof(GameIsForeground),
+                    isForeground = true
+                });
+            }
+
+            return JsonConvert.SerializeObject(new
+            {
+                method = nameof(GameIsForeground),
+                isForeground = false
+            });
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
 }

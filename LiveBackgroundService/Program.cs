@@ -20,28 +20,28 @@ public static class Program
                 await Console.Out.WriteLineAsync("Specific port error");
             }
         }
-
-        //var methods = new LocalMethods();
-        //while (true)
-        //{
-        //    await Task.Delay(3000);
-        //    var gameInfo = methods.DetectGameRunning();
-        //    if (!string.IsNullOrEmpty(gameInfo))
-        //    {
-        //        await Console.Out.WriteLineAsync(gameInfo);
-        //    }
-        //}
-
         await StartBackgroundAsync(port);
     }
 
     public static async Task StartBackgroundAsync(int port)
     {
-        var client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         await client.ConnectAsync("localhost", port);
         await Console.Out.WriteLineAsync($"background connected server on " + port);
 
         var methods = new LocalMethods();
+
+        _ = Task.Factory.StartNew(async () =>
+        {
+            while (true)
+            {
+                var foregroundInfo = methods.GameIsForeground();
+                if (!string.IsNullOrEmpty(foregroundInfo))
+                    await CommonSendAsync(client, foregroundInfo);
+
+                await Task.Delay(300);
+            }
+        });
 
         while (true)
         {
@@ -49,16 +49,18 @@ public static class Program
 
             var musiceInfo = methods.GetMusicInfo();
             if (!string.IsNullOrEmpty(musiceInfo))
-            {
-                await client.SendAsync(Encoding.UTF8.GetBytes(musiceInfo), SocketFlags.None);
-            }
-
+                await CommonSendAsync(client, musiceInfo);
 
             var gameInfo = methods.DetectGameRunning();
             if (!string.IsNullOrEmpty(gameInfo))
-            {
-                await client.SendAsync(Encoding.UTF8.GetBytes(gameInfo), SocketFlags.None);
-            }
+                await CommonSendAsync(client, gameInfo);
         }
+
+    }
+
+    public static async Task CommonSendAsync(Socket client, string data)
+    {
+        await Console.Out.WriteLineAsync(data);
+        await client.SendAsync(Encoding.UTF8.GetBytes(data), SocketFlags.None);
     }
 }
