@@ -60,7 +60,6 @@ public static class Program
 
     public static async Task CommonSendAsync(Socket client, string data)
     {
-        await Console.Out.WriteLineAsync(data);
         await client.SendAsync(Encoding.UTF8.GetBytes(data), SocketFlags.None);
     }
 }

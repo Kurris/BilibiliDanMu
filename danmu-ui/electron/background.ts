@@ -19,20 +19,6 @@ let isManualSetCover: boolean = false;
 // ---------------------------------------------------------------------------------------------
 
 
-// 程序开始前 ---------------------------------------------------------------------------------------------
-
-// 苹果电脑杀掉当前端口进程
-// if (!windowsIsTrueMacIsFalse) {
-//   if (app.isPackaged) {
-//     // exec("lsof -i:5000 | grep -v PID | awk '{print $2}' | xargs kill -9")
-//   }
-// }
-
-
-
-// ---------------------------------------------------------------------------------------------------------
-
-
 
 if (!gotTheLock) {
   app.quit()
@@ -127,9 +113,11 @@ const createWindow = () => {
 
   // 如果打包了，渲染index.html
   if (app.isPackaged) {
-    mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+    // mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+    mainWindow.loadURL('http://isawesome.cn:8080');
   } else {
     mainWindow.loadURL('http://localhost:3000');
+    // mainWindow.loadURL('http://isawesome.cn:8080')
   }
 
 
@@ -200,9 +188,11 @@ const createCover = () => {
 
   // 如果打包了，渲染index.html
   if (app.isPackaged) {
-    overlayWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+    // overlayWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+    overlayWindow.loadURL('http://isawesome.cn:8080/overlay');
   } else {
     overlayWindow.loadURL('http://localhost:3000/overlay');
+    // overlayWindow.loadURL('http://isawesome.cn:8080/overlay');
   }
 
   // overlayWindow.webContents.openDevTools({ mode: 'undocked' })
@@ -227,7 +217,8 @@ app.on("window-all-closed", () => {
 // 确保只运行一次
 ipcMain.once('runService', () => {
 
-  runSocketAndBackgroundService(6000, info => {
+  runSocketAndBackgroundService(info => {
+
     if (info.method != "GameIsForeground") {
       if (mainWindow != null) {
         mainWindow.webContents.send(info.method, info)

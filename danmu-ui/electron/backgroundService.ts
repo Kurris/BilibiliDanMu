@@ -1,11 +1,21 @@
 import net from 'net'
 import path from "path";
 import { app } from "electron";
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
+import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
 
 let liveBackend: ChildProcessWithoutNullStreams;
 
-export const runSocketAndBackgroundService = (port: number, callback: (obj: any) => void) => {
+export const runSocketAndBackgroundService = async (callback: (obj: any) => void) => {
+
+    let port = 6000
+
+    let canBeUse = await judgePorCanUse(port);
+    while (!canBeUse) {
+        port++
+        canBeUse = await judgePorCanUse(port);
+    }
+
+
     const socketServer = net.createServer()
     socketServer.on('connection', (client) => {
 
@@ -52,4 +62,14 @@ const runBackgroundService = (port: number) => {
             console.log(error)
         }
     });
+}
+
+
+const judgePorCanUse = (port: number) => {
+    const command = `netstat -ano|findstr "${port}"`;
+    return new Promise<boolean>((resolve) => {
+        exec(command, (error: any, stdout: string, stderr: string) => {
+            resolve(stdout === "");
+        });
+    })
 }
