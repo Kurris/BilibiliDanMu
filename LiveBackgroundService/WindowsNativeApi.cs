@@ -221,4 +221,15 @@ internal static class WindowsNativeApi
     /// <param name="wCmd">Indicates whether the function returns a handle to the next window or the previous window.</param>
     /// <returns>If the function succeeds, the return value is a handle to the next (or previous) window. If there is no next (or previous) window, the return value is NULL. To get extended error information, call GetLastError.</returns>
     public static IntPtr GetNextWindow(IntPtr hWnd, GetNextWindowCommands wCmd) => GetWindow(hWnd, (GetWindowCommands)wCmd);
+
+
+    /// <summary>
+    /// Examines the Z order of the child windows associated with the specified parent window and retrieves a handle to the child window at the top of the Z order.
+    /// </summary>
+    /// <param name="hWnd">A handle to the parent window whose child windows are to be examined. If this parameter is NULL, the function returns a handle to the window at the top of the Z order.</param>
+    /// <returns>
+    /// If the function succeeds, the return value is a handle to the child window at the top of the Z order. If the specified window has no child windows, the return value is NULL. To get extended error information, use the GetLastError function.
+    /// </returns>
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr GetTopWindow(IntPtr hWnd);
 }

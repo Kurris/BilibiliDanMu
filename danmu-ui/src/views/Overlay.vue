@@ -1,5 +1,5 @@
 <template>
-    <div id="overlay">
+    <div id="overlay" :style="{ 'background-color': bgColor }">
         <v-d-r v-show="!state.isIgnoreMouse" class="status item-bg" :w="380" :h="100" :x="10" :y="height - 120"
             :resizable="false" :parent="true" :draggable="true">
 
@@ -74,7 +74,6 @@
             <GiftCover />
         </v-d-r>
 
-
         <v-d-r v-show="state.isForeground || !state.isIgnoreMouse" :class="{ 'item-bg': !state.isIgnoreMouse }"
             :min-width="200" :w="380" :h="650" :x="3" :y="height / 2 - 650 / 2" :resizable="false" :parent="true"
             :draggable="true">
@@ -90,7 +89,7 @@
 </template>
 <script setup lang="ts">
 
-import { ref, reactive, onBeforeMount } from 'vue';
+import { ref, reactive, onBeforeMount, onMounted } from 'vue';
 import Barrage from '../components/Barrage.vue';
 import { useFetch, useWindowSize } from '@vueuse/core'
 
@@ -138,11 +137,17 @@ const styleSetting = () => {
 
 onBeforeMount(() => {
 
+    // window.location.href = 'https://chat.laplace.live/obs/25034104?baseFontSize=18&colorScheme=light&customAvatarApi=&eventGuardUsernameColor0=&eventGuardUsernameColor1=&eventGuardUsernameColor2=&eventGuardUsernameColor3=&eventMessageColor=&showAvatar=true&showCurrentRank=true&showEmote=true&showEnterEvent=false&showEnterEventCurrentGuardOnly=false&showFollowEvent=false&showGiftFree=false&showGiftHighlightAbove=29.99&showGiftPriceAbove=1&showGiftStickyAbove=29.99&showGiftStickyAlways=false&showMedal=false&showMedalLightenedOnly=true&showModBadge=true&showOnlyCurrentMedal=false&showPhoneNotVerified=false&showStickyBar=true&showSystemMessage=true&showUserLevelAbove=0&showUserLvl=false&showUsername=true&showWealthMedal=false&sortStickyBarByPrice=false'
+
     streamser.info = window.electron.getStreamerInfo()
 
     signalR.start().then(() => {
         connectRoom()
     })
+})
+
+onMounted(() => {
+    window.electron.isReady()
 })
 
 
@@ -159,7 +164,6 @@ body {}
     width: 100%;
     background-color: transparent;
     user-select: none;
-    background-color: v-bind(bgColor);
 }
 
 

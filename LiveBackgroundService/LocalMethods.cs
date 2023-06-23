@@ -19,6 +19,7 @@ public class LocalMethods
 
     private bool _musicePrgramExists = false;
     private string _musiceTitle = string.Empty;
+    private IntPtr _musiceHandle = IntPtr.Zero;
 
     static LocalMethods()
     {
@@ -29,7 +30,7 @@ public class LocalMethods
 
 
     /// <summary>
-    /// boolean:intptr
+    /// 
     /// </summary>
     /// <returns></returns>
     public string DetectGameRunning()
@@ -190,40 +191,47 @@ public class LocalMethods
 
     public string GetMusicInfo()
     {
-        //简单暴力
-        var musicProcess = Process.GetProcesses().Where(x => x.ProcessName.Contains("music", StringComparison.OrdinalIgnoreCase));
-        var program = musicProcess.FirstOrDefault(x => IsWindow(x.MainWindowHandle));
-
-        if (program == null)
+        if (_musiceHandle == IntPtr.Zero || !IsWindow(_musiceHandle))
         {
-            if (_musicePrgramExists)
+            //简单暴力
+            var musicProcess = Process.GetProcesses().Where(x => x.ProcessName.Contains("music", StringComparison.OrdinalIgnoreCase));
+            var program = musicProcess.FirstOrDefault(x => IsWindow(x.MainWindowHandle));
+
+            if (program == null)
             {
-                _musicePrgramExists = false;
-                _musiceTitle = string.Empty;
-
-                return JsonConvert.SerializeObject(new
+                if (_musicePrgramExists)
                 {
-                    method = nameof(GetMusicInfo),
-                    title = string.Empty
-                });
-            }
+                    _musicePrgramExists = false;
+                    _musiceTitle = string.Empty;
 
-            return string.Empty;
+                    return JsonConvert.SerializeObject(new
+                    {
+                        method = nameof(GetMusicInfo),
+                        title = string.Empty
+                    });
+                }
+
+                return string.Empty;
+            }
+            _musiceHandle = program.MainWindowHandle;
         }
 
-        var title = program.MainWindowTitle;
+
+        var title = GetWindowText(_musiceHandle);
         if (!string.IsNullOrEmpty(title) && !_musiceTitle.Equals(title))
         {
             _musiceTitle = title;
             _musicePrgramExists = true;
 
+
             return JsonConvert.SerializeObject(new
             {
                 method = nameof(GetMusicInfo),
-                handle = program.MainWindowHandle.ToInt32(),
+                handle = _musiceHandle.ToInt32(),
                 title,
             });
         }
+
         return string.Empty;
     }
 

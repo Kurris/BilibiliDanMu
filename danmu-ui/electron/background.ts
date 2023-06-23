@@ -1,12 +1,15 @@
 import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut } from "electron";
 import path from "path";
 import { runSocketAndBackgroundService } from './backgroundService'
+import { type ChildProcessWithoutNullStreams } from 'child_process'
 
 
 // 变量 ---------------------------------------------------------------------------------------------
 let mainWindow: BrowserWindow;
 let loadingWindow: BrowserWindow;
 let overlayWindow: BrowserWindow;
+const overlayWindowUrl = app.isPackaged ? 'http://isawesome.cn:8080/overlay' : 'http://localhost:3000/overlay'
+// overlayWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
 
 const windowsIsTrueMacIsFalse = process.platform == 'win32'
 const gotTheLock = app.requestSingleInstanceLock()
@@ -16,6 +19,10 @@ let tray: Tray;
 let isOverlayIgnoreMouse: boolean = true;
 let isManualSetCover: boolean = false;
 
+let closeByTray = false
+let liveBackend: ChildProcessWithoutNullStreams;
+
+let overlayWindowsIsReady = false
 // ---------------------------------------------------------------------------------------------
 
 
@@ -104,10 +111,20 @@ const createWindow = () => {
     mainWindow.show()
   })
 
-  mainWindow.on('close', () => {
-    if (overlayWindow != null) {
-      overlayWindow.hide()
-      overlayWindow.close()
+  mainWindow.on('close', (e) => {
+    if (!closeByTray) {
+      e.preventDefault()
+      mainWindow.hide()
+    } else {
+
+      if (liveBackend != null) {
+        liveBackend.kill()
+      }
+
+      if (overlayWindow != null) {
+        overlayWindow.hide()
+        overlayWindow.close()
+      }
     }
   })
 
@@ -117,7 +134,6 @@ const createWindow = () => {
     mainWindow.loadURL('http://isawesome.cn:8080');
   } else {
     mainWindow.loadURL('http://localhost:3000');
-    // mainWindow.loadURL('http://isawesome.cn:8080')
   }
 
 
@@ -134,19 +150,11 @@ const createWindow = () => {
         //   overlayWindow.setFullScreen(!cover)
         //   overlayWindow.setSkipTaskbar(!cover);
         // }
-
-        // overlayWindow.setIgnoreMouseEvents(!cover);
-        // overlayWindow.setAlwaysOnTop(!cover, 'pop-up-menu')
-
-        // cover = !cover
-        // shortCutIgnoreMouse = !shortCutIgnoreMouse
       }
     },
     {
       label: '退出', click: () => {
-        mainWindow.close()
-        overlayWindow.hide()
-        overlayWindow.close()
+        closeByTray = true
         app.quit()
       }
     }
@@ -186,23 +194,17 @@ const createCover = () => {
   overlayWindow.setIgnoreMouseEvents(isOverlayIgnoreMouse)
   overlayWindow.setAlwaysOnTop(true, 'pop-up-menu')
 
-  // 如果打包了，渲染index.html
-  if (app.isPackaged) {
-    // overlayWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
-    overlayWindow.loadURL('http://isawesome.cn:8080/overlay');
-  } else {
-    overlayWindow.loadURL('http://localhost:3000/overlay');
-    // overlayWindow.loadURL('http://isawesome.cn:8080/overlay');
-  }
+  overlayWindow.loadURL(overlayWindowUrl);
 
-  // overlayWindow.webContents.openDevTools({ mode: 'undocked' })
   globalShortcut.register("CommandOrControl+Shift+g", () => {
+
+    if (!overlayWindowsIsReady) return
 
     isOverlayIgnoreMouse = !isOverlayIgnoreMouse;
     overlayWindow.setIgnoreMouseEvents(isOverlayIgnoreMouse);
     overlayWindow.webContents.send('ignoreMouse')
-
   });
+  // overlayWindow.webContents.openDevTools({ mode: 'undocked' })
 }
 
 // 关闭窗口
@@ -236,7 +238,7 @@ ipcMain.once('runService', () => {
         }
       }
     }
-  })
+  }).then(p => liveBackend = p)
 })
 
 
@@ -245,6 +247,10 @@ ipcMain.on('overlay', (e, info) => {
   if (overlayWindow != null) {
     overlayWindow.webContents.send('receiveStreamerInfo', info)
   }
+})
+
+ipcMain.on("overlay-isReady", () => {
+  overlayWindowsIsReady = true
 })
 
 

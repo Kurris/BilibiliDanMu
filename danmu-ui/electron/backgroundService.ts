@@ -3,53 +3,57 @@ import path from "path";
 import { app } from "electron";
 import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
 
-let liveBackend: ChildProcessWithoutNullStreams;
-
 export const runSocketAndBackgroundService = async (callback: (obj: any) => void) => {
 
-    let port = 6000
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise<ChildProcessWithoutNullStreams>(async (resolve) => {
+        let port = 6000
 
-    let canBeUse = await judgePorCanUse(port);
-    while (!canBeUse) {
-        port++
-        canBeUse = await judgePorCanUse(port);
-    }
+        let canBeUse = await judgePortCanUse(port);
+        while (!canBeUse) {
+            port++
+            canBeUse = await judgePortCanUse(port);
+        }
 
+        const socketServer = net.createServer()
+        socketServer.on('connection', (client) => {
 
-    const socketServer = net.createServer()
-    socketServer.on('connection', (client) => {
+            console.log('client connected');
 
-        console.log('client connected');
+            client.on('data', (data: Buffer) => {
+                try {
+                    const info = JSON.parse(data.toString())
+                    callback(info)
+                } catch (error) {
+                    // 看起来不会解析错误 {"method":"GameIsForeground","isForeground":false}
+                    // 先catch解决
+                    // console.log('json parse:' + data.toString());
+                }
+            })
 
-        client.on('data', (data: Buffer) => {
+            client.on('close', () => {
+                console.log('client closed');
+            })
 
-            const info = JSON.parse(data.toString())
-
-            callback(info)
-
+            client.on('error', (error) => {
+                console.log(error);
+            })
         })
 
-        client.on('close', () => {
-            console.log('client closed');
-        })
-
-        client.on('error', (error) => {
-            console.log(error);
+        socketServer.listen(port, () => {
+            console.log('server listering on ' + port);
+            return resolve(runBackgroundService(port, true, false))
         })
     })
 
-    socketServer.listen(port, () => {
-        console.log('server listering on ' + port);
-        runBackgroundService(port)
-    })
 }
 
 
-const runBackgroundService = (port: number) => {
+const runBackgroundService = (port: number, detectGame: boolean, detectMusice: boolean) => {
 
     const targetPath = app.isPackaged ? path.join(process.cwd(), '/resources/danmu-exe/') : path.join(__dirname, '../danmu-exe/')
 
-    liveBackend = spawn('dotnet', ['LiveBackgroundService.dll', port.toString()], {
+    const liveBackend = spawn('dotnet', ['LiveBackgroundService.dll', port.toString(), detectGame + "", detectMusice + ""], {
         cwd: targetPath
     });
 
@@ -62,13 +66,15 @@ const runBackgroundService = (port: number) => {
             console.log(error)
         }
     });
+
+    return liveBackend;
 }
 
 
-const judgePorCanUse = (port: number) => {
+const judgePortCanUse = (port: number) => {
     const command = `netstat -ano|findstr "${port}"`;
     return new Promise<boolean>((resolve) => {
-        exec(command, (error: any, stdout: string, stderr: string) => {
+        exec(command, (error: any, stdout: string) => {
             resolve(stdout === "");
         });
     })

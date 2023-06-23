@@ -24,8 +24,8 @@ ipcRenderer.on('GameIsForeground', (e, info) => {
 })
 
 contextBridge.exposeInMainWorld('electron', {
-  ignoreMouse: () => {
-    ipcRenderer.send('ignoreMouse')
+  isReady: () => {
+    ipcRenderer.send('overlay-isReady')
   },
   getIsforeground: () => {
     return isForeground
