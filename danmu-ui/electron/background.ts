@@ -1,30 +1,23 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, globalShortcut } from "electron";
 import path from "path";
-import { runSocketAndBackgroundService } from './backgroundService'
-import { type ChildProcessWithoutNullStreams } from 'child_process'
+import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
+import { runSocketAndBackgroundService, liveBackend } from './backgroundService'
+import { createLoadingWindow, loadingWindow } from './windows/loadingWindow'
+import { createOverlayWindow, overlayWindow } from './windows/overlayWindow'
+import { gotTheLock, mainWindowUrl, windowsIsTrueMacIsFalse, isDevelopment } from './consts'
+import createTray from "./components/appTray";
 
 
-// 变量 ---------------------------------------------------------------------------------------------
 let mainWindow: BrowserWindow;
-let loadingWindow: BrowserWindow;
-let overlayWindow: BrowserWindow;
-const overlayWindowUrl = app.isPackaged ? 'http://isawesome.cn:8080/overlay' : 'http://localhost:3000/overlay'
-// overlayWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
-
-const windowsIsTrueMacIsFalse = process.platform == 'win32'
-const gotTheLock = app.requestSingleInstanceLock()
-
-
-let tray: Tray;
+let isCloseByTray = false
 let isOverlayIgnoreMouse: boolean = true;
 let isManualSetCover: boolean = false;
+let isOverlayWindowsReady = false
 
-let closeByTray = false
-let liveBackend: ChildProcessWithoutNullStreams;
-
-let overlayWindowsIsReady = false
 // ---------------------------------------------------------------------------------------------
 
+
+if (isDevelopment)
+  app.commandLine.appendSwitch('ignore-certificate-errors')
 
 
 if (!gotTheLock) {
@@ -49,39 +42,19 @@ if (!gotTheLock) {
 
   }).then(() => {
 
-    creatLoading();
-    // mac系统
-    app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) creatLoading();
-    });
+    createLoadingWindow(createMainWindow);
 
+    // mac系统处理
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createLoadingWindow(createMainWindow);
+      }
+    });
   })
 }
 
 
-const creatLoading = () => {
-  loadingWindow = new BrowserWindow({
-    show: false, //加载完本地html再展示
-    frame: false,
-    width: 550,
-    height: 350,
-    resizable: false,
-    transparent: true,
-  });
-
-
-  // 先加载文件再展示
-  loadingWindow.loadFile(path.join(__dirname, '../pacman-loading/index.html')).then(() => {
-
-    loadingWindow.show()
-    createWindow()
-
-  }).catch(() => {
-    app.quit()
-  });
-}
-
-const createWindow = () => {
+const createMainWindow = () => {
 
   mainWindow = new BrowserWindow({
     show: false, //由loadingWindow展示窗体
@@ -97,6 +70,7 @@ const createWindow = () => {
     width: 1380,
     title: 'Live chat',
     webPreferences: {
+      devTools: isDevelopment,
       contextIsolation: true, // 是否开启隔离上下文
       nodeIntegration: true, // 渲染进程使用Node API
       preload: path.join(__dirname, "../electron/main-preload.js"), // 需要引用js文件
@@ -112,7 +86,7 @@ const createWindow = () => {
   })
 
   mainWindow.on('close', (e) => {
-    if (!closeByTray) {
+    if (!isCloseByTray) {
       e.preventDefault()
       mainWindow.hide()
     } else {
@@ -128,84 +102,23 @@ const createWindow = () => {
     }
   })
 
-  // 如果打包了，渲染index.html
-  if (app.isPackaged) {
-    // mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
-    mainWindow.loadURL('http://isawesome.cn:8080');
-  } else {
-    mainWindow.loadURL('http://localhost:3000');
-  }
 
+  mainWindow.loadURL(mainWindowUrl).then(() => {
 
-  tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '../electron/app-24.png')))
+    createTray(() => {
+      mainWindow?.setSkipTaskbar(false)
+      mainWindow.show()
+    }, () => {
+      isManualSetCover = !isManualSetCover
+    }, () => {
+      isCloseByTray = true
+      app.quit()
+    })
 
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: '始终覆盖/取消', click: () => {
-        isManualSetCover = !isManualSetCover
-        // if (process.platform == 'darwin') {
-        //   //苹果电脑setFullScreen会切换到另一个子屏幕
-        //   overlayWindow.setSimpleFullScreen(!cover)
-        // } else {
-        //   overlayWindow.setFullScreen(!cover)
-        //   overlayWindow.setSkipTaskbar(!cover);
-        // }
-      }
-    },
-    {
-      label: '退出', click: () => {
-        closeByTray = true
-        app.quit()
-      }
-    }
-  ])
-
-  tray.setToolTip('live chat')
-  tray.setContextMenu(contextMenu)
-  tray.on('click', () => {
-    mainWindow?.setSkipTaskbar(false)
-    mainWindow.show()
-  })
-
-
-  // mainWindow.webContents.openDevTools({ mode: 'right' });
+  });
 }
 
-const createCover = () => {
 
-  if (overlayWindow != null) {
-    return
-  }
-
-  overlayWindow = new BrowserWindow({
-    show: true,
-    transparent: true,
-    fullscreen: true,
-    frame: false,
-    resizable: false,
-    skipTaskbar: true,
-    webPreferences: {
-      contextIsolation: true, // 是否开启隔离上下文
-      nodeIntegration: true, // 渲染进程使用Node API
-      preload: path.join(__dirname, "../electron/overlay-preload.js"), // 需要引用js文件
-    },
-  });
-
-  overlayWindow.setIgnoreMouseEvents(isOverlayIgnoreMouse)
-  overlayWindow.setAlwaysOnTop(true, 'pop-up-menu')
-
-  overlayWindow.loadURL(overlayWindowUrl);
-
-  globalShortcut.register("CommandOrControl+Shift+g", () => {
-
-    if (!overlayWindowsIsReady) return
-
-    isOverlayIgnoreMouse = !isOverlayIgnoreMouse;
-    overlayWindow.setIgnoreMouseEvents(isOverlayIgnoreMouse);
-    overlayWindow.webContents.send('ignoreMouse')
-  });
-  // overlayWindow.webContents.openDevTools({ mode: 'undocked' })
-}
 
 // 关闭窗口
 app.on("window-all-closed", () => {
@@ -215,6 +128,10 @@ app.on("window-all-closed", () => {
   app.quit();
 });
 
+
+
+
+// ipcMain listen event ----------------------------------------------------------------------------
 
 // 确保只运行一次
 ipcMain.once('runService', () => {
@@ -238,19 +155,34 @@ ipcMain.once('runService', () => {
         }
       }
     }
-  }).then(p => liveBackend = p)
+  })
 })
+
 
 
 ipcMain.on('overlay', (e, info) => {
-  createCover()
-  if (overlayWindow != null) {
+
+  createOverlayWindow(() => {
+    globalShortcut.register("CommandOrControl+Shift+G", () => {
+
+      //未加载完成前快捷键不可触发
+      if (!isOverlayWindowsReady) return
+
+      isOverlayIgnoreMouse = !isOverlayIgnoreMouse;
+      overlayWindow.setIgnoreMouseEvents(isOverlayIgnoreMouse);
+      overlayWindow.webContents.send('ignoreMouse')
+
+    });
+
+    console.debug('send streamer info to overlay')
     overlayWindow.webContents.send('receiveStreamerInfo', info)
-  }
+  })
 })
 
+
 ipcMain.on("overlay-isReady", () => {
-  overlayWindowsIsReady = true
+  console.debug('overlay isReady');
+  isOverlayWindowsReady = true
 })
 
 

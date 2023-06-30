@@ -3,49 +3,47 @@ import path from "path";
 import { app } from "electron";
 import { spawn, exec, type ChildProcessWithoutNullStreams } from 'child_process'
 
-export const runSocketAndBackgroundService = async (callback: (obj: any) => void) => {
 
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise<ChildProcessWithoutNullStreams>(async (resolve) => {
-        let port = 6000
+let liveBackend: ChildProcessWithoutNullStreams
 
-        let canBeUse = await judgePortCanUse(port);
-        while (!canBeUse) {
-            port++
-            canBeUse = await judgePortCanUse(port);
-        }
+const runSocketAndBackgroundService = async (callback: (obj: any) => void) => {
+    let port = 6000
 
-        const socketServer = net.createServer()
-        socketServer.on('connection', (client) => {
+    let canBeUse = await judgePortCanUse(port);
+    while (!canBeUse) {
+        port++
+        canBeUse = await judgePortCanUse(port);
+    }
 
-            console.log('client connected');
+    const socketServer = net.createServer()
+    socketServer.on('connection', (client) => {
 
-            client.on('data', (data: Buffer) => {
-                try {
-                    const info = JSON.parse(data.toString())
-                    callback(info)
-                } catch (error) {
-                    // 看起来不会解析错误 {"method":"GameIsForeground","isForeground":false}
-                    // 先catch解决
-                    // console.log('json parse:' + data.toString());
-                }
-            })
+        console.log('client connected');
 
-            client.on('close', () => {
-                console.log('client closed');
-            })
-
-            client.on('error', (error) => {
-                console.log(error);
-            })
+        client.on('data', (data: Buffer) => {
+            try {
+                const info = JSON.parse(data.toString())
+                callback(info)
+            } catch (error) {
+                // 看起来不会解析错误 {"method":"GameIsForeground","isForeground":false}
+                // 先catch解决
+                // console.log('json parse:' + data.toString());
+            }
         })
 
-        socketServer.listen(port, () => {
-            console.log('server listering on ' + port);
-            return resolve(runBackgroundService(port, true, false))
+        client.on('close', () => {
+            console.log('client closed');
+        })
+
+        client.on('error', (error) => {
+            console.log(error);
         })
     })
 
+    socketServer.listen(port, () => {
+        console.log('server listering on ' + port);
+        runBackgroundService(port, true, false)
+    })
 }
 
 
@@ -53,10 +51,9 @@ const runBackgroundService = (port: number, detectGame: boolean, detectMusice: b
 
     const targetPath = app.isPackaged ? path.join(process.cwd(), '/resources/danmu-exe/') : path.join(__dirname, '../danmu-exe/')
 
-    const liveBackend = spawn('dotnet', ['LiveBackgroundService.dll', port.toString(), detectGame + "", detectMusice + ""], {
+    liveBackend = spawn('dotnet', ['LiveBackgroundService.dll', port.toString(), detectGame + "", detectMusice + ""], {
         cwd: targetPath
     });
-
 
     // 输出相关的数据
     liveBackend.stdout.on('data', (data: Buffer) => {
@@ -66,8 +63,6 @@ const runBackgroundService = (port: number, detectGame: boolean, detectMusice: b
             console.log(error)
         }
     });
-
-    return liveBackend;
 }
 
 
@@ -79,3 +74,6 @@ const judgePortCanUse = (port: number) => {
         });
     })
 }
+
+
+export { runSocketAndBackgroundService, liveBackend }

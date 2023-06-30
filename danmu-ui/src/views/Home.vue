@@ -1,17 +1,23 @@
 <template>
     <div id="home">
-
         <img v-if="streamer.info.roomInfo?.backgroundUrl" class="bg-img" referrerpolicy="no-referrer"
             :src="streamer.info.roomInfo?.backgroundUrl" alt="" srcset="" z-index="-100">
+        <div style="display: flex;">
+            <ShortcutKey key-name="tab" />
+            <ShortcutKey key-name="q" />
+            <ShortcutKey key-name="w" />
+            <ShortcutKey key-name="e" />
+            <ShortcutKey key-name="r" />
+        </div>
 
-        <div class="main-container">
+        <!-- <div class="main-container">
 
-            <!-- <div class="connectionStatus">
+            <div class="connectionStatus">
 
                 <div v-if="signalR.connected()"
                     style="background-color: green;border-radius: 50%; height: 60px;width: 60px; " />
                 <div v-else style="background-color: red;border-radius: 50%; height: 60px;width: 60px;" />
-            </div> -->
+            </div>
 
             <div id="music-container" @click="musicContainerRaiseClick">
                 <div class="music-title">{{ mediaInfo.music?.title }}</div>
@@ -22,11 +28,11 @@
             </div>
             <div id="foreground-container" @click="foregroundContainerRaiseClick" />
 
-            <!-- <PreviewStyle :height="500" :width="380">
+            <PreviewStyle :height="500" :width="380">
                 <Barrage :danmu-count="10" entry-effect-direction="left" :show-avatar="true" :show-medal="true" />
-            </PreviewStyle> -->
+            </PreviewStyle>
 
-        </div>
+        </div> -->
     </div>
 </template>
 <script setup lang="ts">
@@ -38,7 +44,9 @@ import { useStreamer } from '../stores/streamerStore';
 import Barrage from '../components/Barrage.vue';
 import PreviewStyle from '../components/PreviewStyle.vue';
 import { AppSetting } from '../utils/appSetting';
-import { useFetch } from '@vueuse/core';
+import { useFetch, useStorage } from '@vueuse/core';
+import ShortcutKey from '../components/ShortKeyItem.vue';
+
 
 
 
@@ -46,10 +54,10 @@ const signalR = useSignalR()
 const mediaInfo = useMediaInfo()
 const streamer = useStreamer()
 
-const bgColor = ref('#6ce88f')
-watch(() => streamer.info.roomInfo.backgroundUrl, () => {
-    bgColor.value = streamer.info.roomInfo.backgroundUrl != "" ? 'unset' : '#eafaee'
-})
+// const bgColor = ref('#6ce88f')
+// watch(() => streamer.info.roomInfo.backgroundUrl, () => {
+//     bgColor.value = streamer.info.roomInfo.backgroundUrl != "" ? 'unset' : '#eafaee'
+// })
 
 
 const gameContainerRaiseClick = async () => {
@@ -93,14 +101,14 @@ onBeforeMount(() => {
 
 onMounted(() => {
 
+    useStorage('streamer', streamer.info)
+
     try {
         window.electron.runService()
         window.electron.overlay(JSON.parse(JSON.stringify(streamer.info)))
     } catch (error) {
-
         console.log(error);
     }
-
 
 
 })
@@ -109,19 +117,17 @@ onMounted(() => {
   
 <style lang="scss">
 #home {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    background-color: v-bind(bgColor);
-
+    // position: absolute;
+    // height: 100%;
+    // width: 100%;
 }
 
-.connectionStatus {
-    position: absolute;
-    top: -3.5%;
-    left: -1.8%;
-    // box-shadow: 2px 2px 5px 5px rgba(0, 0, 0, 0.2);
-}
+// .connectionStatus {
+//     position: absolute;
+//     top: -3.5%;
+//     left: -1.8%;
+//     box-shadow: 2px 2px 5px 5px rgba(0, 0, 0, 0.2);
+// }
 
 .music-title {
     height: 12.5px;
@@ -141,11 +147,6 @@ onMounted(() => {
     background-color: rgba($color: #ffffff, $alpha: 0.9);
     border-radius: 1%;
     border: 1px solid #182736;
-
-    // #game-container {
-    //     position: absolute;
-    //     bottom: 0;
-    // }
 }
 
 .bg-img {

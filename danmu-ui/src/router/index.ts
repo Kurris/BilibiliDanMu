@@ -23,6 +23,11 @@ const router = createRouter({
       name: 'overlay',
       component: () => import('../views/Overlay.vue')
     },
+    {
+      path: '/shortKey',
+      name: 'shortKey',
+      component: () => import('../views/ShortKey.vue')
+    },
   ]
 })
 

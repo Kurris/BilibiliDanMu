@@ -21,12 +21,6 @@ const router = useRouter()
 
   .title {
     height: 60px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    display: flex;
-    // background-color: rebeccapurple;
   }
 }
 </style>
