@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using LiveCore.Consts;
 using LiveCore.Enums;
 using LiveCore.Models;
 using Newtonsoft.Json.Linq;
@@ -24,7 +25,7 @@ public class BilibiliApiService
 
     public async Task<BroadCastInfo> GetBroadCastInfoAsync(int roomId)
     {
-        var requestContent = await _httpClient.GetStringAsync(ApiUrls.BroadCastUrl + roomId);
+        var requestContent = await _httpClient.GetStringAsync(BilibiliApiUrlConsts.BroadCastUrl + roomId);
         var data = JObject.Parse(requestContent)["data"]!;
 
         return new BroadCastInfo()
@@ -75,7 +76,7 @@ public class BilibiliApiService
 
     public async Task<RoomInfo> GetRoomInfoAsync(int roomId)
     {
-        var response = await _httpClient.GetStringAsync(ApiUrls.RoomInfoUrl + roomId);
+        var response = await _httpClient.GetStringAsync(BilibiliApiUrlConsts.RoomInfoUrl + roomId);
         var jObj = JObject.Parse(response);
         var code = jObj["code"].Value<int>();
         if (code != 0)
@@ -129,7 +130,7 @@ public class BilibiliApiService
         });
 
         var p = await content.ReadAsStringAsync();
-        string url = string.Concat(ApiUrls.GiftListUrl, "?", p);
+        string url = string.Concat(BilibiliApiUrlConsts.GiftListUrl, "?", p);
 
         var response = await _httpClient.GetStringAsync(url);
         var jObj = JObject.Parse(response);
@@ -199,7 +200,7 @@ public class BilibiliApiService
         client.DefaultRequestHeaders.Add("Referer", "https://www.bilibili.com");
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
         client.DefaultRequestHeaders.Add("Origin", "https://www.bilibili.com");
-        var response = await client.GetStringAsync(ApiUrls.BroadCastStreamUrl + "?" + await content.ReadAsStringAsync());
+        var response = await client.GetStringAsync(BilibiliApiUrlConsts.BroadCastStreamUrl + "?" + await content.ReadAsStringAsync());
         var jObj = JObject.Parse(response);
         var urlInfos = jObj["data"]["durl"];
         var url = urlInfos[0]["url"].Value<string>();
@@ -217,7 +218,7 @@ public class BilibiliApiService
             ["uid"] = mid.ToString(),
         });
 
-        var response = await _httpClient.GetStringAsync(ApiUrls.StreamerInfoUrl + "?" + await content.ReadAsStringAsync());
+        var response = await _httpClient.GetStringAsync(BilibiliApiUrlConsts.StreamerInfoUrl + "?" + await content.ReadAsStringAsync());
         var jObj = JObject.Parse(response);
         var data = jObj["data"];
 

@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Reflection;
+using LiveCore.Consts;
 
 namespace LiveCore.Enums;
 
@@ -25,7 +26,7 @@ public class GuardType : BaseEnumeration
     /// <summary>
     /// 星星frame
     /// </summary>
-    public string StarFrameUrl => "https://s1.hdslb.com/bfs/static/blive/blfe-live-room/static/img/star.d40d9a4..png";
+    public string StarFrameUrl => BilibiliImageUrlConsts.StarFrame;
 
     public GuardType(int id, string name, string fontColor, string frameUrl, string fansMedalIconUrl) : base(id, name)
     {

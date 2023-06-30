@@ -1,6 +1,6 @@
-﻿namespace LiveCore
+﻿namespace LiveCore.Consts
 {
-    internal static class ApiUrls
+    internal static class BilibiliApiUrlConsts
     {
         /// <summary>
         /// 用户信息(容易被ban ip)

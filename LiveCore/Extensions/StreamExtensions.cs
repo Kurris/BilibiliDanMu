@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BDanMuLib.Converters;
-using LiveCore.Services;
+using LiveCore.Models;
 using Newtonsoft.Json;
 
 namespace LiveCore.Extensions

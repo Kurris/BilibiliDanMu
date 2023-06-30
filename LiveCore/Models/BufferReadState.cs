@@ -1,4 +1,4 @@
-﻿namespace LiveCore.Services
+﻿namespace LiveCore.Models
 {
     /// <summary>
     /// just let stream safety dispose
